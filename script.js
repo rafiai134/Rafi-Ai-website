@@ -129,3 +129,10 @@ function startVoice() {
 
   recognition.start();
 }
+
+// Rafi AI - Smooth chat experience
+const chatMessages = document.getElementById("chat-messages");
+
+if (chatMessages) {
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
