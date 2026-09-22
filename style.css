@@ -658,3 +658,28 @@ userInput.addEventListener("input", function () {
   width: 100%;
   min-height: 46px;
   }
+
+.language-selector {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 15px 0;
+  flex-wrap: wrap;
+}
+
+.language-selector button {
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: #162337;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.language-selector button:hover {
+  transform: translateY(-1px);
+  background: #1d304a;
+}
