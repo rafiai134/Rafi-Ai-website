@@ -114,7 +114,7 @@ function startVoice() {
 
   const recognition = new SpeechRecognition();
 
-  recognition.lang = "ur-PK";
+  recognition.lang = "en-US";
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
@@ -123,8 +123,8 @@ function startVoice() {
     document.getElementById("userInput").value = text;
   };
 
-  recognition.onerror = function() {
-    alert("Voice input could not be started.");
+  recognition.onerror = function(event) {
+    alert("Voice error: " + event.error);
   };
 
   recognition.start();
