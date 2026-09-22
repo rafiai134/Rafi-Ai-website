@@ -574,6 +574,7 @@ footer .logo {
   overflow-wrap: break-word;
   word-break: break-word;
   flex-shrink: 0;
+
 }
 const userInput = document.getElementById("userInput");
 
@@ -582,3 +583,22 @@ userInput.addEventListener("input", function () {
   this.style.height = Math.min(this.scrollHeight, 120) + "px";
   this.scrollTop = this.scrollHeight;
 });
+
+@media (max-width: 600px) {
+  .chat-buttons {
+    flex-direction: column;
+  }
+
+  .chat-buttons button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  #userInput {
+    width: 100%;
+    height: 80px;
+    min-height: 80px;
+    max-height: 80px;
+    font-size: 16px;
+  }
+}
