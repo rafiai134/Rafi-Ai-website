@@ -575,3 +575,10 @@ footer .logo {
   word-break: break-word;
   flex-shrink: 0;
 }
+const userInput = document.getElementById("userInput");
+
+userInput.addEventListener("input", function () {
+  this.style.height = "auto";
+  this.style.height = Math.min(this.scrollHeight, 120) + "px";
+  this.scrollTop = this.scrollHeight;
+});
