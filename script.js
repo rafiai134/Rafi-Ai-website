@@ -136,3 +136,25 @@ const chatMessages = document.getElementById("chat-messages");
 if (chatMessages) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
+let selectedLanguage = "en-US";
+
+document.querySelectorAll(".language-selector button").forEach(button => {
+  button.addEventListener("click", function () {
+    const language = this.textContent.trim();
+
+    if (language === "English") {
+      selectedLanguage = "en-US";
+    } else if (language === "اردو") {
+      selectedLanguage = "ur-PK";
+    } else if (language === "हिन्दी") {
+      selectedLanguage = "hi-IN";
+    }
+
+    document.querySelectorAll(".language-selector button").forEach(btn => {
+      btn.classList.remove("active-language");
+    });
+
+    this.classList.add("active-language");
+  });
+});
