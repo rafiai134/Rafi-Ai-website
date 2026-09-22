@@ -528,15 +528,14 @@ footer .logo {
 #userInput {
   display: block;
   width: 100%;
-  height: 110px;
-  min-height: 110px;
-  max-height: 220px;
-  padding: 15px;
+  height: 70px;
+  min-height: 70px;
+  max-height: 70px;
+  padding: 12px 14px;
   box-sizing: border-box;
-  border-radius: 14px;
   font-size: 16px;
-  line-height: 1.5;
-  resize: vertical;
+  line-height: 1.45;
+  resize: none;
   overflow-y: auto;
   overflow-x: hidden;
   white-space: pre-wrap;
@@ -548,10 +547,18 @@ footer .logo {
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 10px;
+  gap: 8px;
 }
 
 .chat-input-area button {
   width: 100%;
-  min-height: 45px;
+  min-height: 42px;
+}
+
+.chat-messages {
+  max-height: 380px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  padding-bottom: 12px;
 }
