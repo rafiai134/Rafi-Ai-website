@@ -14,7 +14,13 @@ async function sendMessage() {
 
   const aiMessage = document.createElement("div");
   aiMessage.className = "message ai-message";
-  aiMessage.textContent = "Rafi AI سوچ رہا ہے...";
+  aiMessage.innerHTML = `
+  <span class="ai-thinking">
+    <span></span>
+    <span></span>
+    <span></span>
+  </span>
+`;
   messages.appendChild(aiMessage);
 
   messages.scrollTop = messages.scrollHeight;
