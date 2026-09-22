@@ -91,3 +91,8 @@ function submitContact(event) {
 
   event.target.reset();
 }
+
+function clearChat() {
+  const messages = document.getElementById("chatMessages");
+  messages.innerHTML = "";
+}
