@@ -381,6 +381,19 @@ footer p {
   }
 
   .hero-buttons {
+    .r-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #7C5CFF;
+  color: white;
+  font-weight: bold;
+  font-size: 20px;
+  margin-right: 6px;
+    }
     flex-direction: column;
   }
 
