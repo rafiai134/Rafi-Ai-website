@@ -627,3 +627,34 @@ userInput.addEventListener("input", function () {
 .message button {
   margin-top: 8px;
 }
+
+/* Rafi AI Contact Form */
+.contact-form {
+  width: 100%;
+  max-width: 650px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 15px;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+.contact-form textarea {
+  min-height: 130px;
+  resize: vertical;
+  overflow-wrap: break-word;
+}
+
+.contact-form button {
+  width: 100%;
+  min-height: 46px;
+  }
