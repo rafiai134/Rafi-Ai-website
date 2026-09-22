@@ -556,9 +556,22 @@ footer .logo {
 }
 
 .chat-messages {
+  height: 380px;
   max-height: 380px;
   overflow-y: auto;
   overflow-x: hidden;
   scroll-behavior: smooth;
-  padding-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.message {
+  max-width: 85%;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  flex-shrink: 0;
 }
