@@ -9,9 +9,9 @@ html {
 }
 
 body {
-  font-family: Arial, sans-serif;
-  background: #f7f8fc;
-  color: #17172b;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #07111f;
+  color: #f8fafc;
   line-height: 1.6;
 }
 
@@ -19,15 +19,15 @@ header {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid #e8e8ef;
-  backdrop-filter: blur(12px);
+  background: rgba(7, 17, 31, 0.92);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(16px);
 }
 
 .navbar {
   max-width: 1200px;
   margin: auto;
-  padding: 16px 24px;
+  padding: 14px 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -36,13 +36,13 @@ header {
 .logo {
   display: flex;
   align-items: center;
+  color: #fff;
   font-size: 22px;
   font-weight: 800;
-  color: #17172b;
 }
 
 .logo span:last-child {
-  color: #16a34a;
+  color: #4ade80;
 }
 
 .r-logo {
@@ -53,84 +53,90 @@ header {
   height: 36px;
   margin-right: 7px;
   border-radius: 50%;
-  background: #16a34a;
-  color: white !important;
+  background: linear-gradient(135deg, #22c55e, #15803d);
+  color: #fff !important;
   font-size: 20px;
   font-weight: 800;
+  box-shadow: 0 0 22px rgba(34,197,94,.3);
 }
 
 .nav-links {
   display: flex;
-  gap: 28px;
+  gap: 26px;
 }
 
 .nav-links a {
+  color: #cbd5e1;
   text-decoration: none;
-  color: #555568;
   font-weight: 600;
-  transition: 0.2s;
+  transition: .2s;
 }
 
 .nav-links a:hover {
-  color: #16a34a;
+  color: #4ade80;
 }
 
 .menu-btn {
   display: none;
-  border: none;
-  background: none;
+  border: 0;
+  background: transparent;
+  color: white;
   font-size: 28px;
-  cursor: pointer;
 }
 
 .hero {
-  min-height: 620px;
+  position: relative;
+  min-height: 690px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   padding: 80px 20px;
+  overflow: hidden;
   background:
-    radial-gradient(circle at 20% 20%, #dcfce7 0, transparent 28%),
-    radial-gradient(circle at 80% 30%, #dbeafe 0, transparent 28%),
-    linear-gradient(135deg, #ffffff, #f5f7ff);
+    radial-gradient(circle at 15% 20%, rgba(34,197,94,.20), transparent 28%),
+    radial-gradient(circle at 85% 25%, rgba(59,130,246,.18), transparent 30%),
+    radial-gradient(circle at 50% 100%, rgba(139,92,246,.16), transparent 35%),
+    #07111f;
 }
 
 .hero-content {
   max-width: 850px;
+  position: relative;
+  z-index: 2;
 }
 
 .badge {
   display: inline-block;
   padding: 9px 16px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
   border-radius: 30px;
-  background: #ecfdf5;
-  color: #15803d;
-  font-size: 14px;
-  font-weight: 700;
+  color: #86efac;
+  background: rgba(34,197,94,.10);
+  border: 1px solid rgba(74,222,128,.25);
 }
 
 .hero h1 {
-  font-size: clamp(42px, 7vw, 76px);
+  color: white;
+  font-size: clamp(44px, 7vw, 78px);
   line-height: 1.05;
-  margin-bottom: 22px;
   letter-spacing: -2px;
+  margin-bottom: 22px;
 }
 
 .hero h1 span {
-  color: #16a34a;
+  color: #4ade80;
 }
 
 .hero p {
-  max-width: 650px;
+  max-width: 680px;
   margin: auto;
-  color: #656579;
+  color: #cbd5e1;
   font-size: 18px;
 }
 
 .hero-buttons {
-  margin-top: 32px;
+  margin-top: 34px;
   display: flex;
   justify-content: center;
   gap: 14px;
@@ -143,31 +149,29 @@ header {
   border-radius: 12px;
   text-decoration: none;
   font-weight: 700;
-  transition: 0.2s;
+  transition: .2s;
 }
 
 .primary-btn {
-  background: #16a34a;
   color: white;
-  box-shadow: 0 10px 25px rgba(22, 163, 74, 0.2);
-}
-
-.primary-btn:hover {
-  transform: translateY(-2px);
-  background: #15803d;
+  background: linear-gradient(135deg, #22c55e, #15803d);
+  box-shadow: 0 12px 35px rgba(34,197,94,.22);
 }
 
 .secondary-btn {
-  background: white;
-  color: #17172b;
-  border: 1px solid #dddde7;
+  color: white;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.15);
 }
 
-.chat-section,
-.features,
-.about,
-.contact {
+.primary-btn:hover,
+.secondary-btn:hover {
+  transform: translateY(-2px);
+}
+
+.chat-section {
   padding: 90px 20px;
+  background: #0b1727;
 }
 
 .section-title {
@@ -177,7 +181,7 @@ header {
 }
 
 .small-title {
-  color: #16a34a;
+  color: #4ade80;
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 2px;
@@ -186,86 +190,98 @@ header {
 
 .section-title h2,
 .about h2 {
+  color: white;
   font-size: clamp(32px, 5vw, 48px);
-  line-height: 1.15;
   margin-bottom: 12px;
 }
 
-.section-title p,
-.about p {
-  color: #686879;
+.section-title p {
+  color: #94a3b8;
 }
 
 .chat-container {
-  max-width: 900px;
-  height: 560px;
+  max-width: 920px;
+  height: 580px;
   margin: auto;
-  background: white;
-  border: 1px solid #e5e5ed;
-  border-radius: 22px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(20, 20, 50, 0.08);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #101d2f;
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow: 0 25px 70px rgba(0,0,0,.35);
 }
 
 .chat-messages {
   flex: 1;
   padding: 24px;
   overflow-y: auto;
-  background: #fafbfc;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(34,197,94,.05), transparent 25%),
+    #0c1828;
 }
 
 .message {
   max-width: 78%;
   padding: 13px 16px;
-  margin-bottom: 14px;
+  margin-bottom: 15px;
   border-radius: 16px;
   white-space: pre-wrap;
 }
 
 .ai-message {
-  background: white;
-  border: 1px solid #e5e5ed;
-  color: #333346;
+  color: #e2e8f0;
+  background: #162337;
+  border: 1px solid rgba(255,255,255,.08);
 }
 
 .user-message {
   margin-left: auto;
-  background: #16a34a;
   color: white;
+  background: linear-gradient(135deg, #22c55e, #15803d);
+  box-shadow: 0 7px 20px rgba(34,197,94,.18);
 }
 
 .chat-input-area {
   display: flex;
   gap: 10px;
   padding: 16px;
-  border-top: 1px solid #e5e5ed;
-  background: white;
+  background: #101d2f;
+  border-top: 1px solid rgba(255,255,255,.08);
 }
 
 .chat-input-area input {
   flex: 1;
   min-width: 0;
   padding: 14px 16px;
-  border: 1px solid #dcdce6;
+  color: white;
+  background: #0b1727;
+  border: 1px solid rgba(255,255,255,.12);
   border-radius: 12px;
   outline: none;
   font-size: 16px;
 }
 
+.chat-input-area input::placeholder {
+  color: #64748b;
+}
+
 .chat-input-area input:focus {
-  border-color: #16a34a;
+  border-color: #22c55e;
 }
 
 .chat-input-area button {
   padding: 0 22px;
-  border: none;
+  border: 0;
   border-radius: 12px;
-  background: #16a34a;
   color: white;
+  background: linear-gradient(135deg, #22c55e, #15803d);
   font-weight: 700;
-  cursor: pointer;
+}
+
+.features {
+  padding: 90px 20px;
+  background: #07111f;
 }
 
 .feature-grid {
@@ -278,33 +294,35 @@ header {
 
 .feature-card {
   padding: 28px;
-  background: white;
-  border: 1px solid #e7e7ee;
   border-radius: 18px;
-  transition: 0.2s;
+  background: #101d2f;
+  border: 1px solid rgba(255,255,255,.08);
+  transition: .2s;
 }
 
 .feature-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(20, 20, 50, 0.08);
+  border-color: rgba(74,222,128,.35);
+  box-shadow: 0 18px 45px rgba(0,0,0,.25);
 }
 
 .icon {
   font-size: 34px;
-  margin-bottom: 15px;
+  margin-bottom: 14px;
 }
 
 .feature-card h3 {
+  color: white;
   margin-bottom: 8px;
 }
 
 .feature-card p {
-  color: #707084;
+  color: #94a3b8;
 }
 
 .about {
-  background: #17172b;
-  color: white;
+  padding: 100px 20px;
+  background: #0b1727;
 }
 
 .about-content {
@@ -318,8 +336,13 @@ header {
 }
 
 .about p {
-  color: #c5c5d1;
+  color: #94a3b8;
   margin-top: 15px;
+}
+
+.contact {
+  padding: 90px 20px;
+  background: #07111f;
 }
 
 .contact-form {
@@ -334,38 +357,48 @@ header {
 .contact-form textarea {
   width: 100%;
   padding: 15px;
-  border: 1px solid #ddddE7;
+  color: white;
+  background: #101d2f;
+  border: 1px solid rgba(255,255,255,.10);
   border-radius: 12px;
-  font-size: 16px;
   outline: none;
+  font-size: 16px;
+}
+
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+  color: #64748b;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  border-color: #22c55e;
 }
 
 .contact-form textarea {
   min-height: 150px;
-  resize: vertical;
 }
 
 .contact-form button {
   padding: 15px;
-  border: none;
+  border: 0;
   border-radius: 12px;
-  background: #16a34a;
   color: white;
-  font-size: 16px;
+  background: linear-gradient(135deg, #22c55e, #15803d);
   font-weight: 700;
-  cursor: pointer;
+  font-size: 16px;
 }
 
 footer {
   padding: 30px 20px;
   text-align: center;
-  background: #10101f;
-  color: #aaaabc;
+  background: #040b14;
+  color: #64748b;
+  border-top: 1px solid rgba(255,255,255,.08);
 }
 
 footer .logo {
   justify-content: center;
-  color: white;
   margin-bottom: 8px;
 }
 
@@ -373,14 +406,14 @@ footer .logo {
   .nav-links {
     display: none;
     position: absolute;
-    top: 68px;
+    top: 64px;
     left: 0;
     right: 0;
     padding: 20px;
-    background: white;
     flex-direction: column;
     gap: 16px;
-    border-bottom: 1px solid #e5e5ed;
+    background: #07111f;
+    border-bottom: 1px solid rgba(255,255,255,.08);
   }
 
   .nav-links.active {
@@ -394,10 +427,6 @@ footer .logo {
   .feature-grid {
     grid-template-columns: 1fr 1fr;
   }
-
-  .chat-container {
-    height: 520px;
-  }
 }
 
 @media (max-width: 520px) {
@@ -406,12 +435,12 @@ footer .logo {
   }
 
   .hero {
-    min-height: 560px;
+    min-height: 620px;
     padding: 60px 18px;
   }
 
   .hero h1 {
-    font-size: 44px;
+    font-size: 43px;
   }
 
   .hero p {
@@ -422,149 +451,20 @@ footer .logo {
   .features,
   .about,
   .contact {
-    padding: 65px 16px;
-  }
-
-  .feature-grid {
-    grid-template-columns: 1fr;
+    padding: 70px 16px;
   }
 
   .chat-container {
-    height: 500px;
+    height: 520px;
     border-radius: 16px;
   }
 
   .message {
     max-width: 88%;
   }
-  /* ===== Rafi AI Premium Design ===== */
 
-.hero {
-  position: relative;
-  overflow: hidden;
-  min-height: 680px;
-  background:
-    radial-gradient(circle at 15% 20%, rgba(34,197,94,.22), transparent 30%),
-    radial-gradient(circle at 85% 25%, rgba(59,130,246,.20), transparent 32%),
-    radial-gradient(circle at 50% 90%, rgba(139,92,246,.18), transparent 35%),
-    linear-gradient(135deg, #07111f 0%, #0b1628 48%, #101827 100%);
-  color: white;
-}
-
-.hero::before {
-  content: "";
-  position: absolute;
-  width: 420px;
-  height: 420px;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 50%;
-  top: -180px;
-  right: -120px;
-}
-
-.hero::after {
-  content: "";
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  border: 1px solid rgba(255,255,255,.06);
-  border-radius: 50%;
-  bottom: -150px;
-  left: -100px;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 2;
-}
-
-.hero h1 {
-  color: #ffffff;
-  text-shadow: 0 5px 30px rgba(0,0,0,.25);
-}
-
-.hero h1 span {
-  color: #4ade80;
-}
-
-.hero p {
-  color: #cbd5e1;
-}
-
-.badge {
-  background: rgba(34,197,94,.12);
-  border: 1px solid rgba(74,222,128,.25);
-  color: #86efac;
-  box-shadow: 0 0 30px rgba(34,197,94,.08);
-}
-
-.primary-btn {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  box-shadow: 0 12px 35px rgba(34,197,94,.25);
-}
-
-.secondary-btn {
-  background: rgba(255,255,255,.07);
-  border: 1px solid rgba(255,255,255,.18);
-  color: white;
-  backdrop-filter: blur(10px);
-}
-
-.chat-section {
-  background: #f4f7f6;
-}
-
-.chat-container {
-  border: 1px solid #dce5df;
-  box-shadow: 0 25px 70px rgba(15,23,42,.12);
-}
-
-.chat-messages {
-  background:
-    radial-gradient(circle at 10% 10%, rgba(34,197,94,.05), transparent 25%),
-    #f8faf9;
-}
-
-.ai-message {
-  box-shadow: 0 5px 18px rgba(15,23,42,.05);
-}
-
-.user-message {
-  background: linear-gradient(135deg, #22c55e, #15803d);
-  box-shadow: 0 6px 18px rgba(34,197,94,.18);
-}
-
-.feature-card {
-  border: 1px solid #e1e8e3;
-  box-shadow: 0 10px 35px rgba(15,23,42,.05);
-}
-
-.feature-card:hover {
-  border-color: rgba(34,197,94,.35);
-  box-shadow: 0 18px 45px rgba(34,197,94,.10);
-}
-
-.features {
-  background: #ffffff;
-}
-
-.contact {
-  background: #f4f7f6;
-}
-
-footer {
-  background: #07111f;
-  border-top: 1px solid rgba(255,255,255,.08);
-}
-
-@media (max-width: 520px) {
-  .hero {
-    min-height: 620px;
-  }
-
-  .hero h1 {
-    font-size: 42px;
-  }
+  .feature-grid {
+    grid-template-columns: 1fr;
   }
 
   .chat-input-area {
