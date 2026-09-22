@@ -394,6 +394,7 @@ footer p {
   font-size: 20px;
   margin-right: 6px;
     }
+  
     flex-direction: column;
   }
 
@@ -401,4 +402,18 @@ footer p {
     max-width: 90%;
   }
 
+}
+
+.logo .r-logo {
+  display: inline-flex !important;
+  width: 34px !important;
+  height: 34px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  background: #7C5CFF !important;
+  color: white !important;
+  font-weight: bold !important;
+  font-size: 20px !important;
+  margin-right: 6px !important;
 }
