@@ -158,3 +158,19 @@ document.querySelectorAll(".language-selector button").forEach(button => {
     this.classList.add("active-language");
   });
 });
+// Save chat history
+function saveChatHistory() {
+  localStorage.setItem("rafiChatHistory", chatMessages.innerHTML);
+}
+
+// Load chat history
+function loadChatHistory() {
+  const savedChat = localStorage.getItem("rafiChatHistory");
+
+  if (savedChat && chatMessages) {
+    chatMessages.innerHTML = savedChat;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+}
+
+loadChatHistory();
