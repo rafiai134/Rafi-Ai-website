@@ -510,3 +510,17 @@ footer .logo {
     transform: translateY(-4px);
   }
 }
+
+.voice-btn {
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: white;
+  background: #162337;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.voice-btn:hover {
+  background: #1d304a;
+  }
