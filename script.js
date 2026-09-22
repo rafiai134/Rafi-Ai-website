@@ -174,3 +174,12 @@ function loadChatHistory() {
 }
 
 loadChatHistory();
+
+// Clear saved Rafi AI chat history
+const clearChatButton = document.querySelector('[onclick="clearChat()"]');
+
+if (clearChatButton) {
+  clearChatButton.addEventListener("click", function () {
+    localStorage.removeItem("rafiChatHistory");
+  });
+}
