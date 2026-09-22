@@ -437,6 +437,135 @@ footer .logo {
   .message {
     max-width: 88%;
   }
+  /* ===== Rafi AI Premium Design ===== */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 680px;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(34,197,94,.22), transparent 30%),
+    radial-gradient(circle at 85% 25%, rgba(59,130,246,.20), transparent 32%),
+    radial-gradient(circle at 50% 90%, rgba(139,92,246,.18), transparent 35%),
+    linear-gradient(135deg, #07111f 0%, #0b1628 48%, #101827 100%);
+  color: white;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 50%;
+  top: -180px;
+  right: -120px;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 50%;
+  bottom: -150px;
+  left: -100px;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.hero h1 {
+  color: #ffffff;
+  text-shadow: 0 5px 30px rgba(0,0,0,.25);
+}
+
+.hero h1 span {
+  color: #4ade80;
+}
+
+.hero p {
+  color: #cbd5e1;
+}
+
+.badge {
+  background: rgba(34,197,94,.12);
+  border: 1px solid rgba(74,222,128,.25);
+  color: #86efac;
+  box-shadow: 0 0 30px rgba(34,197,94,.08);
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 12px 35px rgba(34,197,94,.25);
+}
+
+.secondary-btn {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.18);
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.chat-section {
+  background: #f4f7f6;
+}
+
+.chat-container {
+  border: 1px solid #dce5df;
+  box-shadow: 0 25px 70px rgba(15,23,42,.12);
+}
+
+.chat-messages {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(34,197,94,.05), transparent 25%),
+    #f8faf9;
+}
+
+.ai-message {
+  box-shadow: 0 5px 18px rgba(15,23,42,.05);
+}
+
+.user-message {
+  background: linear-gradient(135deg, #22c55e, #15803d);
+  box-shadow: 0 6px 18px rgba(34,197,94,.18);
+}
+
+.feature-card {
+  border: 1px solid #e1e8e3;
+  box-shadow: 0 10px 35px rgba(15,23,42,.05);
+}
+
+.feature-card:hover {
+  border-color: rgba(34,197,94,.35);
+  box-shadow: 0 18px 45px rgba(34,197,94,.10);
+}
+
+.features {
+  background: #ffffff;
+}
+
+.contact {
+  background: #f4f7f6;
+}
+
+footer {
+  background: #07111f;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+@media (max-width: 520px) {
+  .hero {
+    min-height: 620px;
+  }
+
+  .hero h1 {
+    font-size: 42px;
+  }
+  }
 
   .chat-input-area {
     padding: 10px;
