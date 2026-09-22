@@ -14,7 +14,7 @@ async function sendMessage() {
 
   const aiMessage = document.createElement("div");
   aiMessage.className = "message ai-message";
-  aiMessage.textContent = "Thinking...";
+  aiMessage.textContent = "Rafi AI سوچ رہا ہے...";
   messages.appendChild(aiMessage);
 
   messages.scrollTop = messages.scrollHeight;
@@ -36,11 +36,39 @@ async function sendMessage() {
 
     aiMessage.textContent = data.reply;
 
+    addCopyButton(aiMessage);
+
   } catch (error) {
     aiMessage.textContent = "Error: " + error.message;
   }
 
   messages.scrollTop = messages.scrollHeight;
+}
+
+function addCopyButton(messageElement) {
+  const button = document.createElement("button");
+
+  button.textContent = "Copy";
+  button.style.marginTop = "10px";
+  button.style.padding = "7px 12px";
+  button.style.border = "0";
+  button.style.borderRadius = "8px";
+  button.style.cursor = "pointer";
+
+  button.onclick = async function () {
+    const text = messageElement.firstChild.textContent;
+
+    await navigator.clipboard.writeText(text);
+
+    button.textContent = "Copied ✓";
+
+    setTimeout(() => {
+      button.textContent = "Copy";
+    }, 1500);
+  };
+
+  messageElement.appendChild(document.createElement("br"));
+  messageElement.appendChild(button);
 }
 
 function toggleMenu() {
