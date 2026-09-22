@@ -96,10 +96,12 @@
       <div class="chat-input-area">
 
         <input
-          type="text"
-          id="userInput"
-          placeholder="Type your message..."
-          onkeydown="handleEnter(event)"
+          <textarea
+  id="userInput"
+  placeholder="Type your message"
+  onkeydown="handleEnter(event)"
+  rows="1"
+></textarea>
         >
 
         <button onclick="sendMessage()">
