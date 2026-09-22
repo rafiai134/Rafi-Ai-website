@@ -102,3 +102,30 @@ function clearChat() {
   const messages = document.getElementById("chatMessages");
   messages.innerHTML = "";
 }
+
+function startVoice() {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Voice input is not supported in this browser.");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+
+  recognition.lang = "ur-PK";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = function(event) {
+    const text = event.results[0][0].transcript;
+    document.getElementById("userInput").value = text;
+  };
+
+  recognition.onerror = function() {
+    alert("Voice input could not be started.");
+  };
+
+  recognition.start();
+}
