@@ -526,18 +526,19 @@ footer .logo {
   }
 
 #userInput {
-  width: 100%;
-  min-height: 80px;
-  height: 80px;
-  max-height: 160px;
-  padding: 14px 16px;
-  box-sizing: border-box;
-  font-size: 16px;
-  line-height: 1.5;
-  resize: vertical;
-  overflow-x: hidden;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 80px !important;
+  min-height: 80px !important;
+  max-height: 160px !important;
+  padding: 14px 16px !important;
+  box-sizing: border-box !important;
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  resize: vertical !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
   }
