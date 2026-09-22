@@ -114,7 +114,7 @@ function startVoice() {
 
   const recognition = new SpeechRecognition();
 
-  recognition.lang = "en-US";
+ recognition.lang = selectedLanguage;
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
