@@ -279,7 +279,15 @@ async function editImage() {
       body: formData
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+
+    let data;
+
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      throw new Error(responseText || "Server نے درست جواب نہیں دیا۔");
+    }
 
     if (!response.ok) {
       throw new Error(data.error || "Image editing failed");
