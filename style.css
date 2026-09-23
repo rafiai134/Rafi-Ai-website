@@ -703,3 +703,7 @@ userInput.addEventListener("input", function () {
   border-color: #22c55e;
   box-shadow: 0 0 12px rgba(34, 197, 94, 0.25);
 }
+
+async function startLiveCall() {
+  alert("Live Call setup is ready.");
+  }
