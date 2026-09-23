@@ -190,6 +190,7 @@ let liveCallStream = null;
 async function startLiveCall() {
   try {
     const pc = new RTCPeerConnection();
+    const selectedVoice = document.getElementById("liveVoice").value;
 
     liveCallConnection = pc;
 
