@@ -707,3 +707,18 @@ userInput.addEventListener("input", function () {
 async function startLiveCall() {
   alert("Live Call setup is ready.");
   }
+
+.edit-image-btn {
+  margin-top: 8px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: white;
+  background: #168cff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.edit-image-btn:hover {
+  background: #0f73d6;
+}
