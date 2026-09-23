@@ -251,3 +251,59 @@ imageInput.addEventListener("change", function () {
 
   alert("تصویر منتخب ہوگئی۔");
 });
+
+async function editImage() {
+  const imageInput = document.getElementById("imageInput");
+  const prompt = document.getElementById("userInput").value.trim();
+
+  if (!imageInput.files[0]) {
+    alert("پہلے تصویر منتخب کریں۔");
+    return;
+  }
+
+  if (!prompt) {
+    alert("تصویر میں کیا تبدیلی کرنی ہے، وہ لکھیں۔");
+    return;
+  }
+
+  const formData = new FormData();
+
+  formData.append("image", imageInput.files[0]);
+  formData.append("prompt", prompt);
+
+  try {
+    alert("تصویر ایڈٹ ہو رہی ہے، براہِ کرم انتظار کریں۔");
+
+    const response = await fetch("/api/image", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Image editing failed");
+    }
+
+    const imageUrl = data.data?.[0]?.url;
+
+    if (!imageUrl) {
+      throw new Error("Edited image نہیں ملی۔");
+    }
+
+    const messages = document.getElementById("chatMessages");
+
+    const image = document.createElement("img");
+    image.src = imageUrl;
+    image.alt = "Edited image";
+    image.style.maxWidth = "100%";
+    image.style.borderRadius = "14px";
+    image.style.marginTop = "10px";
+
+    messages.appendChild(image);
+    messages.scrollTop = messages.scrollHeight;
+
+  } catch (error) {
+    alert("Image Edit Error: " + error.message);
+  }
+}
