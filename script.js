@@ -184,6 +184,59 @@ if (clearChatButton) {
   });
 }
 
+let liveCallConnection = null;
+let liveCallStream = null;
+
 async function startLiveCall() {
-  alert("Live Call setup is ready.");
+  try {
+    const pc = new RTCPeerConnection();
+
+    liveCallConnection = pc;
+
+    const audio = document.createElement("audio");
+    audio.autoplay = true;
+
+    pc.ontrack = function (event) {
+      audio.srcObject = event.streams[0];
+    };
+
+    liveCallStream = await navigator.mediaDevices.getUserMedia({
+      audio: true
+    });
+
+    liveCallStream.getTracks().forEach(function (track) {
+      pc.addTrack(track, liveCallStream);
+    });
+
+    pc.createDataChannel("oai-events");
+
+    const offer = await pc.createOffer();
+
+    await pc.setLocalDescription(offer);
+
+    const response = await fetch("/api/realtime", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/sdp"
+      },
+      body: offer.sdp
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || "Live Call شروع نہیں ہو سکی");
+    }
+
+    const answer = await response.text();
+
+    await pc.setRemoteDescription({
+      type: "answer",
+      sdp: answer
+    });
+
+    alert("Live Call شروع ہوگئی۔ آپ بول سکتے ہیں۔");
+
+  } catch (error) {
+    alert("Live Call Error: " + error.message);
+  }
 }
