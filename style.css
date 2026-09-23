@@ -524,6 +524,19 @@ footer .logo {
 .voice-btn:hover {
   background: #1d304a;
   }
+.call-btn {
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: white;
+  background: #168cff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.call-btn:hover {
+  background: #0f73d6;
+}
 
 #userInput {
   display: block;
