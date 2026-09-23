@@ -183,3 +183,7 @@ if (clearChatButton) {
     localStorage.removeItem("rafiChatHistory");
   });
 }
+
+async function startLiveCall() {
+  alert("Live Call setup is ready.");
+}
