@@ -1,14 +1,16 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).send("Method not allowed");
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
+    const sdp = req.body;
+
     const form = new FormData();
 
-    form.set("sdp", req.body);
+    form.append("sdp", sdp);
 
-    form.set(
+    form.append(
       "session",
       JSON.stringify({
         type: "realtime",
@@ -26,23 +28,23 @@ export default async function handler(req, res) {
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
         },
         body: form
       }
     );
 
-    const answer = await response.text();
+    const result = await response.text();
 
     if (!response.ok) {
-      return res.status(response.status).send(answer);
+      return res.status(response.status).send(result);
     }
 
-    return res.status(200).send(answer);
+    return res.status(200).send(result);
 
   } catch (error) {
     return res.status(500).json({
-      error: error.message || "Live Call failed"
+      error: error.message
     });
   }
-    }
+      }
