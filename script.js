@@ -241,3 +241,13 @@ async function startLiveCall() {
     alert("Live Call Error: " + error.message);
   }
 }
+
+const imageInput = document.getElementById("imageInput");
+
+imageInput.addEventListener("change", function () {
+  const file = this.files[0];
+
+  if (!file) return;
+
+  alert("تصویر منتخب ہوگئی۔");
+});
