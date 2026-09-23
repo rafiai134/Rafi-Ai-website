@@ -1,16 +1,34 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({
+      error: "Method not allowed"
+    });
   }
 
   try {
-    const sdp = req.body;
+    const chunks = [];
+
+    for await (const chunk of req) {
+      chunks.push(
+        Buffer.isBuffer(chunk)
+          ? chunk
+          : Buffer.from(chunk)
+      );
+    }
+
+    const sdp = Buffer.concat(chunks).toString("utf8");
+
+    if (!sdp.trim()) {
+      return res.status(400).json({
+        error: "SDP offer is missing"
+      });
+    }
 
     const form = new FormData();
 
-    form.append("sdp", sdp);
+    form.set("sdp", sdp);
 
-    form.append(
+    form.set(
       "session",
       JSON.stringify({
         type: "realtime",
@@ -28,7 +46,8 @@ export default async function handler(req, res) {
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+          Authorization:
+            `Bearer ${process.env.OPENAI_API_KEY}`
         },
         body: form
       }
@@ -44,7 +63,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     return res.status(500).json({
-      error: error.message
+      error: error.message || "Realtime call failed"
     });
   }
-      }
+}
