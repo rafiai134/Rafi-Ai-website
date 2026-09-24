@@ -13,10 +13,14 @@
 <body>
 
   <!-- Navigation -->
-  <header>
+  <header class="top-header">
+
     <nav class="navbar">
 
-      <div class="logo"><span class="r-logo">R</span> Rafi <span>AI</span></div>
+      <a href="#home" class="logo">
+        <span class="r-logo">R</span>
+        <span>Rafi <span class="logo-ai">AI</span></span>
+      </a>
 
       <div class="nav-links">
         <a href="#home">Home</a>
@@ -25,9 +29,16 @@
         <a href="#contact">Contact</a>
       </div>
 
-      <button class="menu-btn" onclick="toggleMenu()">☰</button>
+      <button
+        type="button"
+        class="menu-btn"
+        onclick="toggleMenu()"
+      >
+        ☰
+      </button>
 
     </nav>
+
   </header>
 
 
@@ -53,7 +64,7 @@
       <div class="hero-buttons">
 
         <a href="#chat" class="primary-btn">
-          Start AI Chat →
+          Start AI Chat
         </a>
 
         <a href="#about" class="secondary-btn">
@@ -70,74 +81,211 @@
   <!-- AI Chat -->
   <section id="chat" class="chat-section">
 
-    <div class="section-title">
-      <div class="small-title">Rafi AI</div>
+    <div class="rafi-chat-app">
 
-      <h2>Chat With AI</h2>
+      <!-- Chat Header -->
+      <div class="chat-header">
 
-      <p>
-        Ask anything and start a conversation with your Rafi AI.
-        <div class="language-selector">
-  <button type="button">English</button>
-  <button type="button">اردو</button>
-  <button type="button">हिन्दी</button>
+        <div class="chat-brand">
+
+          <div class="chat-avatar">
+            R
+          </div>
+
+          <div>
+
+            <div class="chat-name">
+              Rafi AI
+            </div>
+
+            <div class="chat-status">
+              ● Online
+            </div>
+
+          </div>
+
         </div>
-      </p>
-    </div>
 
-
-    <div class="chat-container">
-
-      <div id="chatMessages" class="chat-messages">
-
-        <div class="message ai-message">
-          👋 Hello! I'm your Rafi AI.
-          <br><br>
-          How can I help you today?
-        </div>
-
-      </div>
-
-
-      <div class="chat-input-area">
-
-  <textarea
-    id="userInput"
-    placeholder="Type your message"
-    rows="3"
-    onkeydown="handleEnter(event)"
-  ></textarea>
-        <div class="image-upload">
-  <input type="file" id="imageInput" accept="image/*">
-  <label for="imageInput">🖼️ تصویر منتخب کریں</label>
-        </div>
-        <button type="button" onclick="editImage()" class="edit-image-btn">
-  ✨ تصویر ایڈٹ کریں
+        <button
+          type="button"
+          class="chat-menu-btn"
+          onclick="toggleMenu()"
+        >
+          ⋯
         </button>
 
-  <div class="chat-buttons">
-    <button type="button" onclick="sendMessage()">Send</button>
+      </div>
 
-    <button type="button" onclick="clearChat()">Clear Chat</button>
-    <button type="button" onclick="exportChat()">Save Chat</button>
 
-    <button type="button" onclick="startVoice()" class="voice-btn">
-      🎙️ Voice
-    </button>
-    <button type="button" onclick="startLiveCall()" class="call-btn">
-  📞 Live Call
-    </button>
-    <div class="voice-selector">
-  <label for="liveVoice">AI Voice:</label>
+      <!-- Chat Messages -->
+      <div id="chatMessages" class="chat-messages">
 
-  <select id="liveVoice">
-    <option value="marin">Female Voice</option>
-    <option value="cedar">Male Voice</option>
-  </select>
-    </div>
-  </div>
+        <div class="rafi-welcome">
+
+          <div class="welcome-avatar">
+            R
+          </div>
+
+          <h2>
+            Hi, I am your <span>Rafi</span>
+          </h2>
+
+          <p>
+            How can I help you today?
+          </p>
+
+          <div class="suggestions">
+
+            <button
+              type="button"
+              onclick="document.getElementById('userInput').value='Help me find a profitable product for Shopify'; document.getElementById('userInput').focus();"
+            >
+              💡 Find a product
+            </button>
+
+            <button
+              type="button"
+              onclick="document.getElementById('userInput').value='Help me with my e-commerce business'; document.getElementById('userInput').focus();"
+            >
+              🛒 E-commerce help
+            </button>
+
+            <button
+              type="button"
+              onclick="document.getElementById('userInput').value='Give me a business idea'; document.getElementById('userInput').focus();"
+            >
+              ✨ Business idea
+            </button>
+
+          </div>
+
+        </div>
 
       </div>
+
+
+      <!-- Chat Composer -->
+      <div class="chat-composer">
+
+        <div class="composer-box">
+
+          <!-- Add Image -->
+          <button
+            type="button"
+            class="composer-icon"
+            onclick="document.getElementById('imageInput').click()"
+          >
+            +
+          </button>
+
+
+          <!-- Message Input -->
+          <textarea
+            id="userInput"
+            placeholder="Message Rafi AI"
+            rows="1"
+            onkeydown="handleEnter(event)"
+          ></textarea>
+
+
+          <!-- Voice -->
+          <button
+            type="button"
+            class="composer-icon"
+            onclick="startVoice()"
+          >
+            🎙
+          </button>
+
+
+          <!-- Send -->
+          <button
+            type="button"
+            class="send-btn"
+            onclick="sendMessage()"
+          >
+            ↑
+          </button>
+
+        </div>
+
+
+        <!-- Image Input -->
+        <input
+          type="file"
+          id="imageInput"
+          accept="image/*"
+          hidden
+        >
+
+
+        <!-- Image Editing -->
+        <div class="image-tools">
+
+          <span>
+            Image tools
+          </span>
+
+          <button
+            type="button"
+            onclick="editImage()"
+            class="image-edit-small"
+          >
+            ✨ Edit Image
+          </button>
+
+        </div>
+
+
+        <!-- Extra Controls -->
+        <div class="advanced-tools">
+
+          <button
+            type="button"
+            onclick="startLiveCall()"
+          >
+            📞 Live Call
+          </button>
+
+          <button
+            type="button"
+            onclick="exportChat()"
+          >
+            Save Chat
+          </button>
+
+          <button
+            type="button"
+            onclick="clearChat()"
+          >
+            Clear
+          </button>
+
+          <div class="voice-selector">
+
+            <label for="liveVoice">
+              AI Voice
+            </label>
+
+            <select id="liveVoice">
+
+              <option value="marin">
+                Female Voice
+              </option>
+
+              <option value="cedar">
+                Male Voice
+              </option>
+
+            </select>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
 
   </section>
 
@@ -147,9 +295,13 @@
 
     <div class="section-title">
 
-      <div class="small-title">FEATURES</div>
+      <div class="small-title">
+        FEATURES
+      </div>
 
-      <h2>What You Can Do</h2>
+      <h2>
+        What You Can Do
+      </h2>
 
     </div>
 
@@ -199,10 +351,10 @@
 
         <div class="icon">🔒</div>
 
-        <h3>Simple & Easy</h3>
+        <h3>Simple & Secure</h3>
 
         <p>
-          A clean and simple interface that anyone can use.
+          A clean and simple AI experience.
         </p>
 
       </div>
@@ -228,12 +380,12 @@
 
       <p>
         Rafi AI is designed to make artificial intelligence
-        simple and accessible for everyone.
+        simple and accessible.
       </p>
 
       <p>
-        You can use this platform to ask questions, generate ideas,
-        learn new things and get assistance with everyday tasks.
+        Ask questions, generate ideas, learn new things
+        and get assistance with everyday tasks.
       </p>
 
     </div>
@@ -250,7 +402,9 @@
         CONTACT
       </div>
 
-      <h2>Get In Touch</h2>
+      <h2>
+        Get In Touch
+      </h2>
 
       <p>
         Have a question? Send us a message.
@@ -259,7 +413,10 @@
     </div>
 
 
-    <form class="contact-form" onsubmit="submitContact(event)">
+    <form
+      class="contact-form"
+      onsubmit="submitContact(event)"
+    >
 
       <input
         type="text"
@@ -275,8 +432,6 @@
         required
       >
 
-      
-
       <button type="submit">
         Send Message
       </button>
@@ -290,7 +445,7 @@
   <footer>
 
     <div class="logo">
-     Rafi <span>AI</span>
+      Rafi <span>AI</span>
     </div>
 
     <p>
@@ -303,39 +458,4 @@
   <script src="script.js"></script>
 
 </body>
-</html>
-
-/* Rafi AI Chat Input */
-.chat-input-area {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-#userInput {
-  width: 100%;
-  height: 80px;
-  min-height: 80px;
-  max-height: 80px;
-  box-sizing: border-box;
-  padding: 12px 14px;
-  resize: none;
-  overflow-y: auto;
-  overflow-x: hidden;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  line-height: 1.5;
-}
-
-.chat-buttons {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-}
-
-.chat-buttons button {
-  flex: 1;
-  min-width: 0;
-}
+          </html>
