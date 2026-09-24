@@ -289,6 +289,49 @@
 
   </section>
 
+  <!-- Supplier Chat -->
+<section id="supplier-chat" class="product-research">
+
+  <div class="section-title">
+    <div class="small-title">SUPPLIER CHAT</div>
+
+    <h2>Talk to Supplier</h2>
+
+    <p>
+      Rafi AI supplier کے پیغامات کو سمجھ کر professional reply تیار کرے گا۔
+    </p>
+  </div>
+
+  <div class="research-card">
+
+    <div class="research-field">
+      <label for="supplierChatMessage">
+        Supplier Message
+      </label>
+
+      <textarea
+        id="supplierChatMessage"
+        placeholder="Supplier کا message یہاں لکھیں..."
+        rows="5"
+      ></textarea>
+    </div>
+
+    <button
+      type="button"
+      class="research-btn"
+      onclick="sendSupplierMessage()"
+    >
+      Send to Rafi AI
+    </button>
+
+    <div
+      id="supplierChatResult"
+      class="research-result"
+    ></div>
+
+  </div>
+
+</section>
   <!-- Product Research -->
 <section id="product-research" class="product-research">
    ...
