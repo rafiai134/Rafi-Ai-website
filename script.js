@@ -522,3 +522,50 @@ async function researchSupplier() {
       "Supplier Research Error: " + error.message;
   }
 }
+
+async function checkApproval() {
+  const productName = prompt("Product name:");
+  const quantity = prompt("Quantity:");
+  const unitCost = prompt("Supplier unit cost:");
+  const shippingCost = prompt("Shipping cost per unit:");
+  const sellingPrice = prompt("Selling price per unit:");
+
+  if (!productName || !quantity) {
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/approval", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        productName,
+        quantity,
+        unitCost,
+        shippingCost,
+        sellingPrice
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Approval check failed");
+    }
+
+    alert(
+      "Approval Required\n\n" +
+      "Product: " + data.productName + "\n" +
+      "Quantity: " + data.quantity + "\n" +
+      "Total Cost: $" + data.totalCost + "\n" +
+      "Revenue: $" + data.totalRevenue + "\n" +
+      "Estimated Profit: $" + data.estimatedProfit + "\n\n" +
+      "Status: " + data.status
+    );
+
+  } catch (error) {
+    alert("Approval Error: " + error.message);
+  }
+        }
