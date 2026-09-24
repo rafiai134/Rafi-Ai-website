@@ -711,9 +711,18 @@ function rejectOrder() {
       }
 
 async function sendSupplierMessage() {
-  const message = document.getElementById("userInput").value.trim();
+  const message =
+    document.getElementById("supplierChatMessage").value.trim();
 
-  if (!message) return;
+  const result =
+    document.getElementById("supplierChatResult");
+
+  if (!message) {
+    result.textContent = "Supplier کا message لکھیں۔";
+    return;
+  }
+
+  result.textContent = "Rafi AI جواب تیار کر رہا ہے...";
 
   try {
     const response = await fetch("/api/supplierChat", {
@@ -724,7 +733,7 @@ async function sendSupplierMessage() {
       body: JSON.stringify({
         supplierMessage: message,
         productName:
-          document.getElementById("productName")?.value || "Not provided",
+          document.getElementById("productName")?.value || "",
         supplierPrice:
           document.getElementById("supplierPrice")?.value || "",
         quantity:
@@ -739,19 +748,20 @@ async function sendSupplierMessage() {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || "Supplier chat failed");
+      throw new Error(
+        data.error || "Supplier chat failed"
+      );
     }
 
-    const messages = document.getElementById("chatMessages");
-
-    const aiMessage = document.createElement("div");
-    aiMessage.className = "message ai-message";
-    aiMessage.textContent = data.reply;
-
-    messages.appendChild(aiMessage);
-    messages.scrollTop = messages.scrollHeight;
+    result.innerHTML = `
+      <div class="research-output">
+        <h3>Rafi AI Reply</h3>
+        <p>${data.reply}</p>
+      </div>
+    `;
 
   } catch (error) {
-    alert("Supplier Chat Error: " + error.message);
+    result.textContent =
+      "Supplier Chat Error: " + error.message;
   }
-}
+  }
