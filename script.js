@@ -315,3 +315,99 @@ async function editImage() {
     alert("Image Edit Error: " + error.message);
   }
 }
+
+async function researchProduct() {
+  const productName =
+    document.getElementById("productName").value.trim();
+
+  const supplierPrice =
+    document.getElementById("supplierPrice").value;
+
+  const shippingCost =
+    document.getElementById("shippingCost").value;
+
+  const sellingPrice =
+    document.getElementById("sellingPrice").value;
+
+  const competition =
+    document.getElementById("competition").value.trim();
+
+  const result =
+    document.getElementById("researchResult");
+
+  if (!productName) {
+    result.textContent = "Product name لکھیں۔";
+    return;
+  }
+
+  result.textContent = "Product research ہو رہی ہے...";
+
+  try {
+    const response = await fetch("/api/productResearch", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        productName,
+        supplierPrice,
+        shippingCost,
+        sellingPrice,
+        competition
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Product research failed"
+      );
+    }
+
+    result.innerHTML = `
+      <div class="research-output">
+        <h3>${data.product}</h3>
+
+        <p>
+          Supplier Price:
+          <strong>$${data.supplierPrice}</strong>
+        </p>
+
+        <p>
+          Shipping:
+          <strong>$${data.shippingCost}</strong>
+        </p>
+
+        <p>
+          Total Cost:
+          <strong>$${data.totalCost}</strong>
+        </p>
+
+        <p>
+          Selling Price:
+          <strong>$${data.sellingPrice}</strong>
+        </p>
+
+        <p>
+          Profit:
+          <strong>$${data.profit}</strong>
+        </p>
+
+        <p>
+          Profit Margin:
+          <strong>${data.profitMargin}%</strong>
+        </p>
+
+        <p>
+          Competition:
+          <strong>${data.competition}</strong>
+        </p>
+      </div>
+    `;
+
+  } catch (error) {
+    result.textContent =
+      "Research Error: " + error.message;
+  }
+      }
