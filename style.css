@@ -834,3 +834,114 @@ footer .logo span {
     gap: 8px;
   }
   }
+
+
+/* ================================
+   PRODUCT RESEARCH
+================================ */
+
+.product-research {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 80px 20px;
+}
+
+.product-research .section-title {
+  margin-bottom: 30px;
+}
+
+.research-card {
+  background: #111417;
+  border: 1px solid #292d32;
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.research-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.research-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.research-field label {
+  color: #aeb4bb;
+  font-size: 13px;
+}
+
+.research-field input {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid #30343a;
+  border-radius: 11px;
+  background: #191c20;
+  color: #f5f5f5;
+  outline: none;
+}
+
+.research-field input:focus {
+  border-color: #69727d;
+}
+
+.research-btn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 12px;
+  background: #f5f5f5;
+  color: #111;
+  font-weight: 700;
+}
+
+.research-btn:hover {
+  background: #dedfe1;
+}
+
+.research-result {
+  margin-top: 20px;
+  color: #aeb4bb;
+}
+
+.research-output {
+  padding: 20px;
+  border: 1px solid #30343a;
+  border-radius: 15px;
+  background: #171a1e;
+}
+
+.research-output h3 {
+  color: #fff;
+  margin-bottom: 15px;
+}
+
+.research-output p {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 8px 0;
+  border-bottom: 1px solid #292d32;
+}
+
+.research-output strong {
+  color: #f5f5f5;
+}
+
+@media (max-width: 600px) {
+  .product-research {
+    padding: 60px 15px;
+  }
+
+  .research-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .research-card {
+    padding: 17px;
+  }
+}
