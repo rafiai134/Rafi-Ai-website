@@ -395,6 +395,91 @@
   </div>
 
 </section>
+
+  <!-- Order Approval -->
+<section id="order-approval" class="product-research">
+
+  <div class="section-title">
+    <div class="small-title">ORDER APPROVAL</div>
+
+    <h2>Order Approval</h2>
+
+    <p>
+      Review the order cost and approve it before placing the supplier order.
+    </p>
+  </div>
+
+  <div class="research-card">
+
+    <div class="research-grid">
+
+      <div class="research-field">
+        <label for="approvalProduct">Product Name</label>
+        <input
+          type="text"
+          id="approvalProduct"
+          placeholder="Product name"
+        >
+      </div>
+
+      <div class="research-field">
+        <label for="approvalQuantity">Quantity</label>
+        <input
+          type="number"
+          id="approvalQuantity"
+          placeholder="1"
+          min="1"
+        >
+      </div>
+
+      <div class="research-field">
+        <label for="approvalUnitCost">Supplier Unit Cost</label>
+        <input
+          type="number"
+          id="approvalUnitCost"
+          placeholder="0.00"
+          step="0.01"
+          min="0"
+        >
+      </div>
+
+      <div class="research-field">
+        <label for="approvalShipping">Shipping Per Unit</label>
+        <input
+          type="number"
+          id="approvalShipping"
+          placeholder="0.00"
+          step="0.01"
+          min="0"
+        >
+      </div>
+
+      <div class="research-field">
+        <label for="approvalSelling">Selling Price Per Unit</label>
+        <input
+          type="number"
+          id="approvalSelling"
+          placeholder="0.00"
+          step="0.01"
+          min="0"
+        >
+      </div>
+
+    </div>
+
+    <button
+      type="button"
+      class="research-btn"
+      onclick="checkApproval()"
+    >
+      Check Order
+    </button>
+
+    <div id="approvalResult" class="research-result"></div>
+
+  </div>
+
+</section>
   <!-- Features -->
   <section class="features">
 
