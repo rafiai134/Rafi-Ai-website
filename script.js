@@ -569,3 +569,143 @@ async function checkApproval() {
     alert("Approval Error: " + error.message);
   }
         }
+
+async function checkApproval() {
+  const productName =
+    document.getElementById("approvalProduct").value.trim();
+
+  const quantity =
+    document.getElementById("approvalQuantity").value;
+
+  const unitCost =
+    document.getElementById("approvalUnitCost").value;
+
+  const shippingCost =
+    document.getElementById("approvalShipping").value;
+
+  const sellingPrice =
+    document.getElementById("approvalSelling").value;
+
+  const result =
+    document.getElementById("approvalResult");
+
+  if (!productName || !quantity) {
+    result.textContent =
+      "Product name اور quantity درج کریں۔";
+    return;
+  }
+
+  result.textContent =
+    "Order check ہو رہا ہے...";
+
+  try {
+    const response = await fetch("/api/approval", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        productName,
+        quantity,
+        unitCost,
+        shippingCost,
+        sellingPrice
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Approval check failed"
+      );
+    }
+
+    result.innerHTML = `
+      <div class="research-output">
+
+        <h3>Order Review</h3>
+
+        <p>
+          Product:
+          <strong>${data.productName}</strong>
+        </p>
+
+        <p>
+          Quantity:
+          <strong>${data.quantity}</strong>
+        </p>
+
+        <p>
+          Total Cost:
+          <strong>$${data.totalCost}</strong>
+        </p>
+
+        <p>
+          Total Revenue:
+          <strong>$${data.totalRevenue}</strong>
+        </p>
+
+        <p>
+          Estimated Profit:
+          <strong>$${data.estimatedProfit}</strong>
+        </p>
+
+        <p>
+          Status:
+          <strong>${data.status}</strong>
+        </p>
+
+        <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;">
+
+          <button
+            type="button"
+            class="research-btn"
+            onclick="approveOrder()"
+          >
+            Approve
+          </button>
+
+          <button
+            type="button"
+            class="research-btn"
+            onclick="rejectOrder()"
+          >
+            Reject
+          </button>
+
+        </div>
+
+        <div
+          id="approvalDecision"
+          style="margin-top:15px;"
+        ></div>
+
+      </div>
+    `;
+
+  } catch (error) {
+    result.textContent =
+      "Approval Error: " + error.message;
+  }
+}
+
+function approveOrder() {
+  const decision =
+    document.getElementById("approvalDecision");
+
+  if (decision) {
+    decision.textContent =
+      "Order approved by you. Supplier order has not been placed yet.";
+  }
+}
+
+function rejectOrder() {
+  const decision =
+    document.getElementById("approvalDecision");
+
+  if (decision) {
+    decision.textContent =
+      "Order rejected. No supplier order will be placed.";
+  }
+      }
