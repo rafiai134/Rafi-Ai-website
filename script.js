@@ -709,3 +709,49 @@ function rejectOrder() {
       "Order rejected. No supplier order will be placed.";
   }
       }
+
+async function sendSupplierMessage() {
+  const message = document.getElementById("userInput").value.trim();
+
+  if (!message) return;
+
+  try {
+    const response = await fetch("/api/supplierChat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        supplierMessage: message,
+        productName:
+          document.getElementById("productName")?.value || "Not provided",
+        supplierPrice:
+          document.getElementById("supplierPrice")?.value || "",
+        quantity:
+          document.getElementById("approvalQuantity")?.value || "",
+        shippingCost:
+          document.getElementById("shippingCost")?.value || "",
+        deliveryTime:
+          document.getElementById("deliveryTime")?.value || ""
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Supplier chat failed");
+    }
+
+    const messages = document.getElementById("chatMessages");
+
+    const aiMessage = document.createElement("div");
+    aiMessage.className = "message ai-message";
+    aiMessage.textContent = data.reply;
+
+    messages.appendChild(aiMessage);
+    messages.scrollTop = messages.scrollHeight;
+
+  } catch (error) {
+    alert("Supplier Chat Error: " + error.message);
+  }
+}
