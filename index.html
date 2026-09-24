@@ -295,6 +295,106 @@
 </section>
 
 <section class="features">
+  <!-- Supplier Research -->
+<section id="supplier-research" class="product-research">
+
+  <div class="section-title">
+    <div class="small-title">SUPPLIER RESEARCH</div>
+
+    <h2>Check Supplier</h2>
+
+    <p>
+      Check supplier price, stock, shipping and delivery information.
+    </p>
+  </div>
+
+  <div class="research-card">
+
+    <div class="research-grid">
+
+      <div class="research-field">
+        <label for="supplierName">Supplier Name</label>
+        <input
+          type="text"
+          id="supplierName"
+          placeholder="Supplier name"
+        >
+      </div>
+
+      <div class="research-field">
+        <label for="supplierProduct">Product Name</label>
+        <input
+          type="text"
+          id="supplierProduct"
+          placeholder="Product name"
+        >
+      </div>
+
+      <div class="research-field">
+        <label for="unitPrice">Unit Price</label>
+        <input
+          type="number"
+          id="unitPrice"
+          placeholder="0.00"
+          step="0.01"
+        >
+      </div>
+
+      <div class="research-field">
+        <label for="supplierShipping">Shipping Cost</label>
+        <input
+          type="number"
+          id="supplierShipping"
+          placeholder="0.00"
+          step="0.01"
+        >
+      </div>
+
+      <div class="research-field">
+        <label for="moq">MOQ</label>
+        <input
+          type="number"
+          id="moq"
+          placeholder="Minimum order quantity"
+        >
+      </div>
+
+      <div class="research-field">
+        <label for="stock">Stock</label>
+        <input
+          type="text"
+          id="stock"
+          placeholder="Example: In stock"
+        >
+      </div>
+
+      <div class="research-field">
+        <label for="deliveryTime">Delivery Time</label>
+        <input
+          type="text"
+          id="deliveryTime"
+          placeholder="Example: 7-12 days"
+        >
+      </div>
+
+    </div>
+
+    <button
+      type="button"
+      class="research-btn"
+      onclick="researchSupplier()"
+    >
+      🔎 Check Supplier
+    </button>
+
+    <div
+      id="supplierResult"
+      class="research-result"
+    ></div>
+
+  </div>
+
+</section>
   <!-- Features -->
   <section class="features">
 
