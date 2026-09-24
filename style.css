@@ -945,3 +945,49 @@ footer .logo span {
     padding: 17px;
   }
 }
+
+/* ================================
+   ORDER APPROVAL BUTTONS
+================================ */
+
+.approval-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.approval-actions button {
+  flex: 1;
+  min-width: 120px;
+  padding: 13px 18px;
+  border: 0;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.approval-actions .approve-btn {
+  background: #f5f5f5;
+  color: #111;
+}
+
+.approval-actions .reject-btn {
+  background: #292d32;
+  color: #fff;
+  border: 1px solid #444;
+}
+
+.approval-actions button:hover {
+  opacity: 0.85;
+}
+
+@media (max-width: 600px) {
+  .approval-actions {
+    flex-direction: column;
+  }
+
+  .approval-actions button {
+    width: 100%;
+  }
+}
