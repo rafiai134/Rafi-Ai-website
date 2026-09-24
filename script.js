@@ -411,3 +411,114 @@ async function researchProduct() {
       "Research Error: " + error.message;
   }
       }
+
+async function researchSupplier() {
+  const supplierName =
+    document.getElementById("supplierName").value.trim();
+
+  const productName =
+    document.getElementById("supplierProduct").value.trim();
+
+  const unitPrice =
+    document.getElementById("unitPrice").value;
+
+  const shippingCost =
+    document.getElementById("supplierShipping").value;
+
+  const moq =
+    document.getElementById("moq").value;
+
+  const stock =
+    document.getElementById("stock").value.trim();
+
+  const deliveryTime =
+    document.getElementById("deliveryTime").value.trim();
+
+  const result =
+    document.getElementById("supplierResult");
+
+  if (!supplierName || !productName) {
+    result.textContent =
+      "Supplier Name اور Product Name لکھیں۔";
+    return;
+  }
+
+  result.textContent =
+    "Supplier research ہو رہی ہے...";
+
+  try {
+    const response = await fetch(
+      "/api/supplierResearch",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          supplierName,
+          productName,
+          unitPrice,
+          moq,
+          stock,
+          shippingCost,
+          deliveryTime
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Supplier research failed"
+      );
+    }
+
+    result.innerHTML = `
+      <div class="research-output">
+
+        <h3>${data.supplier}</h3>
+
+        <p>
+          Product:
+          <strong>${data.product}</strong>
+        </p>
+
+        <p>
+          Unit Price:
+          <strong>$${data.unitPrice}</strong>
+        </p>
+
+        <p>
+          Shipping:
+          <strong>$${data.shippingCost}</strong>
+        </p>
+
+        <p>
+          Estimated Unit Cost:
+          <strong>$${data.estimatedUnitCost}</strong>
+        </p>
+
+        <p>
+          MOQ:
+          <strong>${data.minimumOrderQuantity}</strong>
+        </p>
+
+        <p>
+          Stock:
+          <strong>${data.stock}</strong>
+        </p>
+
+        <p>
+          Delivery Time:
+          <strong>${data.deliveryTime}</strong>
+        </p>
+
+      </div>
+    `;
+
+  } catch (error) {
+    result.textContent =
+      "Supplier Research Error: " + error.message;
+  }
+}
