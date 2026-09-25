@@ -747,7 +747,7 @@ async function sendSupplierMessage() {
         data.error || "Conversation failed"
       );
     }
-
+supplierConversationId = data.conversationId;
     result.innerHTML = `
       <div class="research-output">
         <h3>Supplier Conversation</h3>
