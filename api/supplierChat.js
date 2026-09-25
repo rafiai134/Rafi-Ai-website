@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
     if (!supplierMessage || !productName) {
       return res.status(400).json({
-        error: "Supplier message and product name are required"
+        error: "Supplier message is required"
       });
     }
 
