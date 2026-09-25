@@ -83,7 +83,6 @@
 
     <div class="rafi-chat-app">
 
-      <!-- Chat Header -->
       <div class="chat-header">
 
         <div class="chat-brand">
@@ -117,7 +116,6 @@
       </div>
 
 
-      <!-- Chat Messages -->
       <div id="chatMessages" class="chat-messages">
 
         <div class="rafi-welcome">
@@ -164,12 +162,10 @@
       </div>
 
 
-      <!-- Chat Composer -->
       <div class="chat-composer">
 
         <div class="composer-box">
 
-          <!-- Add Image -->
           <button
             type="button"
             class="composer-icon"
@@ -178,8 +174,6 @@
             +
           </button>
 
-
-          <!-- Message Input -->
           <textarea
             id="userInput"
             placeholder="Message Rafi AI"
@@ -187,8 +181,6 @@
             onkeydown="handleEnter(event)"
           ></textarea>
 
-
-          <!-- Voice -->
           <button
             type="button"
             class="composer-icon"
@@ -197,8 +189,6 @@
             🎙
           </button>
 
-
-          <!-- Send -->
           <button
             type="button"
             class="send-btn"
@@ -210,7 +200,6 @@
         </div>
 
 
-        <!-- Image Input -->
         <input
           type="file"
           id="imageInput"
@@ -219,7 +208,6 @@
         >
 
 
-        <!-- Image Editing -->
         <div class="image-tools">
 
           <span>
@@ -237,7 +225,6 @@
         </div>
 
 
-        <!-- Extra Controls -->
         <div class="advanced-tools">
 
           <button
@@ -289,278 +276,515 @@
 
   </section>
 
+
   <!-- Supplier Chat -->
-<section id="supplier-chat" class="product-research">
+  <section id="supplier-chat" class="product-research">
 
-  <div class="section-title">
-    <div class="small-title">SUPPLIER CHAT</div>
+    <div class="section-title">
 
-    <h2>Talk to Supplier</h2>
+      <div class="small-title">
+        SUPPLIER CHAT
+      </div>
 
-    <p>
-      Rafi AI supplier کے پیغامات کو سمجھ کر professional reply تیار کرے گا۔
-    </p>
-  </div>
+      <h2>
+        Talk to Supplier
+      </h2>
 
-  <div class="research-card">
+      <p>
+        Rafi AI supplier کے پیغامات کو سمجھ کر professional reply تیار کرے گا۔
+      </p>
 
-    <div class="research-field">
-      <label for="supplierChatMessage">
-        Supplier Message
-      </label>
-
-      <textarea
-        id="supplierChatMessage"
-        placeholder="Supplier کا message یہاں لکھیں..."
-        rows="5"
-      ></textarea>
     </div>
 
-    <button
-      type="button"
-      class="research-btn"
-      onclick="sendSupplierMessage()"
-    >
-      Send to Rafi AI
-    </button>
+    <div class="research-card">
 
-    <div
-      id="supplierChatResult"
-      class="research-result"
-    ></div>
+      <div class="research-field">
 
-  </div>
+        <label for="supplierChatMessage">
+          Supplier Message
+        </label>
 
-</section>
+        <textarea
+          id="supplierChatMessage"
+          placeholder="Supplier کا message یہاں لکھیں..."
+          rows="5"
+        ></textarea>
+
+      </div>
+
+      <button
+        type="button"
+        class="research-btn"
+        onclick="sendSupplierMessage()"
+      >
+        Send to Rafi AI
+      </button>
+
+      <div
+        id="supplierChatResult"
+        class="research-result"
+      ></div>
+
+    </div>
+
+  </section>
+
+
   <!-- Product Research -->
-<section id="product-research" class="product-research">
-   ...
-</section>
+  <section id="product-research" class="product-research">
 
-<section class="features">
-  <!-- Supplier Research -->
-<section id="supplier-research" class="product-research">
+    <div class="section-title">
 
-  <div class="section-title">
-    <div class="small-title">SUPPLIER RESEARCH</div>
-
-    <h2>Check Supplier</h2>
-
-    <p>
-      Check supplier price, stock, shipping and delivery information.
-    </p>
-  </div>
-
-  <div class="research-card">
-
-    <div class="research-grid">
-
-      <div class="research-field">
-        <label for="supplierName">Supplier Name</label>
-        <input
-          type="text"
-          id="supplierName"
-          placeholder="Supplier name"
-        >
+      <div class="small-title">
+        PRODUCT RESEARCH
       </div>
 
-      <div class="research-field">
-        <label for="supplierProduct">Product Name</label>
-        <input
-          type="text"
-          id="supplierProduct"
-          placeholder="Product name"
-        >
-      </div>
+      <h2>
+        Product Research
+      </h2>
 
-      <div class="research-field">
-        <label for="unitPrice">Unit Price</label>
-        <input
-          type="number"
-          id="unitPrice"
-          placeholder="0.00"
-          step="0.01"
-        >
-      </div>
-
-      <div class="research-field">
-        <label for="supplierShipping">Shipping Cost</label>
-        <input
-          type="number"
-          id="supplierShipping"
-          placeholder="0.00"
-          step="0.01"
-        >
-      </div>
-
-      <div class="research-field">
-        <label for="moq">MOQ</label>
-        <input
-          type="number"
-          id="moq"
-          placeholder="Minimum order quantity"
-        >
-      </div>
-
-      <div class="research-field">
-        <label for="stock">Stock</label>
-        <input
-          type="text"
-          id="stock"
-          placeholder="Example: In stock"
-        >
-      </div>
-
-      <div class="research-field">
-        <label for="deliveryTime">Delivery Time</label>
-        <input
-          type="text"
-          id="deliveryTime"
-          placeholder="Example: 7-12 days"
-        >
-      </div>
+      <p>
+        Check product cost, shipping, selling price, profit and profit margin.
+      </p>
 
     </div>
 
-    <button
-      type="button"
-      class="research-btn"
-      onclick="researchSupplier()"
-    >
-      🔎 Check Supplier
-    </button>
+    <div class="research-card">
 
-    <div
-      id="supplierResult"
-      class="research-result"
-    ></div>
+      <div class="research-grid">
 
-  </div>
+        <div class="research-field">
 
-</section>
+          <label for="productName">
+            Product Name
+          </label>
+
+          <input
+            type="text"
+            id="productName"
+            placeholder="Example: Drawer Organizer"
+          >
+
+        </div>
+
+
+        <div class="research-field">
+
+          <label for="supplierPrice">
+            Supplier Price
+          </label>
+
+          <input
+            type="number"
+            id="supplierPrice"
+            placeholder="0.00"
+            step="0.01"
+            min="0"
+          >
+
+        </div>
+
+
+        <div class="research-field">
+
+          <label for="shippingCost">
+            Shipping Cost
+          </label>
+
+          <input
+            type="number"
+            id="shippingCost"
+            placeholder="0.00"
+            step="0.01"
+            min="0"
+          >
+
+        </div>
+
+
+        <div class="research-field">
+
+          <label for="sellingPrice">
+            Selling Price
+          </label>
+
+          <input
+            type="number"
+            id="sellingPrice"
+            placeholder="0.00"
+            step="0.01"
+            min="0"
+          >
+
+        </div>
+
+
+        <div class="research-field">
+
+          <label for="competition">
+            Competition
+          </label>
+
+          <input
+            type="text"
+            id="competition"
+            placeholder="Example: Low / Medium / High"
+          >
+
+        </div>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="research-btn"
+        onclick="researchProduct()"
+      >
+        🔎 Research Product
+      </button>
+
+
+      <div
+        id="researchResult"
+        class="research-result"
+      ></div>
+
+    </div>
+
+  </section>
+
+
+  <!-- Supplier Research -->
+  <section id="supplier-research" class="product-research">
+
+    <div class="section-title">
+
+      <div class="small-title">
+        SUPPLIER RESEARCH
+      </div>
+
+      <h2>
+        Check Supplier
+      </h2>
+
+      <p>
+        Check supplier price, stock, shipping and delivery information.
+      </p>
+
+    </div>
+
+    <div class="research-card">
+
+      <div class="research-grid">
+
+        <div class="research-field">
+
+          <label for="supplierName">
+            Supplier Name
+          </label>
+
+          <input
+            type="text"
+            id="supplierName"
+            placeholder="Supplier name"
+          >
+
+        </div>
+
+
+        <div class="research-field">
+
+          <label for="supplierProduct">
+            Product Name
+          </label>
+
+          <input
+            type="text"
+            id="supplierProduct"
+            placeholder="Product name"
+          >
+
+        </div>
+
+
+        <div class="research-field">
+
+          <label for="unitPrice">
+            Unit Price
+          </label>
+
+          <input
+            type="number"
+            id="unitPrice"
+            placeholder="0.00"
+            step="0.01"
+          >
+
+        </div>
+
+
+        <div class="research-field">
+
+          <label for="supplierShipping">
+            Shipping Cost
+          </label>
+
+          <input
+            type="number"
+            id="supplierShipping"
+            placeholder="0.00"
+            step="0.01"
+          >
+
+        </div>
+
+
+        <div class="research-field">
+
+          <label for="moq">
+            MOQ
+          </label>
+
+          <input
+            type="number"
+            id="moq"
+            placeholder="Minimum order quantity"
+          >
+
+        </div>
+
+
+        <div class="research-field">
+
+          <label for="stock">
+            Stock
+          </label>
+
+          <input
+            type="text"
+            id="stock"
+            placeholder="Example: In stock"
+          >
+
+        </div>
+
+
+        <div class="research-field">
+
+          <label for="deliveryTime">
+            Delivery Time
+          </label>
+
+          <input
+            type="text"
+            id="deliveryTime"
+            placeholder="Example: 7-12 days"
+          >
+
+        </div>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="research-btn"
+        onclick="researchSupplier()"
+      >
+        🔎 Check Supplier
+      </button>
+
+
+      <div
+        id="supplierResult"
+        class="research-result"
+      ></div>
+
+    </div>
+
+  </section>
+
 
   <!-- Order Approval -->
-<section id="order-approval" class="product-research">
+  <section id="order-approval" class="product-research">
 
-  <div class="section-title">
-    <div class="small-title">ORDER APPROVAL</div>
+    <div class="section-title">
 
-    <h2>Order Approval</h2>
-
-    <p>
-      Review the order cost and approve it before placing the supplier order.
-    </p>
-  </div>
-
-  <div class="research-card">
-
-    <div class="research-grid">
-
-      <div class="research-field">
-        <label for="approvalProduct">Product Name</label>
-        <input
-          type="text"
-          id="approvalProduct"
-          placeholder="Product name"
-        >
-      </div>
-      <div class="research-field">
-  <label for="supplierName">Supplier Name</label>
-
-  <input
-    type="text"
-    id="supplierName"
-    placeholder="Supplier Name"
-  >
+      <div class="small-title">
+        ORDER APPROVAL
       </div>
 
-      <div class="research-field">
-        <label for="approvalQuantity">Quantity</label>
-        <input
-          type="number"
-          id="approvalQuantity"
-          placeholder="1"
-          min="1"
-        >
-      </div>
+      <h2>
+        Order Approval
+      </h2>
 
-      <div class="research-field">
-        <label for="approvalUnitCost">Supplier Unit Cost</label>
-        <input
-          type="number"
-          id="approvalUnitCost"
-          placeholder="0.00"
-          step="0.01"
-          min="0"
-        >
-      </div>
-
-      <div class="research-field">
-        <label for="approvalShipping">Shipping Per Unit</label>
-        <input
-          type="number"
-          id="approvalShipping"
-          placeholder="0.00"
-          step="0.01"
-          min="0"
-        >
-      </div>
-
-      <div class="research-field">
-        <label for="approvalSelling">Selling Price Per Unit</label>
-        <input
-          type="number"
-          id="approvalSelling"
-          placeholder="0.00"
-          step="0.01"
-          min="0"
-        >
-      </div>
+      <p>
+        Review the order cost and approve it before placing the supplier order.
+      </p>
 
     </div>
 
-    <button
-      type="button"
-      class="research-btn"
-      onclick="checkApproval()"
-    >
-      Check Order
-    </button>
-    
-   <button
-  type="button"
-  class="research-btn"
-  onclick="prepareOrder()"
->
-  Prepare Order
-   </button>
-<button
-  type="button"
-  class="research-btn"
-  onclick="approveOrder()"
->
-  Approve Order
-</button>
 
-<button
-  type="button"
-  class="research-btn"
-  onclick="rejectOrder()"
->
-  Reject Order
-</button>
-    <button
-  type="button"
-  class="research-btn"
-  onclick="prepareSupplierOrder()"
->
-  Prepare Supplier Order
-    </button>
-    <div id="approvalResult" class="research-result"></div>
+    <div class="research-card">
 
-  </div>
+      <div class="research-grid">
 
-</section>
+        <div class="research-field">
+
+          <label for="approvalProduct">
+            Product Name
+          </label>
+
+          <input
+            type="text"
+            id="approvalProduct"
+            placeholder="Product name"
+          >
+
+        </div>
+
+
+        <!-- Order Approval Supplier Name -->
+        <div class="research-field">
+
+          <label for="approvalSupplierName">
+            Supplier Name
+          </label>
+
+          <input
+            type="text"
+            id="approvalSupplierName"
+            placeholder="Supplier Name"
+          >
+
+        </div>
+
+
+        <div class="research-field">
+
+          <label for="approvalQuantity">
+            Quantity
+          </label>
+
+          <input
+            type="number"
+            id="approvalQuantity"
+            placeholder="1"
+            min="1"
+          >
+
+        </div>
+
+
+        <div class="research-field">
+
+          <label for="approvalUnitCost">
+            Supplier Unit Cost
+          </label>
+
+          <input
+            type="number"
+            id="approvalUnitCost"
+            placeholder="0.00"
+            step="0.01"
+            min="0"
+          >
+
+        </div>
+
+
+        <div class="research-field">
+
+          <label for="approvalShipping">
+            Shipping Per Unit
+          </label>
+
+          <input
+            type="number"
+            id="approvalShipping"
+            placeholder="0.00"
+            step="0.01"
+            min="0"
+          >
+
+        </div>
+
+
+        <div class="research-field">
+
+          <label for="approvalSelling">
+            Selling Price Per Unit
+          </label>
+
+          <input
+            type="number"
+            id="approvalSelling"
+            placeholder="0.00"
+            step="0.01"
+            min="0"
+          >
+
+        </div>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="research-btn"
+        onclick="checkApproval()"
+      >
+        Check Order
+      </button>
+
+
+      <button
+        type="button"
+        class="research-btn"
+        onclick="prepareOrder()"
+      >
+        Prepare Order
+      </button>
+
+
+      <button
+        type="button"
+        class="research-btn"
+        onclick="approveOrder()"
+      >
+        Approve Order
+      </button>
+
+
+      <button
+        type="button"
+        class="research-btn"
+        onclick="rejectOrder()"
+      >
+        Reject Order
+      </button>
+
+
+      <button
+        type="button"
+        class="research-btn"
+        onclick="prepareSupplierOrder()"
+      >
+        Prepare Supplier Order
+      </button>
+
+
+      <div
+        id="approvalResult"
+        class="research-result"
+      ></div>
+
+    </div>
+
+  </section>
+
+
   <!-- Features -->
   <section class="features">
 
@@ -581,9 +805,13 @@
 
       <div class="feature-card">
 
-        <div class="icon">🤖</div>
+        <div class="icon">
+          🤖
+        </div>
 
-        <h3>Rafi AI</h3>
+        <h3>
+          Rafi AI
+        </h3>
 
         <p>
           Get intelligent answers and helpful information.
@@ -594,9 +822,13 @@
 
       <div class="feature-card">
 
-        <div class="icon">⚡</div>
+        <div class="icon">
+          ⚡
+        </div>
 
-        <h3>Fast Response</h3>
+        <h3>
+          Fast Response
+        </h3>
 
         <p>
           Get quick responses whenever you need help.
@@ -607,9 +839,13 @@
 
       <div class="feature-card">
 
-        <div class="icon">💡</div>
+        <div class="icon">
+          💡
+        </div>
 
-        <h3>Smart Ideas</h3>
+        <h3>
+          Smart Ideas
+        </h3>
 
         <p>
           Generate ideas, plans and solutions with AI.
@@ -620,9 +856,13 @@
 
       <div class="feature-card">
 
-        <div class="icon">🔒</div>
+        <div class="icon">
+          🔒
+        </div>
 
-        <h3>Simple & Secure</h3>
+        <h3>
+          Simple & Secure
+        </h3>
 
         <p>
           A clean and simple AI experience.
@@ -728,5 +968,93 @@
 
   <script src="script.js"></script>
 
+
+  <!-- Order Approval Supplier Name Compatibility Fix -->
+  <script>
+    async function prepareSupplierOrder() {
+
+      const productName =
+        document.getElementById("approvalProduct").value.trim();
+
+      const quantity =
+        document.getElementById("approvalQuantity").value;
+
+      const supplierName =
+        document.getElementById("approvalSupplierName").value.trim();
+
+      const result =
+        document.getElementById("approvalResult");
+
+      const totalCostElement =
+        document.querySelector("#approvalResult strong");
+
+      const totalCost =
+        totalCostElement
+          ? totalCostElement.textContent.replace("$", "")
+          : "0";
+
+      if (!productName || !supplierName) {
+
+        result.textContent =
+          "Product name اور Supplier name ضروری ہیں۔";
+
+        return;
+      }
+
+      try {
+
+        const response = await fetch("/api/supplierOrder", {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+            productName,
+            quantity,
+            supplierName,
+            totalCost,
+            approved: true
+          })
+
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.error || "Supplier order preparation failed"
+          );
+
+        }
+
+        result.innerHTML += `
+
+          <p>
+            Supplier:
+            <strong>${data.supplierName}</strong>
+          </p>
+
+          <p>
+            Status:
+            <strong>${data.status}</strong>
+          </p>
+
+        `;
+
+      } catch (error) {
+
+        result.textContent =
+          "Supplier Order Error: " +
+          error.message;
+
+      }
+
+    }
+  </script>
+
 </body>
-          </html>
+      </html>
