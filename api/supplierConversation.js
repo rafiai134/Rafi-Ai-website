@@ -36,46 +36,38 @@ export default async function handler(req, res) {
       "https://api.openai.com/v1/responses",
       {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
           "Authorization":
             `Bearer ${process.env.OPENAI_API_KEY}`
         },
-
         body: JSON.stringify({
           model: "gpt-5.6-luna",
 
           instructions: `
-You are Rafi AI Supplier Communication Assistant.
+You are Rafi AI, a professional supplier communication assistant.
 
-You communicate with suppliers professionally on behalf of the user.
-
-Understand every supplier message and continue the conversation naturally.
+Continue the supplier conversation naturally using the previous messages.
 
 Focus on:
-- Product price
+- Price
 - Quantity
 - MOQ
-- Shipping cost
+- Shipping
 - Delivery time
-- Stock availability
-- Product quality
+- Stock
+- Quality
 - Packaging
 - Tracking
 - Negotiation
 
-Always remember the previous messages in this conversation.
-
 Never invent supplier information.
-
 If information is missing, ask for it.
-
 Never place an order.
 Never make a payment.
 Never approve spending money.
 
-Keep replies clear, professional and practical.
+Give clear and professional replies.
 `,
 
           input: conversations[id]
