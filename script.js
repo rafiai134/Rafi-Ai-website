@@ -1,3 +1,4 @@
+let supplierConversationId = null;
 async function sendMessage() {
   const input = document.getElementById("userInput");
   const messages = document.getElementById("chatMessages");
