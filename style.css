@@ -991,3 +991,70 @@ footer .logo span {
     width: 100%;
   }
 }
+
+/* ================================
+   RAFI AI — FINAL MOBILE FIXES
+================================ */
+
+/* Mobile navigation */
+@media (max-width: 700px) {
+
+  .nav-links.active {
+    display: flex;
+    position: absolute;
+    top: 64px;
+    left: 10px;
+    right: 10px;
+    flex-direction: column;
+    gap: 0;
+    padding: 10px;
+    background: #111417;
+    border: 1px solid #292d32;
+    border-radius: 15px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
+  }
+
+  .nav-links.active a {
+    padding: 13px 14px;
+    border-radius: 10px;
+  }
+
+  .nav-links.active a:hover {
+    background: #1b1e22;
+  }
+
+  .research-btn {
+    min-height: 48px;
+  }
+
+  .research-output {
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Order approval buttons */
+#approvalResult + .approval-actions {
+  margin-top: 18px;
+}
+
+.approval-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.approval-actions button {
+  flex: 1;
+  min-width: 120px;
+}
+
+@media (max-width: 600px) {
+  .approval-actions {
+    flex-direction: column;
+  }
+
+  .approval-actions button {
+    width: 100%;
+  }
+}
