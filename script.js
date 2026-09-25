@@ -734,8 +734,9 @@ async function sendSupplierMessage() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          message: message
-        })
+  conversationId: supplierConversationId,
+  message: message
+})
       }
     );
 
