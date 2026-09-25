@@ -891,6 +891,76 @@ async function rejectOrder() {
       "Rejection Error: " + error.message;
   }
 }
+async function prepareSupplierOrder() {
+  const productName =
+    document.getElementById("approvalProduct").value.trim();
+
+  const quantity =
+    document.getElementById("approvalQuantity").value;
+
+  const supplierName =
+    document.getElementById("supplierName")
+      ? document.getElementById("supplierName").value.trim()
+      : "";
+
+  const totalCostElement =
+    document.querySelector("#approvalResult strong");
+
+  const totalCost =
+    totalCostElement
+      ? totalCostElement.textContent.replace("$", "")
+      : "0";
+
+  const result =
+    document.getElementById("approvalResult");
+
+  if (!productName || !supplierName) {
+    result.textContent =
+      "Product name اور Supplier name ضروری ہیں۔";
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/supplierOrder", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        productName,
+        quantity,
+        supplierName,
+        totalCost,
+        approved: true
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Supplier order preparation failed"
+      );
+    }
+
+    result.innerHTML += `
+      <p>
+        Supplier:
+        <strong>${data.supplierName}</strong>
+      </p>
+
+      <p>
+        Status:
+        <strong>${data.status}</strong>
+      </p>
+    `;
+
+  } catch (error) {
+    result.textContent =
+      "Supplier Order Error: " +
+      error.message;
+  }
+  }
 async function sendSupplierMessage() {
   const input = document.getElementById("supplierChatMessage");
   const result = document.getElementById("supplierChatResult");
