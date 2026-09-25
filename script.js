@@ -722,46 +722,48 @@ async function sendSupplierMessage() {
     return;
   }
 
-  result.textContent = "Rafi AI جواب تیار کر رہا ہے...";
+  result.textContent = "Conversation محفوظ ہو رہی ہے...";
 
   try {
-    const response = await fetch("/api/supplierChat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        supplierMessage: message,
-        productName:
-          document.getElementById("productName")?.value || "",
-        supplierPrice:
-          document.getElementById("supplierPrice")?.value || "",
-        quantity:
-          document.getElementById("approvalQuantity")?.value || "",
-        shippingCost:
-          document.getElementById("shippingCost")?.value || "",
-        deliveryTime:
-          document.getElementById("deliveryTime")?.value || ""
-      })
-    });
+    const response = await fetch(
+      "/api/supplierConversation",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: message
+        })
+      }
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
       throw new Error(
-        data.error || "Supplier chat failed"
+        data.error || "Conversation failed"
       );
     }
 
     result.innerHTML = `
       <div class="research-output">
-        <h3>Rafi AI Reply</h3>
-        <p>${data.reply}</p>
+        <h3>Supplier Conversation</h3>
+        <p>Message محفوظ ہو گیا۔</p>
+        <p>
+          Conversation ID:
+          <strong>${data.conversationId}</strong>
+        </p>
       </div>
     `;
 
+    document.getElementById(
+      "supplierChatMessage"
+    ).value = "";
+
   } catch (error) {
     result.textContent =
-      "Supplier Chat Error: " + error.message;
+      "Supplier Conversation Error: " +
+      error.message;
   }
-  }
+}
