@@ -15,7 +15,7 @@ export default async function handler(req, res) {
       deliveryTime
     } = req.body || {};
 
-    if (!supplierMessage || !productName) {
+    if (!supplierMessage) {
       return res.status(400).json({
         error: "Supplier message is required"
       });
@@ -25,12 +25,15 @@ export default async function handler(req, res) {
       "https://api.openai.com/v1/responses",
       {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
         },
+
         body: JSON.stringify({
           model: "gpt-5",
+
           instructions: `
 You are Rafi AI Supplier Communication Assistant.
 
@@ -49,11 +52,14 @@ Focus on:
 
 Never invent supplier information.
 Never place an order or make a payment.
+
 If important information is missing, ask the supplier for it.
+
 Reply professionally and clearly.
 `,
+
           input: `
-Product: ${productName}
+Product: ${productName || "Not provided"}
 Quantity: ${quantity || "Not provided"}
 Supplier price: ${supplierPrice || "Not provided"}
 Shipping: ${shippingCost || "Not provided"}
@@ -85,4 +91,4 @@ Prepare the reply that Rafi AI should send to the supplier.
       error: error.message || "Supplier chat failed"
     });
   }
-}
+          }
