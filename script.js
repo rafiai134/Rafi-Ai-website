@@ -690,6 +690,98 @@ async function checkApproval() {
       "Approval Error: " + error.message;
   }
 }
+async function prepareOrder() {
+  const productName =
+    document.getElementById("approvalProduct").value.trim();
+
+  const quantity =
+    document.getElementById("approvalQuantity").value;
+
+  const supplierPrice =
+    document.getElementById("approvalUnitCost").value;
+
+  const shippingCost =
+    document.getElementById("approvalShipping").value;
+
+  const sellingPrice =
+    document.getElementById("approvalSelling").value;
+
+  const result =
+    document.getElementById("approvalResult");
+
+  if (!productName) {
+    result.textContent = "Product name لکھیں۔";
+    return;
+  }
+
+  result.textContent = "Order تیار ہو رہا ہے...";
+
+  try {
+    const response = await fetch("/api/order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        productName,
+        quantity,
+        supplierPrice,
+        shippingCost,
+        sellingPrice,
+        stock: "Available",
+        deliveryTime: "Not confirmed"
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Order preparation failed"
+      );
+    }
+
+    result.innerHTML = `
+      <div class="research-output">
+        <h3>Order Ready for Approval</h3>
+
+        <p>
+          Product:
+          <strong>${data.productName}</strong>
+        </p>
+
+        <p>
+          Quantity:
+          <strong>${data.quantity}</strong>
+        </p>
+
+        <p>
+          Total Cost:
+          <strong>$${data.totalCost}</strong>
+        </p>
+
+        <p>
+          Total Revenue:
+          <strong>$${data.totalRevenue}</strong>
+        </p>
+
+        <p>
+          Estimated Profit:
+          <strong>$${data.estimatedProfit}</strong>
+        </p>
+
+        <p>
+          Status:
+          <strong>${data.status}</strong>
+        </p>
+      </div>
+    `;
+
+  } catch (error) {
+    result.textContent =
+      "Order Error: " + error.message;
+  }
+}
 
 function approveOrder() {
   const decision =
