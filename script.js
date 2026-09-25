@@ -712,33 +712,29 @@ function rejectOrder() {
       }
 
 async function sendSupplierMessage() {
-  const message =
-    document.getElementById("supplierChatMessage").value.trim();
+  const input = document.getElementById("supplierChatMessage");
+  const result = document.getElementById("supplierChatResult");
 
-  const result =
-    document.getElementById("supplierChatResult");
+  const message = input.value.trim();
 
   if (!message) {
     result.textContent = "Supplier کا message لکھیں۔";
     return;
   }
 
-  result.textContent = "Conversation محفوظ ہو رہی ہے...";
+  result.textContent = "Rafi AI جواب تیار کر رہا ہے...";
 
   try {
-    const response = await fetch(
-      "/api/supplierConversation",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-  conversationId: supplierConversationId,
-  message: message
-})
-      }
-    );
+    const response = await fetch("/api/supplierConversation", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        conversationId: supplierConversationId,
+        message: message
+      })
+    });
 
     const data = await response.json();
 
@@ -747,11 +743,31 @@ async function sendSupplierMessage() {
         data.error || "Conversation failed"
       );
     }
-supplierConversationId = data.conversationId;
-    result.innerHTML = `
+
+    supplierConversationId = data.conversationId;
+
+    let conversationHTML = `
       <div class="research-output">
         <h3>Supplier Conversation</h3>
-        <p>Message محفوظ ہو گیا۔</p>
+    `;
+
+    if (data.messages && data.messages.length) {
+      data.messages.forEach(function (item) {
+        const title =
+          item.role === "user"
+            ? "آپ"
+            : "Rafi AI";
+
+        conversationHTML += `
+          <p>
+            <strong>${title}:</strong>
+            ${item.content}
+          </p>
+        `;
+      });
+    }
+
+    conversationHTML += `
         <p>
           Conversation ID:
           <strong>${data.conversationId}</strong>
@@ -759,9 +775,9 @@ supplierConversationId = data.conversationId;
       </div>
     `;
 
-    document.getElementById(
-      "supplierChatMessage"
-    ).value = "";
+    result.innerHTML = conversationHTML;
+
+    input.value = "";
 
   } catch (error) {
     result.textContent =
