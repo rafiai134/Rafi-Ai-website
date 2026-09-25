@@ -803,6 +803,94 @@ function rejectOrder() {
   }
       }
 
+async function approveOrder() {
+  const productName =
+    document.getElementById("approvalProduct").value.trim();
+
+  const quantity =
+    document.getElementById("approvalQuantity").value;
+
+  const result =
+    document.getElementById("approvalResult");
+
+  try {
+    const response = await fetch("/api/orderApproval", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        productName,
+        quantity,
+        totalCost: "0",
+        action: "approve"
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Approval failed"
+      );
+    }
+
+    result.innerHTML += `
+      <p>
+        <strong>${data.status}</strong>
+      </p>
+    `;
+
+  } catch (error) {
+    result.textContent =
+      "Approval Error: " + error.message;
+  }
+}
+
+
+async function rejectOrder() {
+  const productName =
+    document.getElementById("approvalProduct").value.trim();
+
+  const quantity =
+    document.getElementById("approvalQuantity").value;
+
+  const result =
+    document.getElementById("approvalResult");
+
+  try {
+    const response = await fetch("/api/orderApproval", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        productName,
+        quantity,
+        totalCost: "0",
+        action: "reject"
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Rejection failed"
+      );
+    }
+
+    result.innerHTML += `
+      <p>
+        <strong>${data.status}</strong>
+      </p>
+    `;
+
+  } catch (error) {
+    result.textContent =
+      "Rejection Error: " + error.message;
+  }
+}
 async function sendSupplierMessage() {
   const input = document.getElementById("supplierChatMessage");
   const result = document.getElementById("supplierChatResult");
