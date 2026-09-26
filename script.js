@@ -1315,7 +1315,6 @@ function getApprovalTotalCost() {
   );
 }
 
-
 /* ================================
    ORDER APPROVAL CHECK
 ================================ */
@@ -1323,106 +1322,633 @@ function getApprovalTotalCost() {
 async function checkApproval() {
 
   const productName =
-    getElement("approvalProduct")
-      ?.value
-      .trim();
+    getElement("approvalProduct")?.value.trim();
 
+  const supplierName =
+    getElement("approvalSupplierName")?.value.trim();
 
   const quantity =
-    getElement("approvalQuantity")
-      ?.value;
-
+    getElement("approvalQuantity")?.value;
 
   const unitCost =
-    getElement("approvalUnitCost")
-      ?.value;
-
+    getElement("approvalUnitCost")?.value;
 
   const shippingCost =
-    getElement("approvalShipping")
-      ?.value;
-
+    getElement("approvalShipping")?.value;
 
   const sellingPrice =
-    getElement("approvalSelling")
-      ?.value;
-
+    getElement("approvalSelling")?.value;
 
   const result =
     getElement("approvalResult");
-
 
   if (!result) {
     return;
   }
 
-
   orderApproved = false;
-
 
   if (
     !productName ||
-    !quantity
+    !supplierName ||
+    !quantity ||
+    !unitCost ||
+    !shippingCost ||
+    !sellingPrice
   ) {
-
     result.textContent =
-      "Product name اور quantity درج کریں۔";
-
+      "تمام Order Approval معلومات درج کریں۔";
     return;
   }
-
 
   result.textContent =
     "Order check ہو رہا ہے...";
 
-
   try {
 
     const response =
-      await fetch(
-        "/api/approval",
-        {
-          method: "POST",
+      await fetch("/api/approval", {
+        method: "POST",
 
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
+        headers: {
+          "Content-Type": "application/json"
+        },
 
-          body: JSON.stringify({
-
-            productName,
-            quantity,
-            unitCost,
-            shippingCost,
-            sellingPrice
-
-          })
-
-        }
-      );
-
+        body: JSON.stringify({
+          productName,
+          quantity,
+          unitCost,
+          shippingCost,
+          sellingPrice
+        })
+      });
 
     const data =
       await response.json();
 
-
     if (!response.ok) {
-
       throw new Error(
-        data.error ||
-        "Approval check failed"
+        data.error || "Approval check failed"
       );
-
     }
-
 
     result.innerHTML = `
 
       <div class="research-output">
 
-        <h3>
-          Order Review
-        </h3>
+        <h3>Order Review</h3>
 
         <p>
+          Product:
+          <strong>${escapeHtml(data.productName)}</strong>
+        </p>
+
+        <p>
+          Supplier:
+          <strong>${escapeHtml(supplierName)}</strong>
+        </p>
+
+        <p>
+          Quantity:
+          <strong>${escapeHtml(data.quantity)}</strong>
+        </p>
+
+        <p>
+          Total Cost:
+          <strong>$${escapeHtml(data.totalCost)}</strong>
+        </p>
+
+        <p>
+          Total Revenue:
+          <strong>$${escapeHtml(data.totalRevenue)}</strong>
+        </p>
+
+        <p>
+          Estimated Profit:
+          <strong>$${escapeHtml(data.estimatedProfit)}</strong>
+        </p>
+
+        <p>
+          Status:
+          <strong>Waiting for Human Approval</strong>
+        </p>
+
+      </div>
+
+    `;
+
+  } catch (error) {
+
+    result.textContent =
+      "Approval Error: " +
+      error.message;
+  }
+}
+
+
+/* ================================
+   PREPARE ORDER
+================================ */
+
+async function prepareOrder() {
+
+  const productName =
+    getElement("approvalProduct")?.value.trim();
+
+  const quantity =
+    getElement("approvalQuantity")?.value;
+
+  const supplierPrice =
+    getElement("approvalUnitCost")?.value;
+
+  const shippingCost =
+    getElement("approvalShipping")?.value;
+
+  const sellingPrice =
+    getElement("approvalSelling")?.value;
+
+  const supplierName =
+    getElement("approvalSupplierName")?.value.trim();
+
+  const result =
+    getElement("approvalResult");
+
+  if (!result) {
+    return;
+  }
+
+  if (
+    !productName ||
+    !supplierName ||
+    !quantity ||
+    !supplierPrice ||
+    !shippingCost ||
+    !sellingPrice
+  ) {
+    result.textContent =
+      "پہلے Order Approval کی تمام معلومات مکمل کریں۔";
+    return;
+  }
+
+  try {
+
+    const response =
+      await fetch("/api/order", {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+
+        body: JSON.stringify({
+          productName,
+          quantity,
+          supplierPrice,
+          shippingCost,
+          sellingPrice
+        })
+      });
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Order preparation failed"
+      );
+    }
+
+    result.innerHTML += `
+
+      <div class="research-output">
+
+        <p>
+          Order prepared successfully.
+        </p>
+
+        <p>
+          Total Cost:
+          <strong>$${escapeHtml(data.totalCost)}</strong>
+        </p>
+
+        <p>
+          Estimated Profit:
+          <strong>$${escapeHtml(data.estimatedProfit)}</strong>
+        </p>
+
+        <p>
+          Status:
+          <strong>Waiting for Human Approval</strong>
+        </p>
+
+      </div>
+
+    `;
+
+  } catch (error) {
+
+    result.textContent =
+      "Order Error: " +
+      error.message;
+  }
+}
+
+
+/* ================================
+   APPROVE ORDER
+================================ */
+
+async function approveOrder() {
+
+  const productName =
+    getElement("approvalProduct")?.value.trim();
+
+  const supplierName =
+    getElement("approvalSupplierName")?.value.trim();
+
+  const quantity =
+    getElement("approvalQuantity")?.value;
+
+  const totalCost =
+    getApprovalTotalCost();
+
+  const result =
+    getElement("approvalResult");
+
+  if (!result) {
+    return;
+  }
+
+  if (
+    !productName ||
+    !supplierName ||
+    !quantity
+  ) {
+    result.textContent =
+      "پہلے Order Check مکمل کریں۔";
+    return;
+  }
+
+  try {
+
+    const response =
+      await fetch("/api/orderApproval", {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+
+        body: JSON.stringify({
+          productName,
+          quantity,
+          totalCost,
+          action: "approve"
+        })
+      });
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Approval failed"
+      );
+    }
+
+    orderApproved = true;
+
+    result.innerHTML += `
+
+      <div class="research-output">
+
+        <p>
+          <strong>Order approved by you.</strong>
+        </p>
+
+        <p>
+          Supplier order has not been placed yet.
+        </p>
+
+      </div>
+
+    `;
+
+  } catch (error) {
+
+    result.textContent =
+      "Approval Error: " +
+      error.message;
+  }
+}
+
+
+/* ================================
+   REJECT ORDER
+================================ */
+
+async function rejectOrder() {
+
+  const productName =
+    getElement("approvalProduct")?.value.trim();
+
+  const quantity =
+    getElement("approvalQuantity")?.value;
+
+  const totalCost =
+    getApprovalTotalCost();
+
+  const result =
+    getElement("approvalResult");
+
+  if (!result) {
+    return;
+  }
+
+  if (!productName) {
+    result.textContent =
+      "Product name درج کریں۔";
+    return;
+  }
+
+  try {
+
+    const response =
+      await fetch("/api/orderApproval", {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+
+        body: JSON.stringify({
+          productName,
+          quantity,
+          totalCost,
+          action: "reject"
+        })
+      });
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Reject failed"
+      );
+    }
+
+    orderApproved = false;
+
+    result.innerHTML += `
+
+      <div class="research-output">
+
+        <p>
+          <strong>Order rejected by you.</strong>
+        </p>
+
+      </div>
+
+    `;
+
+  } catch (error) {
+
+    result.textContent =
+      "Reject Error: " +
+      error.message;
+  }
+}
+
+
+/* ================================
+   PREPARE SUPPLIER ORDER
+================================ */
+
+async function prepareSupplierOrder() {
+
+  const productName =
+    getElement("approvalProduct")?.value.trim();
+
+  const supplierName =
+    getElement("approvalSupplierName")?.value.trim();
+
+  const quantity =
+    Number(
+      getElement("approvalQuantity")?.value || 0
+    );
+
+  const totalCost =
+    getApprovalTotalCost();
+
+  const result =
+    getElement("approvalResult");
+
+  if (!result) {
+    return;
+  }
+
+  if (!productName || !supplierName || quantity <= 0) {
+    result.textContent =
+      "Order کی مکمل معلومات درج کریں۔";
+    return;
+  }
+
+  if (orderApproved !== true) {
+    result.innerHTML += `
+
+      <div class="research-output">
+
+        <p>
+          Supplier order سے پہلے Human Approval ضروری ہے۔
+        </p>
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+  try {
+
+    const response =
+      await fetch("/api/supplierOrder", {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+
+        body: JSON.stringify({
+          productName,
+          quantity,
+          supplierName,
+          totalCost,
+          approved: true
+        })
+      });
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "Supplier order preparation failed"
+      );
+    }
+
+    result.innerHTML += `
+
+      <div class="research-output">
+
+        <p>
+          <strong>Supplier Order Ready</strong>
+        </p>
+
+        <p>
+          Supplier:
+          <strong>${escapeHtml(data.supplierName)}</strong>
+        </p>
+
+        <p>
+          Product:
+          <strong>${escapeHtml(data.productName)}</strong>
+        </p>
+
+        <p>
+          Total Cost:
+          <strong>$${escapeHtml(data.totalCost)}</strong>
+        </p>
+
+        <p>
+          Status:
+          <strong>${escapeHtml(data.status)}</strong>
+        </p>
+
+      </div>
+
+    `;
+
+  } catch (error) {
+
+    result.innerHTML += `
+
+      <div class="research-output">
+
+        <p>
+          Supplier Order Error:
+          <strong>${escapeHtml(error.message)}</strong>
+        </p>
+
+      </div>
+
+    `;
+  }
+}
+
+
+/* ================================
+   SUPPLIER CHAT
+================================ */
+
+async function sendSupplierMessage() {
+
+  const input =
+    getElement("supplierChatMessage");
+
+  const result =
+    getElement("supplierChatResult");
+
+  if (!input || !result) {
+    return;
+  }
+
+  const message =
+    input.value.trim();
+
+  if (!message) {
+    return;
+  }
+
+  result.textContent =
+    "Supplier conversation تیار ہو رہی ہے...";
+
+  try {
+
+    const response =
+      await fetch("/api/supplierConversation", {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+
+        body: JSON.stringify({
+          conversationId:
+            supplierConversationId,
+          message
+        })
+      });
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "Supplier conversation failed"
+      );
+    }
+
+    supplierConversationId =
+      data.conversationId;
+
+    result.textContent =
+      data.reply || "No reply generated.";
+
+    input.value = "";
+
+  } catch (error) {
+
+    result.textContent =
+      "Supplier Chat Error: " +
+      error.message;
+  }
+}
+
+
+/* ================================
+   INITIALIZATION
+================================ */
+
+function initializeRafiAI() {
+
+  loadChatHistory();
+
+  setupImageInput();
+
+}
+
+
+if (
+  document.readyState ===
+  "loading"
+) {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    initializeRafiAI
+  );
+
+} else {
+
+  initializeRafiAI();
+
+}
