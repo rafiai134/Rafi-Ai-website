@@ -14,7 +14,6 @@
 
   <!-- Navigation -->
   <header class="top-header">
-
     <nav class="navbar">
 
       <a href="#home" class="logo">
@@ -38,7 +37,6 @@
       </button>
 
     </nav>
-
   </header>
 
 
@@ -92,7 +90,6 @@
           </div>
 
           <div>
-
             <div class="chat-name">
               Rafi AI
             </div>
@@ -100,7 +97,6 @@
             <div class="chat-status">
               ● Online
             </div>
-
           </div>
 
         </div>
@@ -296,6 +292,7 @@
 
     </div>
 
+
     <div class="research-card">
 
       <div class="research-field">
@@ -312,6 +309,7 @@
 
       </div>
 
+
       <button
         type="button"
         class="research-btn"
@@ -319,6 +317,7 @@
       >
         Send to Rafi AI
       </button>
+
 
       <div
         id="supplierChatResult"
@@ -348,6 +347,7 @@
       </p>
 
     </div>
+
 
     <div class="research-card">
 
@@ -474,6 +474,7 @@
 
     </div>
 
+
     <div class="research-card">
 
       <div class="research-grid">
@@ -519,6 +520,7 @@
             id="unitPrice"
             placeholder="0.00"
             step="0.01"
+            min="0"
           >
 
         </div>
@@ -535,6 +537,7 @@
             id="supplierShipping"
             placeholder="0.00"
             step="0.01"
+            min="0"
           >
 
         </div>
@@ -550,6 +553,7 @@
             type="number"
             id="moq"
             placeholder="Minimum order quantity"
+            min="0"
           >
 
         </div>
@@ -630,6 +634,7 @@
 
       <div class="research-grid">
 
+        <!-- Product Name -->
         <div class="research-field">
 
           <label for="approvalProduct">
@@ -645,7 +650,7 @@
         </div>
 
 
-        <!-- Order Approval Supplier Name -->
+        <!-- Supplier Name -->
         <div class="research-field">
 
           <label for="approvalSupplierName">
@@ -655,12 +660,13 @@
           <input
             type="text"
             id="approvalSupplierName"
-            placeholder="Supplier Name"
+            placeholder="Supplier name"
           >
 
         </div>
 
 
+        <!-- Quantity -->
         <div class="research-field">
 
           <label for="approvalQuantity">
@@ -677,6 +683,7 @@
         </div>
 
 
+        <!-- Supplier Unit Cost -->
         <div class="research-field">
 
           <label for="approvalUnitCost">
@@ -694,6 +701,7 @@
         </div>
 
 
+        <!-- Shipping Per Unit -->
         <div class="research-field">
 
           <label for="approvalShipping">
@@ -711,6 +719,7 @@
         </div>
 
 
+        <!-- Selling Price Per Unit -->
         <div class="research-field">
 
           <label for="approvalSelling">
@@ -730,6 +739,7 @@
       </div>
 
 
+      <!-- Check Order -->
       <button
         type="button"
         class="research-btn"
@@ -739,6 +749,7 @@
       </button>
 
 
+      <!-- Prepare Order -->
       <button
         type="button"
         class="research-btn"
@@ -748,6 +759,7 @@
       </button>
 
 
+      <!-- Approve Order -->
       <button
         type="button"
         class="research-btn"
@@ -757,6 +769,7 @@
       </button>
 
 
+      <!-- Reject Order -->
       <button
         type="button"
         class="research-btn"
@@ -766,6 +779,7 @@
       </button>
 
 
+      <!-- Prepare Supplier Order -->
       <button
         type="button"
         class="research-btn"
@@ -966,95 +980,8 @@
   </footer>
 
 
+  <!-- Main JavaScript -->
   <script src="script.js"></script>
 
-
-  <!-- Order Approval Supplier Name Compatibility Fix -->
-  <script>
-    async function prepareSupplierOrder() {
-
-      const productName =
-        document.getElementById("approvalProduct").value.trim();
-
-      const quantity =
-        document.getElementById("approvalQuantity").value;
-
-      const supplierName =
-        document.getElementById("approvalSupplierName").value.trim();
-
-      const result =
-        document.getElementById("approvalResult");
-
-      const totalCostElement =
-        document.querySelector("#approvalResult strong");
-
-      const totalCost =
-        totalCostElement
-          ? totalCostElement.textContent.replace("$", "")
-          : "0";
-
-      if (!productName || !supplierName) {
-
-        result.textContent =
-          "Product name اور Supplier name ضروری ہیں۔";
-
-        return;
-      }
-
-      try {
-
-        const response = await fetch("/api/supplierOrder", {
-
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json"
-          },
-
-          body: JSON.stringify({
-            productName,
-            quantity,
-            supplierName,
-            totalCost,
-            approved: true
-          })
-
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-
-          throw new Error(
-            data.error || "Supplier order preparation failed"
-          );
-
-        }
-
-        result.innerHTML += `
-
-          <p>
-            Supplier:
-            <strong>${data.supplierName}</strong>
-          </p>
-
-          <p>
-            Status:
-            <strong>${data.status}</strong>
-          </p>
-
-        `;
-
-      } catch (error) {
-
-        result.textContent =
-          "Supplier Order Error: " +
-          error.message;
-
-      }
-
-    }
-  </script>
-
 </body>
-      </html>
+            </html>
