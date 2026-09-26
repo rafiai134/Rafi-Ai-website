@@ -35,6 +35,7 @@ a {
   text-decoration: none;
 }
 
+
 /* ================================
    HEADER
 ================================ */
@@ -102,6 +103,7 @@ a {
   color: #fff;
   font-size: 31px;
 }
+
 
 /* ================================
    HERO
@@ -173,8 +175,9 @@ a {
   color: #eee;
 }
 
+
 /* ================================
-   CHAT SECTION
+   CHAT
 ================================ */
 
 .chat-section {
@@ -189,10 +192,6 @@ a {
   border-radius: 24px;
   overflow: hidden;
 }
-
-/* ================================
-   CHAT HEADER
-================================ */
 
 .chat-header {
   height: 76px;
@@ -231,10 +230,6 @@ a {
   font-size: 13px;
 }
 
-.chat-status::first-letter {
-  color: #777;
-}
-
 .chat-menu-btn {
   border: 0;
   background: transparent;
@@ -242,6 +237,7 @@ a {
   font-size: 25px;
   padding: 8px;
 }
+
 
 /* ================================
    CHAT MESSAGES
@@ -262,10 +258,6 @@ a {
   background: #30343a;
   border-radius: 10px;
 }
-
-/* ================================
-   WELCOME
-================================ */
 
 .rafi-welcome {
   min-height: 500px;
@@ -327,6 +319,7 @@ a {
   border-color: #41464d;
 }
 
+
 /* ================================
    MESSAGES
 ================================ */
@@ -354,6 +347,7 @@ a {
   color: #e3e5e8;
   border-bottom-left-radius: 5px;
 }
+
 
 /* ================================
    COMPOSER
@@ -429,6 +423,7 @@ a {
   background: #dfe2e5;
 }
 
+
 /* ================================
    IMAGE TOOLS
 ================================ */
@@ -455,6 +450,7 @@ a {
   background: #1a1d21;
   color: #fff;
 }
+
 
 /* ================================
    ADVANCED TOOLS
@@ -497,8 +493,9 @@ a {
   outline: none;
 }
 
+
 /* ================================
-   THINKING ANIMATION
+   THINKING
 ================================ */
 
 .ai-thinking {
@@ -524,6 +521,7 @@ a {
 }
 
 @keyframes thinking {
+
   0%,
   60%,
   100% {
@@ -535,7 +533,9 @@ a {
     opacity: 1;
     transform: translateY(-3px);
   }
+
 }
+
 
 /* ================================
    FEATURES
@@ -591,6 +591,7 @@ a {
   font-size: 14px;
 }
 
+
 /* ================================
    ABOUT
 ================================ */
@@ -616,6 +617,7 @@ a {
   margin: 10px auto;
   max-width: 650px;
 }
+
 
 /* ================================
    CONTACT
@@ -655,6 +657,7 @@ a {
   font-weight: 600;
 }
 
+
 /* ================================
    FOOTER
 ================================ */
@@ -675,6 +678,150 @@ footer .logo {
 footer .logo span {
   color: #a8b5ff;
 }
+
+
+/* ================================
+   PRODUCT / SUPPLIER RESEARCH
+================================ */
+
+.product-research {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 80px 20px;
+}
+
+.product-research .section-title {
+  margin-bottom: 30px;
+}
+
+.research-card {
+  background: #111417;
+  border: 1px solid #292d32;
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.research-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.research-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.research-field label {
+  color: #aeb4bb;
+  font-size: 13px;
+}
+
+.research-field input,
+.research-field textarea {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid #30343a;
+  border-radius: 11px;
+  background: #191c20;
+  color: #f5f5f5;
+  outline: none;
+}
+
+.research-field textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.research-field input:focus,
+.research-field textarea:focus {
+  border-color: #69727d;
+}
+
+.research-btn {
+  width: 100%;
+  margin-top: 20px;
+  min-height: 48px;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 12px;
+  background: #f5f5f5;
+  color: #111;
+  font-weight: 700;
+}
+
+.research-btn:hover {
+  background: #dedfe1;
+}
+
+.research-result {
+  margin-top: 20px;
+  color: #aeb4bb;
+}
+
+.research-output {
+  padding: 20px;
+  border: 1px solid #30343a;
+  border-radius: 15px;
+  background: #171a1e;
+  overflow-wrap: anywhere;
+}
+
+.research-output h3 {
+  color: #fff;
+  margin-bottom: 15px;
+}
+
+.research-output p {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 8px 0;
+  border-bottom: 1px solid #292d32;
+}
+
+.research-output strong {
+  color: #f5f5f5;
+}
+
+
+/* ================================
+   ORDER APPROVAL
+================================ */
+
+.approval-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.approval-actions button {
+  flex: 1;
+  min-width: 120px;
+  min-height: 48px;
+  padding: 13px 18px;
+  border: 0;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.approve-btn {
+  background: #f5f5f5;
+  color: #111;
+}
+
+.reject-btn {
+  background: #292d32;
+  color: #fff;
+  border: 1px solid #444 !important;
+}
+
+.approval-actions button:hover {
+  opacity: 0.85;
+}
+
 
 /* ================================
    MOBILE
@@ -702,6 +849,30 @@ footer .logo span {
 
   .menu-btn {
     display: block;
+  }
+
+  .nav-links.active {
+    display: flex;
+    position: absolute;
+    top: 64px;
+    left: 10px;
+    right: 10px;
+    flex-direction: column;
+    gap: 0;
+    padding: 10px;
+    background: #111417;
+    border: 1px solid #292d32;
+    border-radius: 15px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
+  }
+
+  .nav-links.active a {
+    padding: 13px 14px;
+    border-radius: 10px;
+  }
+
+  .nav-links.active a:hover {
+    background: #1b1e22;
   }
 
   .hero {
@@ -803,7 +974,33 @@ footer .logo span {
   .about h2 {
     font-size: 34px;
   }
+
+  .product-research {
+    padding: 60px 15px;
+  }
+
+  .research-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .research-card {
+    padding: 17px;
+  }
+
+  .approval-actions {
+    flex-direction: column;
+  }
+
+  .approval-actions button {
+    width: 100%;
+  }
+
 }
+
+
+/* ================================
+   SMALL MOBILE
+================================ */
 
 @media (max-width: 430px) {
 
@@ -833,228 +1030,10 @@ footer .logo span {
   .advanced-tools {
     gap: 8px;
   }
-  }
 
-
-/* ================================
-   PRODUCT RESEARCH
-================================ */
-
-.product-research {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 80px 20px;
-}
-
-.product-research .section-title {
-  margin-bottom: 30px;
-}
-
-.research-card {
-  background: #111417;
-  border: 1px solid #292d32;
-  border-radius: 20px;
-  padding: 24px;
-}
-
-.research-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.research-field {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.research-field label {
-  color: #aeb4bb;
-  font-size: 13px;
-}
-
-.research-field input {
-  width: 100%;
-  padding: 13px 14px;
-  border: 1px solid #30343a;
-  border-radius: 11px;
-  background: #191c20;
-  color: #f5f5f5;
-  outline: none;
-}
-
-.research-field input:focus {
-  border-color: #69727d;
-}
-
-.research-btn {
-  width: 100%;
-  margin-top: 20px;
-  padding: 14px 18px;
-  border: 0;
-  border-radius: 12px;
-  background: #f5f5f5;
-  color: #111;
-  font-weight: 700;
-}
-
-.research-btn:hover {
-  background: #dedfe1;
-}
-
-.research-result {
-  margin-top: 20px;
-  color: #aeb4bb;
-}
-
-.research-output {
-  padding: 20px;
-  border: 1px solid #30343a;
-  border-radius: 15px;
-  background: #171a1e;
-}
-
-.research-output h3 {
-  color: #fff;
-  margin-bottom: 15px;
-}
-
-.research-output p {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 8px 0;
-  border-bottom: 1px solid #292d32;
-}
-
-.research-output strong {
-  color: #f5f5f5;
-}
-
-@media (max-width: 600px) {
-  .product-research {
-    padding: 60px 15px;
-  }
-
-  .research-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .research-card {
-    padding: 17px;
-  }
-}
-
-/* ================================
-   ORDER APPROVAL BUTTONS
-================================ */
-
-.approval-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 18px;
-  flex-wrap: wrap;
-}
-
-.approval-actions button {
-  flex: 1;
-  min-width: 120px;
-  padding: 13px 18px;
-  border: 0;
-  border-radius: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.approval-actions .approve-btn {
-  background: #f5f5f5;
-  color: #111;
-}
-
-.approval-actions .reject-btn {
-  background: #292d32;
-  color: #fff;
-  border: 1px solid #444;
-}
-
-.approval-actions button:hover {
-  opacity: 0.85;
-}
-
-@media (max-width: 600px) {
-  .approval-actions {
-    flex-direction: column;
-  }
-
-  .approval-actions button {
+  .voice-selector {
     width: 100%;
-  }
-}
-
-/* ================================
-   RAFI AI — FINAL MOBILE FIXES
-================================ */
-
-/* Mobile navigation */
-@media (max-width: 700px) {
-
-  .nav-links.active {
-    display: flex;
-    position: absolute;
-    top: 64px;
-    left: 10px;
-    right: 10px;
-    flex-direction: column;
-    gap: 0;
-    padding: 10px;
-    background: #111417;
-    border: 1px solid #292d32;
-    border-radius: 15px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
+    justify-content: center;
   }
 
-  .nav-links.active a {
-    padding: 13px 14px;
-    border-radius: 10px;
-  }
-
-  .nav-links.active a:hover {
-    background: #1b1e22;
-  }
-
-  .research-btn {
-    min-height: 48px;
-  }
-
-  .research-output {
-    overflow-wrap: anywhere;
-  }
-}
-
-/* Order approval buttons */
-#approvalResult + .approval-actions {
-  margin-top: 18px;
-}
-
-.approval-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 18px;
-  flex-wrap: wrap;
-}
-
-.approval-actions button {
-  flex: 1;
-  min-width: 120px;
-}
-
-@media (max-width: 600px) {
-  .approval-actions {
-    flex-direction: column;
-  }
-
-  .approval-actions button {
-    width: 100%;
-  }
-}
+   }
