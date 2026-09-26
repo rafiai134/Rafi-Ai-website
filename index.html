@@ -12,8 +12,12 @@
 
 <body>
 
-  <!-- Navigation -->
+  <!-- =========================
+       NAVIGATION
+  ========================== -->
+
   <header class="top-header">
+
     <nav class="navbar">
 
       <a href="#home" class="logo">
@@ -22,25 +26,32 @@
       </a>
 
       <div class="nav-links">
+
         <a href="#home">Home</a>
         <a href="#chat">AI Chat</a>
         <a href="#about">About</a>
         <a href="#contact">Contact</a>
+
       </div>
 
       <button
         type="button"
         class="menu-btn"
         onclick="toggleMenu()"
+        aria-label="Open menu"
       >
         ☰
       </button>
 
     </nav>
+
   </header>
 
 
-  <!-- Home -->
+  <!-- =========================
+       HOME
+  ========================== -->
+
   <section id="home" class="hero">
 
     <div class="hero-content">
@@ -76,7 +87,10 @@
   </section>
 
 
-  <!-- AI Chat -->
+  <!-- =========================
+       AI CHAT
+  ========================== -->
+
   <section id="chat" class="chat-section">
 
     <div class="rafi-chat-app">
@@ -90,6 +104,7 @@
           </div>
 
           <div>
+
             <div class="chat-name">
               Rafi AI
             </div>
@@ -97,6 +112,7 @@
             <div class="chat-status">
               ● Online
             </div>
+
           </div>
 
         </div>
@@ -105,6 +121,7 @@
           type="button"
           class="chat-menu-btn"
           onclick="toggleMenu()"
+          aria-label="Menu"
         >
           ⋯
         </button>
@@ -166,6 +183,7 @@
             type="button"
             class="composer-icon"
             onclick="document.getElementById('imageInput').click()"
+            aria-label="Select image"
           >
             +
           </button>
@@ -181,6 +199,7 @@
             type="button"
             class="composer-icon"
             onclick="startVoice()"
+            aria-label="Voice input"
           >
             🎙
           </button>
@@ -189,6 +208,7 @@
             type="button"
             class="send-btn"
             onclick="sendMessage()"
+            aria-label="Send message"
           >
             ↑
           </button>
@@ -273,7 +293,10 @@
   </section>
 
 
-  <!-- Supplier Chat -->
+  <!-- =========================
+       SUPPLIER CHAT
+  ========================== -->
+
   <section id="supplier-chat" class="product-research">
 
     <div class="section-title">
@@ -309,7 +332,6 @@
 
       </div>
 
-
       <button
         type="button"
         class="research-btn"
@@ -317,7 +339,6 @@
       >
         Send to Rafi AI
       </button>
-
 
       <div
         id="supplierChatResult"
@@ -329,7 +350,10 @@
   </section>
 
 
-  <!-- Product Research -->
+  <!-- =========================
+       PRODUCT RESEARCH
+  ========================== -->
+
   <section id="product-research" class="product-research">
 
     <div class="section-title">
@@ -455,7 +479,10 @@
   </section>
 
 
-  <!-- Supplier Research -->
+  <!-- =========================
+       SUPPLIER RESEARCH
+  ========================== -->
+
   <section id="supplier-research" class="product-research">
 
     <div class="section-title">
@@ -610,7 +637,10 @@
   </section>
 
 
-  <!-- Order Approval -->
+  <!-- =========================
+       ORDER APPROVAL
+  ========================== -->
+
   <section id="order-approval" class="product-research">
 
     <div class="section-title">
@@ -634,7 +664,6 @@
 
       <div class="research-grid">
 
-        <!-- Product Name -->
         <div class="research-field">
 
           <label for="approvalProduct">
@@ -650,7 +679,6 @@
         </div>
 
 
-        <!-- Supplier Name -->
         <div class="research-field">
 
           <label for="approvalSupplierName">
@@ -666,7 +694,6 @@
         </div>
 
 
-        <!-- Quantity -->
         <div class="research-field">
 
           <label for="approvalQuantity">
@@ -683,7 +710,6 @@
         </div>
 
 
-        <!-- Supplier Unit Cost -->
         <div class="research-field">
 
           <label for="approvalUnitCost">
@@ -701,7 +727,6 @@
         </div>
 
 
-        <!-- Shipping Per Unit -->
         <div class="research-field">
 
           <label for="approvalShipping">
@@ -719,7 +744,6 @@
         </div>
 
 
-        <!-- Selling Price Per Unit -->
         <div class="research-field">
 
           <label for="approvalSelling">
@@ -739,7 +763,6 @@
       </div>
 
 
-      <!-- Check Order -->
       <button
         type="button"
         class="research-btn"
@@ -749,7 +772,6 @@
       </button>
 
 
-      <!-- Prepare Order -->
       <button
         type="button"
         class="research-btn"
@@ -759,27 +781,27 @@
       </button>
 
 
-      <!-- Approve Order -->
-      <button
-        type="button"
-        class="research-btn"
-        onclick="approveOrder()"
-      >
-        Approve Order
-      </button>
+      <div class="approval-actions">
+
+        <button
+          type="button"
+          class="approve-btn"
+          onclick="approveOrder()"
+        >
+          Approve Order
+        </button>
+
+        <button
+          type="button"
+          class="reject-btn"
+          onclick="rejectOrder()"
+        >
+          Reject Order
+        </button>
+
+      </div>
 
 
-      <!-- Reject Order -->
-      <button
-        type="button"
-        class="research-btn"
-        onclick="rejectOrder()"
-      >
-        Reject Order
-      </button>
-
-
-      <!-- Prepare Supplier Order -->
       <button
         type="button"
         class="research-btn"
@@ -799,7 +821,10 @@
   </section>
 
 
-  <!-- Features -->
+  <!-- =========================
+       FEATURES
+  ========================== -->
+
   <section class="features">
 
     <div class="section-title">
@@ -889,7 +914,10 @@
   </section>
 
 
-  <!-- About -->
+  <!-- =========================
+       ABOUT
+  ========================== -->
+
   <section id="about" class="about">
 
     <div class="about-content">
@@ -918,7 +946,10 @@
   </section>
 
 
-  <!-- Contact -->
+  <!-- =========================
+       CONTACT
+  ========================== -->
+
   <section id="contact" class="contact">
 
     <div class="section-title">
@@ -966,7 +997,10 @@
   </section>
 
 
-  <!-- Footer -->
+  <!-- =========================
+       FOOTER
+  ========================== -->
+
   <footer>
 
     <div class="logo">
@@ -980,8 +1014,7 @@
   </footer>
 
 
-  <!-- Main JavaScript -->
   <script src="script.js"></script>
 
 </body>
-            </html>
+  </html>
