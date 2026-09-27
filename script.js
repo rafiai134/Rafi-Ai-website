@@ -1162,3 +1162,142 @@ document.addEventListener(
   "DOMContentLoaded",
   initializeRafiAI
 );
+
+/* ================================
+   RAFI VOICE ASSISTANT
+   Wake phrase: "Hi Rafi"
+================================ */
+
+let rafiWakeRecognition = null;
+let rafiCommandRecognition = null;
+let rafiVoiceActive = false;
+
+function startRafiVoiceAssistant() {
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("آپ کے browser میں voice recognition support نہیں ہے۔ Chrome استعمال کریں۔");
+    return;
+  }
+
+  if (rafiVoiceActive) return;
+
+  rafiVoiceActive = true;
+
+  rafiWakeRecognition = new SpeechRecognition();
+  rafiWakeRecognition.lang = "en-US";
+  rafiWakeRecognition.continuous = true;
+  rafiWakeRecognition.interimResults = false;
+
+  rafiWakeRecognition.onresult = function (event) {
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      if (!event.results[i].isFinal) continue;
+
+      const text = event.results[i][0].transcript
+        .trim()
+        .toLowerCase();
+
+      if (
+        text.includes("hi rafi") ||
+        text.includes("hey rafi") ||
+        text.includes("ہائی رافی") ||
+        text.includes("ہی رافی")
+      ) {
+        speakReply("Yes, I'm listening.");
+        startRafiCommandListening();
+        return;
+      }
+    }
+  };
+
+  rafiWakeRecognition.onerror = function () {
+    if (rafiVoiceActive) {
+      setTimeout(startRafiVoiceAssistant, 1000);
+    }
+  };
+
+  rafiWakeRecognition.onend = function () {
+    if (rafiVoiceActive) {
+      setTimeout(() => {
+        try {
+          rafiWakeRecognition.start();
+        } catch (e) {}
+      }, 500);
+    }
+  };
+
+  try {
+    rafiWakeRecognition.start();
+    speakReply("Rafi voice assistant is ready.");
+  } catch (e) {}
+}
+
+
+function startRafiCommandListening() {
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) return;
+
+  if (rafiCommandRecognition) {
+    try {
+      rafiCommandRecognition.stop();
+    } catch (e) {}
+  }
+
+  rafiCommandRecognition = new SpeechRecognition();
+  rafiCommandRecognition.lang = "en-US";
+  rafiCommandRecognition.continuous = false;
+  rafiCommandRecognition.interimResults = false;
+
+  rafiCommandRecognition.onresult = function (event) {
+    const command =
+      event.results[0][0].transcript.trim();
+
+    const input = document.getElementById("userInput");
+
+    if (input) {
+      input.value = command;
+
+      if (typeof sendMessage === "function") {
+        sendMessage();
+      }
+    }
+  };
+
+  rafiCommandRecognition.onerror = function () {
+    speakReply("I didn't hear that. Please try again.");
+  };
+
+  try {
+    rafiCommandRecognition.start();
+  } catch (e) {}
+}
+
+
+function stopRafiVoiceAssistant() {
+  rafiVoiceActive = false;
+
+  try {
+    if (rafiWakeRecognition) {
+      rafiWakeRecognition.stop();
+    }
+  } catch (e) {}
+
+  try {
+    if (rafiCommandRecognition) {
+      rafiCommandRecognition.stop();
+    }
+  } catch (e) {}
+}
+
+
+/* Start voice assistant when page is loaded */
+document.addEventListener("DOMContentLoaded", function () {
+  setTimeout(() => {
+    startRafiVoiceAssistant();
+  }, 1500);
+});
