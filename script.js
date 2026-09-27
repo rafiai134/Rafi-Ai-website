@@ -1164,13 +1164,39 @@ document.addEventListener(
 );
 
 /* ================================
-   RAFI VOICE ASSISTANT
-   Wake phrase: "Hi Rafi"
+   RAFI VOICE ASSISTANT - FIXED
 ================================ */
 
 let rafiWakeRecognition = null;
 let rafiCommandRecognition = null;
 let rafiVoiceActive = false;
+let rafiSpeaking = false;
+
+function rafiSpeak(text, callback) {
+  if (!("speechSynthesis" in window)) {
+    if (callback) callback();
+    return;
+  }
+
+  rafiSpeaking = true;
+
+  window.speechSynthesis.cancel();
+
+  const speech = new SpeechSynthesisUtterance(text);
+  speech.lang = "en-US";
+  speech.rate = 1;
+  speech.pitch = 1;
+
+  speech.onend = function () {
+    rafiSpeaking = false;
+    if (callback) {
+      setTimeout(callback, 500);
+    }
+  };
+
+  window.speechSynthesis.speak(speech);
+}
+
 
 function startRafiVoiceAssistant() {
   const SpeechRecognition =
@@ -1178,7 +1204,7 @@ function startRafiVoiceAssistant() {
     window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
-    alert("آپ کے browser میں voice recognition support نہیں ہے۔ Chrome استعمال کریں۔");
+    alert("Voice recognition کے لیے Chrome استعمال کریں۔");
     return;
   }
 
@@ -1187,98 +1213,165 @@ function startRafiVoiceAssistant() {
   rafiVoiceActive = true;
 
   rafiWakeRecognition = new SpeechRecognition();
+
   rafiWakeRecognition.lang = "en-US";
   rafiWakeRecognition.continuous = true;
   rafiWakeRecognition.interimResults = false;
+  rafiWakeRecognition.maxAlternatives = 3;
 
   rafiWakeRecognition.onresult = function (event) {
-    for (let i = event.resultIndex; i < event.results.length; i++) {
+
+    for (
+      let i = event.resultIndex;
+      i < event.results.length;
+      i++
+    ) {
+
       if (!event.results[i].isFinal) continue;
 
-      const text = event.results[i][0].transcript
-        .trim()
-        .toLowerCase();
+      const heard =
+        event.results[i][0].transcript
+          .trim()
+          .toLowerCase();
+
+      console.log("Rafi heard:", heard);
 
       if (
-        text.includes("hi rafi") ||
-        text.includes("hey rafi") ||
-        text.includes("ہائی رافی") ||
-        text.includes("ہی رافی")
+        heard.includes("hi rafi") ||
+        heard.includes("hey rafi") ||
+        heard.includes("hi raffi") ||
+        heard.includes("hey raffi")
       ) {
-        speakReply("Yes, I'm listening.");
-        startRafiCommandListening();
+
+        try {
+          rafiWakeRecognition.stop();
+        } catch (e) {}
+
+        rafiSpeak(
+          "Yes, I'm listening.",
+          startRafiCommandListening
+        );
+
         return;
       }
     }
   };
 
-  rafiWakeRecognition.onerror = function () {
-    if (rafiVoiceActive) {
-      setTimeout(startRafiVoiceAssistant, 1000);
-    }
+
+  rafiWakeRecognition.onerror = function (event) {
+    console.log("Rafi wake error:", event.error);
   };
 
+
   rafiWakeRecognition.onend = function () {
-    if (rafiVoiceActive) {
-      setTimeout(() => {
-        try {
-          rafiWakeRecognition.start();
-        } catch (e) {}
-      }, 500);
+
+    if (!rafiVoiceActive || rafiSpeaking) {
+      return;
     }
+
+    setTimeout(function () {
+      try {
+        rafiWakeRecognition.start();
+      } catch (e) {}
+    }, 700);
   };
+
 
   try {
     rafiWakeRecognition.start();
-    speakReply("Rafi voice assistant is ready.");
-  } catch (e) {}
+    console.log("Rafi voice listening...");
+  } catch (e) {
+    console.log("Voice start error:", e);
+  }
 }
 
 
 function startRafiCommandListening() {
+
   const SpeechRecognition =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) return;
 
-  if (rafiCommandRecognition) {
-    try {
-      rafiCommandRecognition.stop();
-    } catch (e) {}
-  }
+  rafiCommandRecognition =
+    new SpeechRecognition();
 
-  rafiCommandRecognition = new SpeechRecognition();
   rafiCommandRecognition.lang = "en-US";
   rafiCommandRecognition.continuous = false;
   rafiCommandRecognition.interimResults = false;
+  rafiCommandRecognition.maxAlternatives = 1;
+
+
+  rafiCommandRecognition.onstart = function () {
+    console.log("Rafi is listening for command...");
+  };
+
 
   rafiCommandRecognition.onresult = function (event) {
+
     const command =
       event.results[0][0].transcript.trim();
 
-    const input = document.getElementById("userInput");
+    console.log("Rafi command:", command);
 
-    if (input) {
-      input.value = command;
+    const input =
+      document.getElementById("userInput");
 
-      if (typeof sendMessage === "function") {
-        sendMessage();
-      }
+    if (!input) return;
+
+    input.value = command;
+
+    if (typeof sendMessage === "function") {
+      sendMessage();
     }
   };
 
-  rafiCommandRecognition.onerror = function () {
-    speakReply("I didn't hear that. Please try again.");
-  };
+
+  rafiCommandRecognition.onerror =
+    function (event) {
+
+      console.log(
+        "Rafi command error:",
+        event.error
+      );
+
+      rafiSpeak(
+        "Sorry, I didn't hear you."
+      );
+
+      setTimeout(
+        startRafiVoiceAssistant,
+        1000
+      );
+    };
+
+
+  rafiCommandRecognition.onend =
+    function () {
+
+      if (!rafiSpeaking) {
+        setTimeout(
+          startRafiVoiceAssistant,
+          700
+        );
+      }
+    };
+
 
   try {
     rafiCommandRecognition.start();
-  } catch (e) {}
+  } catch (e) {
+    console.log(
+      "Command listening error:",
+      e
+    );
+  }
 }
 
 
 function stopRafiVoiceAssistant() {
+
   rafiVoiceActive = false;
 
   try {
@@ -1292,12 +1385,29 @@ function stopRafiVoiceAssistant() {
       rafiCommandRecognition.stop();
     }
   } catch (e) {}
+
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
 }
 
 
-/* Start voice assistant when page is loaded */
-document.addEventListener("DOMContentLoaded", function () {
-  setTimeout(() => {
-    startRafiVoiceAssistant();
-  }, 1500);
-});
+/* Start after page loads */
+document.addEventListener(
+  "DOMContentLoaded",
+  function () {
+
+    setTimeout(function () {
+
+      rafiSpeak(
+        "Rafi voice assistant is ready."
+      );
+
+      setTimeout(function () {
+        startRafiVoiceAssistant();
+      }, 1800);
+
+    }, 1000);
+
+  }
+);
