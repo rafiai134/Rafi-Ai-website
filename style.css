@@ -1,7 +1,3 @@
-/* ================================
-   RAFI AI — PROFESSIONAL UI
-================================ */
-
 * {
   box-sizing: border-box;
   margin: 0;
@@ -14,9 +10,16 @@ html {
 
 body {
   font-family: Arial, Helvetica, sans-serif;
-  background: #0b0d0f;
-  color: #f5f5f5;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(90, 70, 255, 0.18), transparent 35%),
+    #070914;
+  color: #f5f7ff;
   line-height: 1.6;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
 button,
@@ -30,30 +33,22 @@ button {
   cursor: pointer;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-
-/* ================================
-   HEADER
-================================ */
+/* HEADER */
 
 .top-header {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(11, 13, 15, 0.92);
-  border-bottom: 1px solid #22262a;
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(18px);
+  background: rgba(7, 9, 20, 0.78);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 .navbar {
-  max-width: 1180px;
+  max-width: 1200px;
   margin: auto;
-  height: 72px;
-  padding: 0 24px;
+  min-height: 72px;
+  padding: 0 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -62,96 +57,110 @@ a {
 .logo {
   display: flex;
   align-items: center;
-  gap: 11px;
-  font-size: 25px;
-  font-weight: 700;
-}
-
-.r-logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: #f5f5f5;
-  color: #111;
-  display: grid;
-  place-items: center;
-  font-size: 25px;
+  gap: 10px;
+  font-size: 21px;
+  font-weight: 800;
 }
 
 .logo-ai {
-  color: #8fa3ff;
+  color: #8c7cff;
+}
+
+.r-logo,
+.chat-avatar,
+.welcome-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  color: white;
+  background: linear-gradient(135deg, #7867ff, #00c6ff);
+  box-shadow: 0 0 30px rgba(94, 112, 255, 0.45);
 }
 
 .nav-links {
   display: flex;
-  gap: 30px;
-  color: #b8bdc4;
+  gap: 28px;
 }
 
 .nav-links a {
-  transition: color 0.2s ease;
+  color: #aeb5cf;
+  font-size: 14px;
+  transition: 0.2s;
 }
 
 .nav-links a:hover {
-  color: #fff;
+  color: white;
+}
+
+.menu-btn,
+.chat-menu-btn {
+  border: 0;
+  background: transparent;
+  color: white;
+  font-size: 25px;
 }
 
 .menu-btn {
   display: none;
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 31px;
 }
 
-
-/* ================================
-   HERO
-================================ */
+/* HERO */
 
 .hero {
   min-height: 620px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 80px 20px 70px;
   text-align: center;
+  padding: 90px 20px;
 }
 
 .hero-content {
   max-width: 850px;
 }
 
-.badge {
-  display: inline-flex;
-  padding: 10px 18px;
-  border: 1px solid #30343a;
-  border-radius: 999px;
-  background: #15181c;
-  color: #d9dde2;
-  margin-bottom: 28px;
+.badge,
+.small-title {
+  color: #9b8cff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
-.hero h1 {
-  font-size: clamp(48px, 8vw, 82px);
-  line-height: 1.05;
-  letter-spacing: -3px;
+.badge {
+  display: inline-block;
+  padding: 9px 16px;
+  border: 1px solid rgba(140,124,255,0.35);
+  border-radius: 999px;
+  background: rgba(140,124,255,0.08);
   margin-bottom: 25px;
 }
 
+.hero h1 {
+  font-size: clamp(48px, 8vw, 88px);
+  line-height: 1.05;
+  letter-spacing: -4px;
+}
+
 .hero h1 span {
-  color: #a8b5ff;
+  display: block;
+  background: linear-gradient(90deg, #8f7cff, #36d7ff);
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 .hero p {
-  max-width: 680px;
-  margin: auto;
-  color: #9299a1;
-  font-size: 19px;
+  max-width: 650px;
+  margin: 28px auto;
+  color: #aeb5cf;
+  font-size: 18px;
 }
 
 .hero-buttons {
-  margin-top: 35px;
   display: flex;
   justify-content: center;
   gap: 14px;
@@ -159,389 +168,251 @@ a {
 
 .primary-btn,
 .secondary-btn {
-  padding: 15px 27px;
-  border-radius: 13px;
-  border: 1px solid #30343a;
-  font-weight: 600;
+  padding: 13px 22px;
+  border-radius: 12px;
+  font-weight: 700;
 }
 
 .primary-btn {
-  background: #f5f5f5;
-  color: #111;
+  background: linear-gradient(135deg, #7967ff, #35cfff);
+  color: white;
 }
 
 .secondary-btn {
-  background: #17191d;
-  color: #eee;
+  border: 1px solid rgba(255,255,255,0.13);
+  background: rgba(255,255,255,0.05);
 }
 
-
-/* ================================
-   CHAT
-================================ */
+/* CHAT */
 
 .chat-section {
-  padding: 30px 14px 80px;
+  padding: 30px 16px 90px;
 }
 
 .rafi-chat-app {
-  width: min(900px, 100%);
+  max-width: 1050px;
+  min-height: 650px;
   margin: auto;
-  background: #101214;
-  border: 1px solid #292d32;
-  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 28px;
   overflow: hidden;
+  background: rgba(14,17,34,0.78);
+  box-shadow: 0 30px 100px rgba(0,0,0,0.4);
+  backdrop-filter: blur(20px);
 }
 
 .chat-header {
-  height: 76px;
-  padding: 0 22px;
-  border-bottom: 1px solid #292d32;
+  min-height: 72px;
+  padding: 12px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 .chat-brand {
   display: flex;
   align-items: center;
-  gap: 13px;
+  gap: 12px;
 }
 
 .chat-avatar {
-  width: 43px;
-  height: 43px;
-  border-radius: 50%;
-  background: #f5f5f5;
-  color: #111;
-  display: grid;
-  place-items: center;
-  font-size: 21px;
-  font-weight: 500;
+  width: 40px;
+  height: 40px;
 }
 
 .chat-name {
-  font-size: 17px;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .chat-status {
-  color: #81878f;
-  font-size: 13px;
+  color: #58e69b;
+  font-size: 12px;
 }
-
-.chat-menu-btn {
-  border: 0;
-  background: transparent;
-  color: #aab0b7;
-  font-size: 25px;
-  padding: 8px;
-}
-
-
-/* ================================
-   CHAT MESSAGES
-================================ */
 
 .chat-messages {
-  height: 560px;
+  min-height: 430px;
+  max-height: 520px;
   overflow-y: auto;
-  padding: 25px;
-  scrollbar-width: thin;
-}
-
-.chat-messages::-webkit-scrollbar {
-  width: 6px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-  background: #30343a;
-  border-radius: 10px;
+  padding: 35px 22px;
 }
 
 .rafi-welcome {
-  min-height: 500px;
+  min-height: 390px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 40px 20px;
 }
 
 .welcome-avatar {
-  width: 86px;
-  height: 86px;
-  border-radius: 50%;
-  background: #f5f5f5;
-  color: #111;
-  display: grid;
-  place-items: center;
-  font-size: 36px;
-  margin-bottom: 25px;
+  width: 80px;
+  height: 80px;
+  font-size: 30px;
+  margin-bottom: 22px;
+  box-shadow:
+    0 0 35px rgba(101, 91, 255, 0.5),
+    0 0 100px rgba(0, 196, 255, 0.18);
 }
 
 .rafi-welcome h2 {
-  font-size: 36px;
-  margin-bottom: 8px;
-  letter-spacing: -1px;
+  font-size: 30px;
 }
 
 .rafi-welcome h2 span {
-  color: #a8b5ff;
+  color: #8877ff;
 }
 
 .rafi-welcome p {
-  color: #858c94;
-  font-size: 17px;
-  margin-bottom: 28px;
+  color: #9ea6c0;
+  margin: 7px 0 25px;
 }
 
 .suggestions {
-  width: min(560px, 100%);
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
 }
 
-.suggestions button {
-  width: 100%;
-  padding: 14px 18px;
-  border-radius: 13px;
-  border: 1px solid #2b2f35;
-  background: #17191d;
-  color: #c9ced4;
-  text-align: left;
-  transition: 0.2s ease;
+.suggestions button,
+.advanced-tools button,
+.image-edit-small {
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: #dce1f4;
+  padding: 10px 14px;
+  border-radius: 12px;
+  transition: 0.2s;
 }
 
-.suggestions button:hover {
-  background: #202328;
-  border-color: #41464d;
+.suggestions button:hover,
+.advanced-tools button:hover,
+.image-edit-small:hover {
+  background: rgba(125,105,255,0.15);
+  border-color: rgba(125,105,255,0.4);
 }
-
-
-/* ================================
-   MESSAGES
-================================ */
-
-.message {
-  max-width: 78%;
-  margin: 14px 0;
-  padding: 12px 16px;
-  border-radius: 16px;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-.user-message {
-  margin-left: auto;
-  background: #292d33;
-  color: #f3f3f3;
-  border-bottom-right-radius: 5px;
-}
-
-.ai-message {
-  margin-right: auto;
-  background: #171a1e;
-  border: 1px solid #292d32;
-  color: #e3e5e8;
-  border-bottom-left-radius: 5px;
-}
-
-
-/* ================================
-   COMPOSER
-================================ */
 
 .chat-composer {
-  padding: 14px 18px 18px;
-  border-top: 1px solid #292d32;
-  background: #101214;
+  padding: 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
 }
 
 .composer-box {
-  min-height: 58px;
   display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 8px 7px 12px;
-  border: 1px solid #343940;
-  background: #191b1f;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 18px;
+  background: rgba(0,0,0,0.2);
 }
 
-.composer-box:focus-within {
-  border-color: #555b64;
-}
-
-#userInput {
+.composer-box textarea {
   flex: 1;
-  min-width: 0;
-  max-height: 130px;
   resize: none;
-  overflow-y: auto;
+  min-height: 42px;
+  max-height: 140px;
+  padding: 10px;
+  color: white;
   border: 0;
   outline: 0;
   background: transparent;
-  color: #f3f3f3;
-  padding: 10px 7px;
 }
 
-#userInput::placeholder {
-  color: #777e86;
+.composer-box textarea::placeholder {
+  color: #747c98;
 }
 
-.composer-icon {
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: #aeb4bb;
-  font-size: 24px;
-}
-
-.composer-icon:hover {
-  background: #292d33;
-  color: #fff;
-}
-
+.composer-icon,
 .send-btn {
   width: 42px;
   height: 42px;
   flex-shrink: 0;
+  border-radius: 12px;
   border: 0;
-  border-radius: 50%;
-  background: #f5f5f5;
-  color: #111;
-  font-size: 25px;
-  font-weight: 700;
 }
 
-.send-btn:hover {
-  background: #dfe2e5;
+.composer-icon {
+  background: rgba(255,255,255,0.06);
+  color: #cbd1e5;
 }
 
-
-/* ================================
-   IMAGE TOOLS
-================================ */
-
-.image-tools {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 12px;
-  color: #777e86;
-  font-size: 13px;
+.send-btn {
+  background: linear-gradient(135deg, #7967ff, #36cfff);
+  color: white;
+  font-size: 20px;
 }
 
-.image-edit-small {
-  padding: 8px 13px;
-  border: 1px solid #292d32;
-  border-radius: 10px;
-  background: transparent;
-  color: #aaa;
-}
-
-.image-edit-small:hover {
-  background: #1a1d21;
-  color: #fff;
-}
-
-
-/* ================================
-   ADVANCED TOOLS
-================================ */
-
+.image-tools,
 .advanced-tools {
   display: flex;
   align-items: center;
-  justify-content: center;
   flex-wrap: wrap;
-  gap: 18px;
-  margin-top: 14px;
-  color: #777e86;
-  font-size: 13px;
+  gap: 9px;
+  margin-top: 10px;
 }
 
-.advanced-tools button {
-  border: 0;
-  background: transparent;
-  color: #777e86;
-  padding: 5px;
+.image-tools span {
+  color: #747c98;
+  font-size: 12px;
+  margin-right: 4px;
 }
 
-.advanced-tools button:hover {
-  color: #d5d8dc;
+.advanced-tools {
+  justify-content: space-between;
 }
 
 .voice-selector {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
+  color: #858da8;
+  font-size: 12px;
 }
 
 .voice-selector select {
-  border: 1px solid #30343a;
+  background: #171b31;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 8px;
   border-radius: 9px;
-  background: #17191d;
-  color: #bfc4ca;
-  padding: 7px 9px;
-  outline: none;
 }
 
+/* CHAT BUBBLES */
 
-/* ================================
-   THINKING
-================================ */
-
-.ai-thinking {
-  display: inline-flex;
-  gap: 5px;
-  align-items: center;
+.chat-message {
+  display: flex;
+  margin: 15px 0;
 }
 
-.ai-thinking span {
-  width: 6px;
-  height: 6px;
-  background: #999;
-  border-radius: 50%;
-  animation: thinking 1.2s infinite ease-in-out;
+.chat-message.user {
+  justify-content: flex-end;
 }
 
-.ai-thinking span:nth-child(2) {
-  animation-delay: 0.15s;
+.message-bubble {
+  max-width: 78%;
+  padding: 13px 16px;
+  border-radius: 17px;
+  white-space: pre-wrap;
 }
 
-.ai-thinking span:nth-child(3) {
-  animation-delay: 0.3s;
+.chat-message.user .message-bubble {
+  background: linear-gradient(135deg, #6757df, #397fcf);
 }
 
-@keyframes thinking {
-
-  0%,
-  60%,
-  100% {
-    opacity: 0.25;
-    transform: translateY(0);
-  }
-
-  30% {
-    opacity: 1;
-    transform: translateY(-3px);
-  }
-
+.chat-message.assistant .message-bubble {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
+/* GENERAL SECTIONS */
 
-/* ================================
-   FEATURES
-================================ */
-
-.features {
+.product-research,
+.features,
+.about,
+.contact {
   max-width: 1100px;
   margin: auto;
   padding: 90px 20px;
@@ -549,162 +420,32 @@ a {
 
 .section-title {
   text-align: center;
-  margin-bottom: 45px;
-}
-
-.small-title {
-  color: #8f9cff;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  margin-bottom: 9px;
+  margin-bottom: 35px;
 }
 
 .section-title h2 {
-  font-size: 38px;
+  font-size: clamp(30px, 5vw, 48px);
+  margin: 8px 0;
 }
 
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 15px;
+.section-title p {
+  color: #969eb8;
 }
 
-.feature-card {
-  background: #111417;
-  border: 1px solid #292d32;
-  border-radius: 17px;
-  padding: 25px;
-}
-
-.feature-card .icon {
-  font-size: 27px;
-  margin-bottom: 15px;
-}
-
-.feature-card h3 {
-  margin-bottom: 7px;
-}
-
-.feature-card p {
-  color: #858c94;
-  font-size: 14px;
-}
-
-
-/* ================================
-   ABOUT
-================================ */
-
-.about {
-  max-width: 900px;
-  margin: auto;
-  padding: 100px 20px;
-  text-align: center;
-}
-
-.about h2 {
-  font-size: 42px;
-  margin-bottom: 20px;
-}
-
-.about h2 span {
-  color: #a8b5ff;
-}
-
-.about p {
-  color: #8a9199;
-  margin: 10px auto;
-  max-width: 650px;
-}
-
-
-/* ================================
-   CONTACT
-================================ */
-
-.contact {
-  max-width: 700px;
-  margin: auto;
-  padding: 80px 20px 100px;
-}
-
-.contact-form {
-  display: grid;
-  gap: 13px;
-}
-
-.contact-form input {
-  width: 100%;
-  padding: 15px;
-  border: 1px solid #30343a;
-  border-radius: 12px;
-  background: #15181c;
-  color: #fff;
-  outline: none;
-}
-
-.contact-form input:focus {
-  border-color: #59616b;
-}
-
-.contact-form button {
-  padding: 14px;
-  border: 0;
-  border-radius: 12px;
-  background: #f5f5f5;
-  color: #111;
-  font-weight: 600;
-}
-
-
-/* ================================
-   FOOTER
-================================ */
-
-footer {
-  padding: 35px 20px;
-  text-align: center;
-  border-top: 1px solid #25292e;
-  color: #777e86;
-}
-
-footer .logo {
-  justify-content: center;
-  margin-bottom: 8px;
-  color: #eee;
-}
-
-footer .logo span {
-  color: #a8b5ff;
-}
-
-
-/* ================================
-   PRODUCT / SUPPLIER RESEARCH
-================================ */
-
-.product-research {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 80px 20px;
-}
-
-.product-research .section-title {
-  margin-bottom: 30px;
-}
+/* CARDS */
 
 .research-card {
-  background: #111417;
-  border: 1px solid #292d32;
-  border-radius: 20px;
-  padding: 24px;
+  padding: 25px;
+  border-radius: 22px;
+  background: rgba(17,21,41,0.75);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
 }
 
 .research-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: 18px;
 }
 
 .research-field {
@@ -714,7 +455,7 @@ footer .logo span {
 }
 
 .research-field label {
-  color: #aeb4bb;
+  color: #aeb6cf;
   font-size: 13px;
 }
 
@@ -722,126 +463,165 @@ footer .logo span {
 .research-field textarea {
   width: 100%;
   padding: 13px 14px;
-  border: 1px solid #30343a;
-  border-radius: 11px;
-  background: #191c20;
-  color: #f5f5f5;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.2);
+  color: white;
   outline: none;
-}
-
-.research-field textarea {
-  resize: vertical;
-  min-height: 120px;
 }
 
 .research-field input:focus,
 .research-field textarea:focus {
-  border-color: #69727d;
+  border-color: #7667ff;
 }
 
 .research-btn {
-  width: 100%;
-  margin-top: 20px;
-  min-height: 48px;
-  padding: 14px 18px;
+  margin-top: 18px;
   border: 0;
   border-radius: 12px;
-  background: #f5f5f5;
-  color: #111;
+  padding: 13px 18px;
+  color: white;
   font-weight: 700;
+  background: linear-gradient(135deg, #7161f0, #319bd1);
 }
-
-.research-btn:hover {
-  background: #dedfe1;
-}
-
-.research-result {
-  margin-top: 20px;
-  color: #aeb4bb;
-}
-
-.research-output {
-  padding: 20px;
-  border: 1px solid #30343a;
-  border-radius: 15px;
-  background: #171a1e;
-  overflow-wrap: anywhere;
-}
-
-.research-output h3 {
-  color: #fff;
-  margin-bottom: 15px;
-}
-
-.research-output p {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 8px 0;
-  border-bottom: 1px solid #292d32;
-}
-
-.research-output strong {
-  color: #f5f5f5;
-}
-
-
-/* ================================
-   ORDER APPROVAL
-================================ */
 
 .approval-actions {
   display: flex;
   gap: 10px;
-  margin-top: 18px;
-  flex-wrap: wrap;
+  margin-top: 10px;
 }
 
-.approval-actions button {
+.approve-btn,
+.reject-btn {
   flex: 1;
-  min-width: 120px;
-  min-height: 48px;
-  padding: 13px 18px;
   border: 0;
+  padding: 13px;
   border-radius: 12px;
+  color: white;
   font-weight: 700;
 }
 
 .approve-btn {
-  background: #f5f5f5;
-  color: #111;
+  background: #16895a;
 }
 
 .reject-btn {
-  background: #292d32;
-  color: #fff;
-  border: 1px solid #444 !important;
+  background: #a93245;
 }
 
-.approval-actions button:hover {
-  opacity: 0.85;
+.research-result {
+  margin-top: 20px;
 }
 
+.research-output {
+  padding: 18px;
+  border-radius: 15px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
 
-/* ================================
-   MOBILE
-================================ */
+.research-output h3 {
+  margin-bottom: 12px;
+  color: #a99cff;
+}
 
-@media (max-width: 700px) {
+/* FEATURES */
 
-  .navbar {
-    height: 64px;
-    padding: 0 18px;
-  }
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
 
-  .logo {
-    font-size: 23px;
-  }
+.feature-card {
+  padding: 24px;
+  min-height: 190px;
+  border-radius: 20px;
+  background: rgba(17,21,41,0.7);
+  border: 1px solid rgba(255,255,255,0.08);
+}
 
-  .r-logo {
-    width: 40px;
-    height: 40px;
-  }
+.feature-card .icon {
+  font-size: 28px;
+  margin-bottom: 15px;
+}
+
+.feature-card h3 {
+  margin-bottom: 8px;
+}
+
+.feature-card p,
+.about p {
+  color: #929ab5;
+}
+
+/* ABOUT */
+
+.about-content {
+  max-width: 750px;
+  margin: auto;
+  text-align: center;
+}
+
+.about h2 {
+  font-size: clamp(34px, 5vw, 55px);
+  margin: 10px 0 22px;
+}
+
+.about h2 span {
+  color: #8171ff;
+}
+
+.about p {
+  margin: 10px 0;
+}
+
+/* CONTACT */
+
+.contact-form {
+  max-width: 550px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contact-form input {
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(17,21,41,0.8);
+  color: white;
+  outline: none;
+}
+
+.contact-form button {
+  border: 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #7665f4, #35cfff);
+  color: white;
+  font-weight: 700;
+}
+
+/* FOOTER */
+
+footer {
+  text-align: center;
+  padding: 40px 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  color: #747c98;
+}
+
+footer .logo {
+  justify-content: center;
+  color: white;
+  margin-bottom: 8px;
+}
+
+/* MOBILE */
+
+@media (max-width: 800px) {
 
   .nav-links {
     display: none;
@@ -851,189 +631,92 @@ footer .logo span {
     display: block;
   }
 
-  .nav-links.active {
-    display: flex;
-    position: absolute;
-    top: 64px;
-    left: 10px;
-    right: 10px;
-    flex-direction: column;
-    gap: 0;
-    padding: 10px;
-    background: #111417;
-    border: 1px solid #292d32;
-    border-radius: 15px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
-  }
-
-  .nav-links.active a {
-    padding: 13px 14px;
-    border-radius: 10px;
-  }
-
-  .nav-links.active a:hover {
-    background: #1b1e22;
-  }
-
   .hero {
-    min-height: 470px;
-    padding: 55px 18px 45px;
+    min-height: 540px;
+    padding-top: 70px;
   }
 
   .hero h1 {
-    font-size: 48px;
     letter-spacing: -2px;
   }
 
-  .hero p {
-    font-size: 16px;
-  }
-
   .hero-buttons {
-    gap: 10px;
-  }
-
-  .primary-btn,
-  .secondary-btn {
-    padding: 13px 18px;
-  }
-
-  .chat-section {
-    padding: 15px 8px 50px;
-  }
-
-  .rafi-chat-app {
-    border-radius: 19px;
-  }
-
-  .chat-header {
-    height: 68px;
-    padding: 0 15px;
-  }
-
-  .chat-messages {
-    height: 500px;
-    padding: 12px;
-  }
-
-  .rafi-welcome {
-    min-height: 450px;
-    padding: 25px 10px;
-  }
-
-  .welcome-avatar {
-    width: 72px;
-    height: 72px;
-    font-size: 30px;
-    margin-bottom: 20px;
-  }
-
-  .rafi-welcome h2 {
-    font-size: 29px;
-  }
-
-  .rafi-welcome p {
-    font-size: 15px;
-  }
-
-  .suggestions button {
-    text-align: center;
-    padding: 13px;
-  }
-
-  .message {
-    max-width: 88%;
-  }
-
-  .chat-composer {
-    padding: 10px;
-  }
-
-  .composer-box {
-    min-height: 56px;
-    border-radius: 17px;
-  }
-
-  .advanced-tools {
-    gap: 12px;
-    font-size: 12px;
-  }
-
-  .feature-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .features {
-    padding: 65px 15px;
-  }
-
-  .section-title h2 {
-    font-size: 32px;
-  }
-
-  .about h2 {
-    font-size: 34px;
-  }
-
-  .product-research {
-    padding: 60px 15px;
+    flex-direction: column;
+    max-width: 260px;
+    margin: auto;
   }
 
   .research-grid {
     grid-template-columns: 1fr;
   }
 
-  .research-card {
-    padding: 17px;
+  .feature-grid {
+    grid-template-columns: 1fr 1fr;
   }
 
-  .approval-actions {
-    flex-direction: column;
+  .advanced-tools {
+    justify-content: flex-start;
   }
 
-  .approval-actions button {
+  .voice-selector {
     width: 100%;
   }
 
+  .message-bubble {
+    max-width: 90%;
+  }
 }
 
+@media (max-width: 520px) {
 
-/* ================================
-   SMALL MOBILE
-================================ */
-
-@media (max-width: 430px) {
-
-  .hero h1 {
-    font-size: 42px;
+  .navbar {
+    padding: 0 15px;
   }
 
-  .hero-buttons {
+  .hero {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .hero h1 {
+    font-size: 48px;
+  }
+
+  .hero p {
+    font-size: 15px;
+  }
+
+  .chat-section,
+  .product-research,
+  .features,
+  .about,
+  .contact {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .rafi-chat-app {
+    border-radius: 20px;
+  }
+
+  .chat-messages {
+    padding: 20px 12px;
+  }
+
+  .suggestions {
     flex-direction: column;
     width: 100%;
   }
 
-  .primary-btn,
-  .secondary-btn {
+  .suggestions button {
     width: 100%;
-    text-align: center;
   }
 
   .feature-grid {
     grid-template-columns: 1fr;
   }
 
-  .image-tools {
-    flex-wrap: wrap;
+  .approval-actions {
+    flex-direction: column;
   }
-
-  .advanced-tools {
-    gap: 8px;
-  }
-
-  .voice-selector {
-    width: 100%;
-    justify-content: center;
-  }
-
    }
