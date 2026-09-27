@@ -1,1020 +1,218 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ur">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <meta name="theme-color" content="#050816">
+  <meta name="description" content="Rafi AI — Your personal AI command center">
   <title>Rafi AI</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/style.css">
   <link rel="manifest" href="/manifest.json">
-</head>
 
-<body>
-
-  <!-- =========================
-       NAVIGATION
-  ========================== -->
-
-  <header class="top-header">
-
-    <nav class="navbar">
-
-      <a href="#home" class="logo">
-        <span class="r-logo">R</span>
-        <span>Rafi <span class="logo-ai">AI</span></span>
-      </a>
-
-      <div class="nav-links">
-
-        <a href="#home">Home</a>
-        <a href="#chat">AI Chat</a>
-        <a href="#about">About</a>
-        <a href="#contact">Contact</a>
-
-      </div>
-
-      <button
-        type="button"
-        class="menu-btn"
-        onclick="toggleMenu()"
-        aria-label="Open menu"
-      >
-        ☰
-      </button>
-
-    </nav>
-
-  </header>
-
-
-  <!-- =========================
-       HOME
-  ========================== -->
-
-  <section id="home" class="hero">
-
-    <div class="hero-content">
-
-      <div class="badge">
-        ✨ Smart Rafi AI
-      </div>
-
-      <h1>
-        Your Smart
-        <span>Rafi AI</span>
-      </h1>
-
-      <p>
-        Ask questions, get ideas, solve problems and
-        communicate with your Rafi AI easily.
-      </p>
-
-      <div class="hero-buttons">
-
-        <a href="#chat" class="primary-btn">
-          Start AI Chat
-        </a>
-
-        <a href="#about" class="secondary-btn">
-          Learn More
-        </a>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- =========================
-       AI CHAT
-  ========================== -->
-
-  <section id="chat" class="chat-section">
-
-    <div class="rafi-chat-app">
-
-      <div class="chat-header">
-
-        <div class="chat-brand">
-
-          <div class="chat-avatar">
-            R
-          </div>
-
-          <div>
-
-            <div class="chat-name">
-              Rafi AI
-            </div>
-
-            <div class="chat-status">
-              ● Online
-            </div>
-
-          </div>
-
-        </div>
-
-        <button
-          type="button"
-          class="chat-menu-btn"
-          onclick="toggleMenu()"
-          aria-label="Menu"
-        >
-          ⋯
-        </button>
-
-      </div>
-
-
-      <div id="chatMessages" class="chat-messages">
-
-        <div class="rafi-welcome">
-
-          <div class="welcome-avatar">
-            R
-          </div>
-
-          <h2>
-            Hi, I am your <span>Rafi</span>
-          </h2>
-
-          <p>
-            How can I help you today?
-          </p>
-
-          <div class="suggestions">
-
-            <button
-              type="button"
-              onclick="document.getElementById('userInput').value='Help me find a profitable product for Shopify'; document.getElementById('userInput').focus();"
-            >
-              💡 Find a product
-            </button>
-
-            <button
-              type="button"
-              onclick="document.getElementById('userInput').value='Help me with my e-commerce business'; document.getElementById('userInput').focus();"
-            >
-              🛒 E-commerce help
-            </button>
-
-            <button
-              type="button"
-              onclick="document.getElementById('userInput').value='Give me a business idea'; document.getElementById('userInput').focus();"
-            >
-              ✨ Business idea
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div class="chat-composer">
-
-        <div class="composer-box">
-
-          <button
-            type="button"
-            class="composer-icon"
-            onclick="document.getElementById('imageInput').click()"
-            aria-label="Select image"
-          >
-            +
-          </button>
-
-          <textarea
-            id="userInput"
-            placeholder="Message Rafi AI"
-            rows="1"
-            onkeydown="handleEnter(event)"
-          ></textarea>
-
-          <button
-            type="button"
-            class="composer-icon"
-            onclick="startVoice()"
-            aria-label="Voice input"
-          >
-            🎙
-          </button>
-
-          <button
-            type="button"
-            class="send-btn"
-            onclick="sendMessage()"
-            aria-label="Send message"
-          >
-            ↑
-          </button>
-
-        </div>
-
-
-        <input
-          type="file"
-          id="imageInput"
-          accept="image/*"
-          hidden
-        >
-
-
-        <div class="image-tools">
-
-          <span>
-            Image tools
-          </span>
-
-          <button
-            type="button"
-            onclick="editImage()"
-            class="image-edit-small"
-          >
-            ✨ Edit Image
-          </button>
-
-        </div>
-
-
-        <div class="advanced-tools">
-
-          <button
-            type="button"
-            onclick="startLiveCall()"
-          >
-            📞 Live Call
-          </button>
-
-          <button
-            type="button"
-            onclick="exportChat()"
-          >
-            Save Chat
-          </button>
-
-          <button
-            type="button"
-            onclick="clearChat()"
-          >
-            Clear
-          </button>
-
-          <div class="voice-selector">
-
-            <label for="liveVoice">
-              AI Voice
-            </label>
-
-            <select id="liveVoice">
-
-              <option value="marin">
-                Female Voice
-              </option>
-
-              <option value="cedar">
-                Male Voice
-              </option>
-
-            </select>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- =========================
-       SUPPLIER CHAT
-  ========================== -->
-
-  <section id="supplier-chat" class="product-research">
-
-    <div class="section-title">
-
-      <div class="small-title">
-        SUPPLIER CHAT
-      </div>
-
-      <h2>
-        Talk to Supplier
-      </h2>
-
-      <p>
-        Rafi AI supplier کے پیغامات کو سمجھ کر professional reply تیار کرے گا۔
-      </p>
-
-    </div>
-
-
-    <div class="research-card">
-
-      <div class="research-field">
-
-        <label for="supplierChatMessage">
-          Supplier Message
-        </label>
-
-        <textarea
-          id="supplierChatMessage"
-          placeholder="Supplier کا message یہاں لکھیں..."
-          rows="5"
-        ></textarea>
-
-      </div>
-
-      <button
-        type="button"
-        class="research-btn"
-        onclick="sendSupplierMessage()"
-      >
-        Send to Rafi AI
-      </button>
-
-      <div
-        id="supplierChatResult"
-        class="research-result"
-      ></div>
-
-    </div>
-
-  </section>
-
-
-  <!-- =========================
-       PRODUCT RESEARCH
-  ========================== -->
-
-  <section id="product-research" class="product-research">
-
-    <div class="section-title">
-
-      <div class="small-title">
-        PRODUCT RESEARCH
-      </div>
-
-      <h2>
-        Product Research
-      </h2>
-
-      <p>
-        Check product cost, shipping, selling price, profit and profit margin.
-      </p>
-
-    </div>
-
-
-    <div class="research-card">
-
-      <div class="research-grid">
-
-        <div class="research-field">
-
-          <label for="productName">
-            Product Name
-          </label>
-
-          <input
-            type="text"
-            id="productName"
-            placeholder="Example: Drawer Organizer"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="supplierPrice">
-            Supplier Price
-          </label>
-
-          <input
-            type="number"
-            id="supplierPrice"
-            placeholder="0.00"
-            step="0.01"
-            min="0"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="shippingCost">
-            Shipping Cost
-          </label>
-
-          <input
-            type="number"
-            id="shippingCost"
-            placeholder="0.00"
-            step="0.01"
-            min="0"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="sellingPrice">
-            Selling Price
-          </label>
-
-          <input
-            type="number"
-            id="sellingPrice"
-            placeholder="0.00"
-            step="0.01"
-            min="0"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="competition">
-            Competition
-          </label>
-
-          <input
-            type="text"
-            id="competition"
-            placeholder="Example: Low / Medium / High"
-          >
-
-        </div>
-
-      </div>
-
-
-      <button
-        type="button"
-        class="research-btn"
-        onclick="researchProduct()"
-      >
-        🔎 Research Product
-      </button>
-
-
-      <div
-        id="researchResult"
-        class="research-result"
-      ></div>
-
-    </div>
-
-  </section>
-
-
-  <!-- =========================
-       SUPPLIER RESEARCH
-  ========================== -->
-
-  <section id="supplier-research" class="product-research">
-
-    <div class="section-title">
-
-      <div class="small-title">
-        SUPPLIER RESEARCH
-      </div>
-
-      <h2>
-        Check Supplier
-      </h2>
-
-      <p>
-        Check supplier price, stock, shipping and delivery information.
-      </p>
-
-    </div>
-
-
-    <div class="research-card">
-
-      <div class="research-grid">
-
-        <div class="research-field">
-
-          <label for="supplierName">
-            Supplier Name
-          </label>
-
-          <input
-            type="text"
-            id="supplierName"
-            placeholder="Supplier name"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="supplierProduct">
-            Product Name
-          </label>
-
-          <input
-            type="text"
-            id="supplierProduct"
-            placeholder="Product name"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="unitPrice">
-            Unit Price
-          </label>
-
-          <input
-            type="number"
-            id="unitPrice"
-            placeholder="0.00"
-            step="0.01"
-            min="0"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="supplierShipping">
-            Shipping Cost
-          </label>
-
-          <input
-            type="number"
-            id="supplierShipping"
-            placeholder="0.00"
-            step="0.01"
-            min="0"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="moq">
-            MOQ
-          </label>
-
-          <input
-            type="number"
-            id="moq"
-            placeholder="Minimum order quantity"
-            min="0"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="stock">
-            Stock
-          </label>
-
-          <input
-            type="text"
-            id="stock"
-            placeholder="Example: In stock"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="deliveryTime">
-            Delivery Time
-          </label>
-
-          <input
-            type="text"
-            id="deliveryTime"
-            placeholder="Example: 7-12 days"
-          >
-
-        </div>
-
-      </div>
-
-
-      <button
-        type="button"
-        class="research-btn"
-        onclick="researchSupplier()"
-      >
-        🔎 Check Supplier
-      </button>
-
-
-      <div
-        id="supplierResult"
-        class="research-result"
-      ></div>
-
-    </div>
-
-  </section>
-
-
-  <!-- =========================
-       ORDER APPROVAL
-  ========================== -->
-
-  <section id="order-approval" class="product-research">
-
-    <div class="section-title">
-
-      <div class="small-title">
-        ORDER APPROVAL
-      </div>
-
-      <h2>
-        Order Approval
-      </h2>
-
-      <p>
-        Review the order cost and approve it before placing the supplier order.
-      </p>
-
-    </div>
-
-
-    <div class="research-card">
-
-      <div class="research-grid">
-
-        <div class="research-field">
-
-          <label for="approvalProduct">
-            Product Name
-          </label>
-
-          <input
-            type="text"
-            id="approvalProduct"
-            placeholder="Product name"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="approvalSupplierName">
-            Supplier Name
-          </label>
-
-          <input
-            type="text"
-            id="approvalSupplierName"
-            placeholder="Supplier name"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="approvalQuantity">
-            Quantity
-          </label>
-
-          <input
-            type="number"
-            id="approvalQuantity"
-            placeholder="1"
-            min="1"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="approvalUnitCost">
-            Supplier Unit Cost
-          </label>
-
-          <input
-            type="number"
-            id="approvalUnitCost"
-            placeholder="0.00"
-            step="0.01"
-            min="0"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="approvalShipping">
-            Shipping Per Unit
-          </label>
-
-          <input
-            type="number"
-            id="approvalShipping"
-            placeholder="0.00"
-            step="0.01"
-            min="0"
-          >
-
-        </div>
-
-
-        <div class="research-field">
-
-          <label for="approvalSelling">
-            Selling Price Per Unit
-          </label>
-
-          <input
-            type="number"
-            id="approvalSelling"
-            placeholder="0.00"
-            step="0.01"
-            min="0"
-          >
-
-        </div>
-
-      </div>
-
-
-      <button
-        type="button"
-        class="research-btn"
-        onclick="checkApproval()"
-      >
-        Check Order
-      </button>
-
-
-      <button
-        type="button"
-        class="research-btn"
-        onclick="prepareOrder()"
-      >
-        Prepare Order
-      </button>
-
-
-      <div class="approval-actions">
-
-        <button
-          type="button"
-          class="approve-btn"
-          onclick="approveOrder()"
-        >
-          Approve Order
-        </button>
-
-        <button
-          type="button"
-          class="reject-btn"
-          onclick="rejectOrder()"
-        >
-          Reject Order
-        </button>
-
-      </div>
-
-
-      <button
-        type="button"
-        class="research-btn"
-        onclick="prepareSupplierOrder()"
-      >
-        Prepare Supplier Order
-      </button>
-
-
-      <div
-        id="approvalResult"
-        class="research-result"
-      ></div>
-
-    </div>
-
-  </section>
-
-
-  <!-- =========================
-       FEATURES
-  ========================== -->
-
-  <section class="features">
-
-    <div class="section-title">
-
-      <div class="small-title">
-        FEATURES
-      </div>
-
-      <h2>
-        What You Can Do
-      </h2>
-
-    </div>
-
-
-    <div class="feature-grid">
-
-      <div class="feature-card">
-
-        <div class="icon">
-          🤖
-        </div>
-
-        <h3>
-          Rafi AI
-        </h3>
-
-        <p>
-          Get intelligent answers and helpful information.
-        </p>
-
-      </div>
-
-
-      <div class="feature-card">
-
-        <div class="icon">
-          ⚡
-        </div>
-
-        <h3>
-          Fast Response
-        </h3>
-
-        <p>
-          Get quick responses whenever you need help.
-        </p>
-
-      </div>
-
-
-      <div class="feature-card">
-
-        <div class="icon">
-          💡
-        </div>
-
-        <h3>
-          Smart Ideas
-        </h3>
-
-        <p>
-          Generate ideas, plans and solutions with AI.
-        </p>
-
-      </div>
-
-
-      <div class="feature-card">
-
-        <div class="icon">
-          🔒
-        </div>
-
-        <h3>
-          Simple & Secure
-        </h3>
-
-        <p>
-          A clean and simple AI experience.
-        </p>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- =========================
-       ABOUT
-  ========================== -->
-
-  <section id="about" class="about">
-
-    <div class="about-content">
-
-      <div class="small-title">
-        ABOUT US
-      </div>
-
-      <h2>
-        Powerful AI.
-        <span>Simple Experience.</span>
-      </h2>
-
-      <p>
-        Rafi AI is designed to make artificial intelligence
-        simple and accessible.
-      </p>
-
-      <p>
-        Ask questions, generate ideas, learn new things
-        and get assistance with everyday tasks.
-      </p>
-
-    </div>
-
-  </section>
-
-
-  <!-- =========================
-       CONTACT
-  ========================== -->
-
-  <section id="contact" class="contact">
-
-    <div class="section-title">
-
-      <div class="small-title">
-        CONTACT
-      </div>
-
-      <h2>
-        Get In Touch
-      </h2>
-
-      <p>
-        Have a question? Send us a message.
-      </p>
-
-    </div>
-
-
-    <form
-      class="contact-form"
-      onsubmit="submitContact(event)"
-    >
-
-      <input
-        type="text"
-        id="name"
-        placeholder="Your Name"
-        required
-      >
-
-      <input
-        type="email"
-        id="email"
-        placeholder="Your Email"
-        required
-      >
-
-      <button type="submit">
-        Send Message
-      </button>
-
-    </form>
-
-  </section>
-
-
-  <!-- =========================
-       FOOTER
-  ========================== -->
-
-  <footer>
-
-    <div class="logo">
-      Rafi <span>AI</span>
-    </div>
-
-    <p>
-      © 2026 Rafi AI. All rights reserved.
-    </p>
-
-  </footer>
-
-
-  <script src="script.js"></script>
-
-</body>
-  </html>
+  <style>
+    /* Rafi AI Command Center */
+    .rafi-command-center {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    .rafi-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 24px;
+    }
+
+    .rafi-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .rafi-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 35% 30%, #ffffff, #7c5cff 25%, #20d9ff 60%, #071126 100%);
+      box-shadow: 0 0 35px rgba(78, 170, 255, .55);
+      font-weight: 900;
+      color: white;
+    }
+
+    .rafi-brand h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .rafi-brand p {
+      margin: 3px 0 0;
+      opacity: .65;
+      font-size: 13px;
+    }
+
+    .rafi-status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      opacity: .8;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #35e889;
+      box-shadow: 0 0 12px #35e889;
+    }
+
+    .rafi-orb-area {
+      min-height: 270px;
+      display: grid;
+      place-items: center;
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      margin-bottom: 22px;
+      background:
+        radial-gradient(circle at center,
+          rgba(78, 130, 255, .16),
+          transparent 35%),
+        rgba(7, 12, 30, .55);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .rafi-orb {
+      width: 145px;
+      height: 145px;
+      border-radius: 50%;
+      position: relative;
+      background:
+        radial-gradient(circle at 32% 28%,
+          #fff 0 4%,
+          #9d8cff 8%,
+          #596cff 25%,
+          #20d9ff 55%,
+          #061126 78%);
+      box-shadow:
+        0 0 25px rgba(91,115,255,.75),
+        0 0 70px rgba(31,210,255,.35),
+        inset 0 0 35px rgba(255,255,255,.25);
+      animation: rafiPulse 3s ease-in-out infinite;
+    }
+
+    .rafi-orb::before,
+    .rafi-orb::after {
+      content: "";
+      position: absolute;
+      inset: -30px;
+      border: 1px solid rgba(77,190,255,.28);
+      border-radius: 50%;
+      animation: rafiOrbit 7s linear infinite;
+    }
+
+    .rafi-orb::after {
+      inset: -52px;
+      border-color: rgba(135,102,255,.18);
+      animation-duration: 11s;
+      animation-direction: reverse;
+    }
+
+    .rafi-orb-label {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 13px;
+      opacity: .65;
+    }
+
+    @keyframes rafiPulse {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+
+    @keyframes rafiOrbit {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .rafi-layout {
+      display: grid;
+      grid-template-columns: 1.45fr .75fr;
+      gap: 20px;
+    }
+
+    .rafi-panel {
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(8,14,32,.72);
+      backdrop-filter: blur(18px);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .rafi-panel-head {
+      padding: 17px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .rafi-panel-head strong {
+      font-size: 15px;
+    }
+
+    .rafi-panel-head span {
+      font-size: 11px;
+      opacity: .55;
+    }
+
+    #chatMessages {
+      height: 390px;
+      overflow-y: auto;
+      padding: 18px;
+    }
+
+    .rafi-welcome {
+      text-align: center;
+      padding: 55px 20px;
+      opacity: .72;
+    }
+
+    .rafi-welcome h2 {
+      margin: 0 0 8px;
+      font-size: 25px;
+    }
+
+    .rafi-welcome p {
+      margin: 0;
+      font-size: 13px;
+    }
+
+    .rafi-input-area {
+      padding: 14px;
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+
+    .rafi-input-row {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+    }
+
+    #userInput {
+      flex: 1;
+      min-height: 48px;
+      resize: none;
+      border-radius: 16px;
+      padding: 13px 15px;
+    }
+
+    .rafi-icon-btn,
