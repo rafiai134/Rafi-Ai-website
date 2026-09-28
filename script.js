@@ -271,4 +271,1143 @@ function clearChat() {
 
 function setSuggestion(text) {
 
-  const input = getElement("user
+  const input = getElement("userInput");
+
+  if (!input) return;
+
+  input.value = text;
+  input.focus();
+}
+
+/* =========================
+   SAVE CHAT
+========================= */
+
+function exportChat() {
+
+  const container = getElement("chatMessages");
+
+  if (!container) return;
+
+  const text = container.innerText;
+
+  const blob = new Blob(
+    [text],
+    { type: "text/plain;charset=utf-8" }
+  );
+
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "Rafi-AI-chat.txt";
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  URL.revokeObjectURL(url);
+}
+
+/* =========================
+   CONTACT
+========================= */
+
+function submitContact(event) {
+
+  event.preventDefault();
+
+  alert("آپ کا پیغام محفوظ کر لیا گیا ہے۔");
+
+  event.target.reset();
+}
+
+/* =========================
+   PRODUCT RESEARCH
+========================= */
+
+async function researchProduct() {
+
+  const productName =
+    getElement("productName")?.value.trim();
+
+  const supplierPrice =
+    getElement("supplierPrice")?.value;
+
+  const shippingCost =
+    getElement("shippingCost")?.value;
+
+  const sellingPrice =
+    getElement("sellingPrice")?.value;
+
+  const competition =
+    getElement("competition")?.value.trim();
+
+  if (!productName) {
+    showResult(
+      "researchResult",
+      `<div class="research-output">
+        Product name ضروری ہے۔
+      </div>`
+    );
+    return;
+  }
+
+  showResult(
+    "researchResult",
+    `<div class="research-output">
+      Rafi AI research کر رہا ہے...
+    </div>`
+  );
+
+  try {
+
+    const response = await fetch(
+      "/api/productResearch",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          productName,
+          supplierPrice,
+          shippingCost,
+          sellingPrice,
+          competition
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Research failed");
+    }
+
+    showResult(
+      "researchResult",
+      `
+      <div class="research-output">
+
+        <h3>Product Research Result</h3>
+
+        <p><strong>Product:</strong> ${escapeHtml(data.product)}</p>
+
+        <p><strong>Supplier Price:</strong> $${data.supplierPrice}</p>
+
+        <p><strong>Shipping:</strong> $${data.shippingCost}</p>
+
+        <p><strong>Total Cost:</strong> $${data.totalCost}</p>
+
+        <p><strong>Selling Price:</strong> $${data.sellingPrice}</p>
+
+        <p><strong>Profit:</strong> $${data.profit}</p>
+
+        <p><strong>Profit Margin:</strong> ${data.profitMargin}%</p>
+
+        <p><strong>Competition:</strong> ${escapeHtml(data.competition)}</p>
+
+      </div>
+      `
+    );
+
+  } catch (error) {
+
+    showResult(
+      "researchResult",
+      `<div class="research-output">
+        ${escapeHtml(error.message)}
+      </div>`
+    );
+  }
+}
+
+/* =========================
+   SUPPLIER RESEARCH
+========================= */
+
+async function researchSupplier() {
+
+  const supplierName =
+    getElement("supplierName")?.value.trim();
+
+  const productName =
+    getElement("supplierProduct")?.value.trim();
+
+  const unitPrice =
+    getElement("unitPrice")?.value;
+
+  const shippingCost =
+    getElement("supplierShipping")?.value;
+
+  const moq =
+    getElement("moq")?.value;
+
+  const stock =
+    getElement("stock")?.value.trim();
+
+  const deliveryTime =
+    getElement("deliveryTime")?.value.trim();
+
+  if (!supplierName || !productName) {
+
+    showResult(
+      "supplierResult",
+      `<div class="research-output">
+        Supplier name اور product name ضروری ہیں۔
+      </div>`
+    );
+
+    return;
+  }
+
+  showResult(
+    "supplierResult",
+    `<div class="research-output">
+      Supplier check ہو رہا ہے...
+    </div>`
+  );
+
+  try {
+
+    const response = await fetch(
+      "/api/supplierResearch",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          supplierName,
+          productName,
+          unitPrice,
+          shippingCost,
+          moq,
+          stock,
+          deliveryTime
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Supplier research failed");
+    }
+
+    showResult(
+      "supplierResult",
+      `
+      <div class="research-output">
+
+        <h3>Supplier Result</h3>
+
+        <p><strong>Supplier:</strong> ${escapeHtml(data.supplier)}</p>
+
+        <p><strong>Product:</strong> ${escapeHtml(data.product)}</p>
+
+        <p><strong>Unit Price:</strong> $${data.unitPrice}</p>
+
+        <p><strong>Shipping:</strong> $${data.shippingCost}</p>
+
+        <p><strong>Estimated Unit Cost:</strong> $${data.estimatedUnitCost}</p>
+
+        <p><strong>MOQ:</strong> ${data.minimumOrderQuantity}</p>
+
+        <p><strong>Stock:</strong> ${escapeHtml(data.stock)}</p>
+
+        <p><strong>Delivery:</strong> ${escapeHtml(data.deliveryTime)}</p>
+
+      </div>
+      `
+    );
+
+  } catch (error) {
+
+    showResult(
+      "supplierResult",
+      `<div class="research-output">
+        ${escapeHtml(error.message)}
+      </div>`
+    );
+  }
+}
+
+/* =========================
+   ORDER APPROVAL
+========================= */
+
+async function checkApproval() {
+
+  const productName =
+    getElement("approvalProduct")?.value.trim();
+
+  const quantity =
+    getElement("approvalQuantity")?.value;
+
+  const unitCost =
+    getElement("approvalUnitCost")?.value;
+
+  const shipping =
+    getElement("approvalShipping")?.value;
+
+  const selling =
+    getElement("approvalSelling")?.value;
+
+  if (!productName) {
+
+    showResult(
+      "approvalResult",
+      `<div class="research-output">
+        Product name ضروری ہے۔
+      </div>`
+    );
+
+    return;
+  }
+
+  try {
+
+    const response = await fetch(
+      "/api/approval",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          productName,
+          quantity,
+          unitCost,
+          shippingCost: shipping,
+          sellingPrice: selling
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Approval check failed");
+    }
+
+    orderApproved = false;
+
+    showResult(
+      "approvalResult",
+      `
+      <div class="research-output">
+
+        <h3>Order Review</h3>
+
+        <p><strong>Product:</strong> ${escapeHtml(data.productName)}</p>
+
+        <p><strong>Quantity:</strong> ${data.quantity}</p>
+
+        <p><strong>Total Cost:</strong> $${data.totalCost}</p>
+
+        <p><strong>Total Revenue:</strong> $${data.totalRevenue}</p>
+
+        <p><strong>Estimated Profit:</strong> $${data.estimatedProfit}</p>
+
+        <p><strong>Status:</strong> ${escapeHtml(data.status)}</p>
+
+      </div>
+      `
+    );
+
+  } catch (error) {
+
+    showResult(
+      "approvalResult",
+      `<div class="research-output">
+        ${escapeHtml(error.message)}
+      </div>`
+    );
+  }
+}
+
+/* =========================
+   PREPARE ORDER
+========================= */
+
+async function prepareOrder() {
+
+  const productName =
+    getElement("approvalProduct")?.value.trim();
+
+  const quantity =
+    getElement("approvalQuantity")?.value;
+
+  const supplierPrice =
+    getElement("approvalUnitCost")?.value;
+
+  const shippingCost =
+    getElement("approvalShipping")?.value;
+
+  const sellingPrice =
+    getElement("approvalSelling")?.value;
+
+  const supplierName =
+    getElement("approvalSupplierName")?.value.trim();
+
+  if (!productName || !supplierName) {
+
+    showResult(
+      "approvalResult",
+      `<div class="research-output">
+        Product اور Supplier name ضروری ہیں۔
+      </div>`
+    );
+
+    return;
+  }
+
+  try {
+
+    const response = await fetch(
+      "/api/order",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          productName,
+          quantity,
+          supplierPrice,
+          shippingCost,
+          sellingPrice,
+          stock: "Not provided",
+          deliveryTime: "Not provided"
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Order preparation failed");
+    }
+
+    orderApproved = false;
+
+    showResult(
+      "approvalResult",
+      `
+      <div class="research-output">
+
+        <h3>Order Prepared</h3>
+
+        <p><strong>Product:</strong> ${escapeHtml(data.productName)}</p>
+
+        <p><strong>Quantity:</strong> ${data.quantity}</p>
+
+        <p><strong>Total Cost:</strong> $${data.totalCost}</p>
+
+        <p><strong>Total Revenue:</strong> $${data.totalRevenue}</p>
+
+        <p><strong>Estimated Profit:</strong> $${data.estimatedProfit}</p>
+
+        <p><strong>Status:</strong> ${escapeHtml(data.status)}</p>
+
+      </div>
+      `
+    );
+
+  } catch (error) {
+
+    showResult(
+      "approvalResult",
+      `<div class="research-output">
+        ${escapeHtml(error.message)}
+      </div>`
+    );
+  }
+}
+
+/* =========================
+   APPROVE ORDER
+========================= */
+
+async function approveOrder() {
+
+  const productName =
+    getElement("approvalProduct")?.value.trim();
+
+  const quantity =
+    getElement("approvalQuantity")?.value;
+
+  if (!productName) {
+
+    showResult(
+      "approvalResult",
+      `<div class="research-output">
+        پہلے Order check کریں۔
+      </div>`
+    );
+
+    return;
+  }
+
+  try {
+
+    const response = await fetch(
+      "/api/orderApproval",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          productName,
+          quantity,
+          totalCost: getApprovalTotalCost(),
+          action: "approve"
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Approval failed");
+    }
+
+    orderApproved = true;
+
+    showResult(
+      "approvalResult",
+      `
+      <div class="research-output">
+
+        <h3>✓ Order Approved</h3>
+
+        <p>
+          آپ نے اس Order کو approve کر دیا ہے۔
+        </p>
+
+        <p>
+          Supplier order ابھی automatically place نہیں کیا گیا۔
+        </p>
+
+      </div>
+      `
+    );
+
+  } catch (error) {
+
+    showResult(
+      "approvalResult",
+      `<div class="research-output">
+        ${escapeHtml(error.message)}
+      </div>`
+    );
+  }
+}
+
+/* =========================
+   REJECT ORDER
+========================= */
+
+async function rejectOrder() {
+
+  const productName =
+    getElement("approvalProduct")?.value.trim();
+
+  const quantity =
+    getElement("approvalQuantity")?.value;
+
+  if (!productName) return;
+
+  try {
+
+    const response = await fetch(
+      "/api/orderApproval",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          productName,
+          quantity,
+          totalCost: getApprovalTotalCost(),
+          action: "reject"
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    orderApproved = false;
+
+    showResult(
+      "approvalResult",
+      `
+      <div class="research-output">
+
+        <h3>Order Rejected</h3>
+
+        <p>${escapeHtml(data.status || "Order rejected")}</p>
+
+      </div>
+      `
+    );
+
+  } catch (error) {
+
+    showResult(
+      "approvalResult",
+      `<div class="research-output">
+        ${escapeHtml(error.message)}
+      </div>`
+    );
+  }
+}
+
+/* =========================
+   TOTAL COST
+========================= */
+
+function getApprovalTotalCost() {
+
+  const quantity =
+    Number(getElement("approvalQuantity")?.value || 0);
+
+  const unitCost =
+    Number(getElement("approvalUnitCost")?.value || 0);
+
+  const shipping =
+    Number(getElement("approvalShipping")?.value || 0);
+
+  return Number(
+    ((unitCost + shipping) * quantity).toFixed(2)
+  );
+}
+
+/* =========================
+   SUPPLIER ORDER
+========================= */
+
+async function prepareSupplierOrder() {
+
+  const productName =
+    getElement("approvalProduct")?.value.trim();
+
+  const supplierName =
+    getElement("approvalSupplierName")?.value.trim();
+
+  const quantity =
+    getElement("approvalQuantity")?.value;
+
+  const totalCost =
+    getApprovalTotalCost();
+
+  if (!productName || !supplierName) {
+
+    showResult(
+      "approvalResult",
+      `<div class="research-output">
+        Product اور Supplier name ضروری ہیں۔
+      </div>`
+    );
+
+    return;
+  }
+
+  try {
+
+    const response = await fetch(
+      "/api/supplierOrder",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          productName,
+          quantity,
+          supplierName,
+          totalCost,
+          approved: orderApproved
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Supplier order failed");
+    }
+
+    showResult(
+      "approvalResult",
+      `
+      <div class="research-output">
+
+        <h3>Supplier Order Ready</h3>
+
+        <p><strong>Supplier:</strong> ${escapeHtml(data.supplierName)}</p>
+
+        <p><strong>Product:</strong> ${escapeHtml(data.productName)}</p>
+
+        <p><strong>Quantity:</strong> ${data.quantity}</p>
+
+        <p><strong>Total Cost:</strong> $${data.totalCost}</p>
+
+        <p>
+          ${escapeHtml(data.status)}
+        </p>
+
+      </div>
+      `
+    );
+
+  } catch (error) {
+
+    showResult(
+      "approvalResult",
+      `<div class="research-output">
+        ${escapeHtml(error.message)}
+      </div>`
+    );
+  }
+}
+
+/* =========================
+   SUPPLIER CONVERSATION
+========================= */
+
+async function sendSupplierMessage() {
+
+  const input =
+    getElement("supplierChatMessage");
+
+  const result =
+    getElement("supplierChatResult");
+
+  if (!input || !result) return;
+
+  const message = input.value.trim();
+
+  if (!message) return;
+
+  result.innerHTML = `
+    <div class="research-output">
+      Rafi AI supplier message تیار کر رہا ہے...
+    </div>
+  `;
+
+  try {
+
+    const response = await fetch(
+      "/api/supplierConversation",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          conversationId: supplierConversationId,
+          message
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Supplier conversation failed"
+      );
+    }
+
+    supplierConversationId =
+      data.conversationId || supplierConversationId;
+
+    result.innerHTML = `
+      <div class="research-output">
+
+        <h3>Rafi AI Reply</h3>
+
+        <p>${escapeHtml(data.reply || "")}</p>
+
+      </div>
+    `;
+
+  } catch (error) {
+
+    result.innerHTML = `
+      <div class="research-output">
+        ${escapeHtml(error.message)}
+      </div>
+    `;
+  }
+}
+
+/* =========================
+   IMAGE
+========================= */
+
+async function editImage() {
+
+  const input = getElement("imageInput");
+
+  if (!input || !input.files.length) {
+
+    alert("پہلے ایک image منتخب کریں۔");
+
+    return;
+  }
+
+  alert(
+    "Image selected۔ Image editing API اگلے مرحلے میں connect کیا جائے گا۔"
+  );
+}
+
+/* =========================
+   LIVE CALL
+========================= */
+
+async function startLiveCall() {
+
+  alert(
+    "Live Voice mode موجود ہے۔ Browser microphone permission مانگ سکتا ہے۔"
+  );
+
+  try {
+
+    if (
+      !navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia
+    ) {
+      return;
+    }
+
+    const stream =
+      await navigator.mediaDevices.getUserMedia({
+        audio: true
+      });
+
+    stream.getTracks().forEach(track => {
+      track.stop();
+    });
+
+  } catch (error) {
+
+    console.error("Microphone permission:", error);
+  }
+}
+
+/* =========================
+   IMAGE INPUT
+========================= */
+
+function setupImageInput() {
+
+  const input = getElement("imageInput");
+
+  if (!input) return;
+
+  input.addEventListener(
+    "change",
+    function () {
+
+      if (input.files.length) {
+
+        const file =
+          input.files[0];
+
+        addMessage(
+          "user",
+          `📷 Image selected: ${file.name}`
+        );
+      }
+
+    }
+  );
+}
+
+/* =========================
+   INITIALIZE
+========================= */
+
+function initializeRafiAI() {
+
+  setupImageInput();
+
+  const input = getElement("userInput");
+
+  if (input) {
+
+    input.addEventListener(
+      "input",
+      function () {
+
+        input.style.height = "auto";
+
+        input.style.height =
+          Math.min(input.scrollHeight, 140) + "px";
+      }
+    );
+  }
+
+  console.log("Rafi AI initialized successfully.");
+}
+
+document.addEventListener(
+  "DOMContentLoaded",
+  initializeRafiAI
+);
+
+/* ================================
+   RAFI VOICE ASSISTANT - FIXED
+================================ */
+
+let rafiWakeRecognition = null;
+let rafiCommandRecognition = null;
+let rafiVoiceActive = false;
+let rafiSpeaking = false;
+
+function rafiSpeak(text, callback) {
+  if (!("speechSynthesis" in window)) {
+    if (callback) callback();
+    return;
+  }
+
+  rafiSpeaking = true;
+
+  window.speechSynthesis.cancel();
+
+  const speech = new SpeechSynthesisUtterance(text);
+  speech.lang = "en-US";
+  speech.rate = 1;
+  speech.pitch = 1;
+
+  speech.onend = function () {
+    rafiSpeaking = false;
+    if (callback) {
+      setTimeout(callback, 500);
+    }
+  };
+
+  window.speechSynthesis.speak(speech);
+}
+
+
+function startRafiVoiceAssistant() {
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Voice recognition کے لیے Chrome استعمال کریں۔");
+    return;
+  }
+
+  if (rafiVoiceActive) return;
+
+  rafiVoiceActive = true;
+
+  rafiWakeRecognition = new SpeechRecognition();
+
+  rafiWakeRecognition.lang = "en-US";
+  rafiWakeRecognition.continuous = true;
+  rafiWakeRecognition.interimResults = false;
+  rafiWakeRecognition.maxAlternatives = 3;
+
+  rafiWakeRecognition.onresult = function (event) {
+
+    for (
+      let i = event.resultIndex;
+      i < event.results.length;
+      i++
+    ) {
+
+      if (!event.results[i].isFinal) continue;
+
+      const heard =
+        event.results[i][0].transcript
+          .trim()
+          .toLowerCase();
+
+      console.log("Rafi heard:", heard);
+
+      if (
+        heard.includes("hi rafi") ||
+        heard.includes("hey rafi") ||
+        heard.includes("hi raffi") ||
+        heard.includes("hey raffi")
+      ) {
+
+        try {
+          rafiWakeRecognition.stop();
+        } catch (e) {}
+
+        rafiSpeak(
+          "Yes, I'm listening.",
+          startRafiCommandListening
+        );
+
+        return;
+      }
+    }
+  };
+
+
+  rafiWakeRecognition.onerror = function (event) {
+    console.log("Rafi wake error:", event.error);
+  };
+
+
+  rafiWakeRecognition.onend = function () {
+
+    if (!rafiVoiceActive || rafiSpeaking) {
+      return;
+    }
+
+    setTimeout(function () {
+      try {
+        rafiWakeRecognition.start();
+      } catch (e) {}
+    }, 700);
+  };
+
+
+  try {
+    rafiWakeRecognition.start();
+    console.log("Rafi voice listening...");
+  } catch (e) {
+    console.log("Voice start error:", e);
+  }
+}
+
+
+function startRafiCommandListening() {
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) return;
+
+  rafiCommandRecognition =
+    new SpeechRecognition();
+
+  rafiCommandRecognition.lang = "en-US";
+  rafiCommandRecognition.continuous = false;
+  rafiCommandRecognition.interimResults = false;
+  rafiCommandRecognition.maxAlternatives = 1;
+
+
+  rafiCommandRecognition.onstart = function () {
+    console.log("Rafi is listening for command...");
+  };
+
+
+  rafiCommandRecognition.onresult = function (event) {
+
+    const command =
+      event.results[0][0].transcript.trim();
+
+    console.log("Rafi command:", command);
+
+    const input =
+      document.getElementById("userInput");
+
+    if (!input) return;
+
+    input.value = command;
+
+    if (typeof sendMessage === "function") {
+      sendMessage();
+    }
+  };
+
+
+  rafiCommandRecognition.onerror =
+    function (event) {
+
+      console.log(
+        "Rafi command error:",
+        event.error
+      );
+
+      rafiSpeak(
+        "Sorry, I didn't hear you."
+      );
+
+      setTimeout(
+        startRafiVoiceAssistant,
+        1000
+      );
+    };
+
+
+  rafiCommandRecognition.onend =
+    function () {
+
+      if (!rafiSpeaking) {
+        setTimeout(
+          startRafiVoiceAssistant,
+          700
+        );
+      }
+    };
+
+
+  try {
+    rafiCommandRecognition.start();
+  } catch (e) {
+    console.log(
+      "Command listening error:",
+      e
+    );
+  }
+}
+
+
+function stopRafiVoiceAssistant() {
+
+  rafiVoiceActive = false;
+
+  try {
+    if (rafiWakeRecognition) {
+      rafiWakeRecognition.stop();
+    }
+  } catch (e) {}
+
+  try {
+    if (rafiCommandRecognition) {
+      rafiCommandRecognition.stop();
+    }
+  } catch (e) {}
+
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+}
+
+
+/* Start after page loads */
+document.addEventListener(
+  "DOMContentLoaded",
+  function () {
+
+    setTimeout(function () {
+
+      rafiSpeak(
+        "Rafi voice assistant is ready."
+      );
+
+      setTimeout(function () {
+        startRafiVoiceAssistant();
+      }, 1800);
+
+    }, 1000);
+
+  }
+);
