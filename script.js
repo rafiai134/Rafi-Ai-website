@@ -1,649 +1,448 @@
 const $ = (id) => document.getElementById(id);
 
-const chatMessages = $("chatMessages");
-const messageInput = $("messageInput");
-const sendButton = $("sendButton");
-const voiceButton = $("voiceButton");
-const imageButton = $("imageButton");
-const imageInput = $("imageInput");
-const voiceSelect = $("voiceSelect");
-
-let voices = [];
-let recognition = null;
-let listening = false;
-
+let TOKEN = localStorage.getItem("rafi_token") || "";
+let history = [];
+let busy = false;
+let state = { actions: [], activity: [], inbox: [], contacts: [], config: {} };
 
 /* =========================
-   SYSTEM CLOCK
+   API + LOGIN
 ========================= */
-
-function updateClock() {
-  const el = $("systemTime");
-  if (!el) return;
-
-  el.textContent = new Date().toLocaleTimeString("en-US", {
-    hour12: false
+async function api(path, opts = {}) {
+  const res = await fetch("/api/" + path, {
+    ...opts,
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-token": TOKEN,
+      ...(opts.headers || {})
+    },
+    body: opts.body ? JSON.stringify(opts.body) : undefined
   });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) {
+    showLogin("ٹوکن غلط ہے");
+    throw new Error("Unauthorized");
+  }
+  if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+  return data;
 }
 
-setInterval(updateClock, 1000);
-updateClock();
+function showLogin(err = "") {
+  $("login").hidden = false;
+  $("loginError").textContent = err;
+  $("tokenInput").focus();
+}
 
+$("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  TOKEN = $("tokenInput").value.trim();
+  if (!TOKEN) return;
+  localStorage.setItem("rafi_token", TOKEN);
+  $("login").hidden = true;
+  $("tokenInput").value = "";
+  await refresh();
+});
 
 /* =========================
-   CHAT UI
+   CLOCK
 ========================= */
-
-function addMessage(text, type = "assistant") {
-  if (!chatMessages) return;
-
-  const wrapper = document.createElement("div");
-  wrapper.className =
-    type === "user"
-      ? "message user-message"
-      : "message assistant-message";
-
-  const avatar = document.createElement("div");
-  avatar.className = "message-avatar";
-  avatar.textContent = type === "user" ? "U" : "R";
-
-  const content = document.createElement("div");
-  content.className = "message-content";
-
-  const label = document.createElement("span");
-  label.className = "message-label";
-  label.textContent = type === "user" ? "YOU" : "RAFI AI";
-
-  const p = document.createElement("p");
-  p.textContent = text;
-
-  content.appendChild(label);
-  content.appendChild(p);
-
-  wrapper.appendChild(avatar);
-  wrapper.appendChild(content);
-
-  chatMessages.appendChild(wrapper);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-
-function showThinking() {
-  const old = $("thinkingMessage");
-  if (old) old.remove();
-
-  const wrapper = document.createElement("div");
-  wrapper.id = "thinkingMessage";
-  wrapper.className = "message assistant-message";
-
-  wrapper.innerHTML = `
-    <div class="message-avatar">R</div>
-    <div class="message-content">
-      <span class="message-label">RAFI AI</span>
-      <p>Rafi سوچ رہا ہے...</p>
-    </div>
-  `;
-
-  chatMessages.appendChild(wrapper);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-
-function removeThinking() {
-  const el = $("thinkingMessage");
-  if (el) el.remove();
-}
-
+setInterval(() => {
+  $("clock").textContent = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}, 1000);
 
 /* =========================
-   SEND MESSAGE
+   CHAT
 ========================= */
+const box = $("chatMessages");
 
-async function sendMessage() {
-  if (!messageInput) return;
+function addMsg(text, kind = "bot", links = []) {
+  const div = document.createElement("div");
+  div.className = "msg " + kind;
+  div.textContent = text;
+  if (links.length) {
+    const row = document.createElement("div");
+    row.className = "links";
+    links.forEach((l) => {
+      const a = document.createElement("a");
+      a.href = l.url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = "Open " + l.label;
+      row.appendChild(a);
+    });
+    div.appendChild(row);
+  }
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
 
-  const message = messageInput.value.trim();
+function setCore(mode, label) {
+  const core = $("core");
+  core.classList.remove("listening", "thinking", "speaking");
+  if (mode) core.classList.add(mode);
+  $("coreState").textContent = label;
+}
 
-  if (!message) return;
+async function sendMessage(textOverride) {
+  const input = $("messageInput");
+  const message = (textOverride ?? input.value).trim();
+  if (!message || busy) return;
 
-  addMessage(message, "user");
-
-  messageInput.value = "";
-  messageInput.style.height = "auto";
-
-  showThinking();
-
-  sendButton?.setAttribute("disabled", "true");
+  busy = true;
+  input.value = "";
+  input.style.height = "auto";
+  addMsg(message, "me");
+  setCore("thinking", "Thinking…");
+  agentWorking.core = true;
 
   try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        message
-      })
-    });
+    const data = await api("chat", { method: "POST", body: { message, history: history.slice(-12) } });
+    history.push({ role: "user", content: message }, { role: "assistant", content: data.reply });
+    addMsg(data.reply, "bot", data.ui || []);
 
-    const data = await response.json().catch(() => ({}));
+    const first = (data.ui || []).find((u) => u.type === "open");
+    if (first) window.open(first.url, "_blank", "noopener"); // may be blocked; the button stays visible
 
-    removeThinking();
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-        `Rafi AI request failed (${response.status})`
-      );
-    }
-
-    const reply =
-      data.reply ||
-      "Rafi AI نے کوئی جواب واپس نہیں کیا۔";
-
-    addMessage(reply, "assistant");
-
-    speak(reply);
-
-  } catch (error) {
-    removeThinking();
-
-    console.error("Rafi AI:", error);
-
-    addMessage(
-      error.message ||
-      "Rafi AI سے رابطہ نہیں ہو سکا۔",
-      "assistant"
-    );
+    refresh();
+    speak(data.reply);
+  } catch (err) {
+    if (err.message !== "Unauthorized") addMsg(err.message, "bot err");
+    setCore(null, "Tap to talk");
   } finally {
-    sendButton?.removeAttribute("disabled");
-    messageInput?.focus();
+    busy = false;
+    agentWorking.core = false;
+    $("messageInput").focus();
   }
 }
 
-
-/* =========================
-   ENTER TO SEND
-========================= */
-
-messageInput?.addEventListener("keydown", (event) => {
-
-  if (event.key === "Enter" && !event.shiftKey) {
-    event.preventDefault();
+$("send").addEventListener("click", () => sendMessage());
+$("messageInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
     sendMessage();
   }
-
 });
-
-
-messageInput?.addEventListener("input", () => {
-
-  messageInput.style.height = "auto";
-
-  messageInput.style.height =
-    Math.min(messageInput.scrollHeight, 120) + "px";
-
+$("messageInput").addEventListener("input", (e) => {
+  e.target.style.height = "auto";
+  e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
 });
-
-
-sendButton?.addEventListener("click", sendMessage);
-
+$("clear").addEventListener("click", () => {
+  history = [];
+  box.innerHTML = "";
+  addMsg("چیٹ صاف ہو گئی۔ بتائیں، کیا کرنا ہے؟");
+});
 
 /* =========================
-   TEXT TO SPEECH
+   VOICE (browser speech)
 ========================= */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+let listening = false;
 
-function loadVoices() {
+function startListening() {
+  if (!SR) {
+    addMsg("اس براؤزر میں آواز پہچاننے کی سہولت نہیں۔ Chrome استعمال کریں۔", "bot err");
+    return;
+  }
+  if (listening || busy) return;
+  if (window.speechSynthesis) speechSynthesis.cancel();
 
-  if (!("speechSynthesis" in window)) return;
+  rec = new SR();
+  rec.lang = $("lang").value;
+  rec.interimResults = false;
+  rec.continuous = false;
 
-  voices = speechSynthesis.getVoices();
+  rec.onstart = () => {
+    listening = true;
+    $("mic").classList.add("on");
+    setCore("listening", "Listening…");
+  };
+  rec.onend = () => {
+    listening = false;
+    $("mic").classList.remove("on");
+    if (!busy) setCore(null, "Tap to talk");
+  };
+  rec.onerror = () => {
+    listening = false;
+    $("mic").classList.remove("on");
+    setCore(null, "Tap to talk");
+  };
+  rec.onresult = (e) => {
+    const text = e.results[0][0].transcript;
+    sendMessage(text);
+  };
+  try { rec.start(); } catch { /* already started */ }
+}
 
-  if (!voiceSelect) return;
+function stopListening() {
+  if (rec && listening) rec.stop();
+}
 
-  voiceSelect.innerHTML =
-    `<option value="">Voice</option>`;
+$("mic").addEventListener("click", () => (listening ? stopListening() : startListening()));
+$("core").addEventListener("click", () => (listening ? stopListening() : startListening()));
 
-  voices.forEach((voice, index) => {
+/* =========================
+   SPEECH OUTPUT
+========================= */
+function pickVoice(lang) {
+  const voices = speechSynthesis.getVoices();
+  const base = lang.split("-")[0];
+  return (
+    voices.find((v) => v.lang === lang) ||
+    voices.find((v) => v.lang.startsWith(base)) ||
+    (base === "ur" ? voices.find((v) => v.lang.startsWith("hi")) : null) ||
+    null
+  );
+}
 
-    const option = document.createElement("option");
+function speak(text) {
+  if (!$("speakOn").checked || !("speechSynthesis" in window)) {
+    setCore(null, "Tap to talk");
+    afterSpeak();
+    return;
+  }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = $("lang").value;
+  const v = pickVoice(u.lang);
+  if (v) u.voice = v;
+  u.onstart = () => setCore("speaking", "Speaking…");
+  u.onend = () => { setCore(null, "Tap to talk"); afterSpeak(); };
+  u.onerror = () => { setCore(null, "Tap to talk"); afterSpeak(); };
+  speechSynthesis.speak(u);
+}
 
-    option.value = index;
+function afterSpeak() {
+  if ($("convo").checked) setTimeout(startListening, 400);
+}
 
-    option.textContent =
-      `${voice.name} — ${voice.lang}`;
+if ("speechSynthesis" in window) speechSynthesis.onvoiceschanged = () => {};
 
-    voiceSelect.appendChild(option);
+/* =========================
+   STATE: approvals, feeds, pills
+========================= */
+async function refresh() {
+  if (!TOKEN) return showLogin();
+  try {
+    state = await api("state");
+    render();
+  } catch { /* login shown or offline */ }
+}
 
+function render() {
+  document.querySelectorAll(".pill").forEach((p) => {
+    const on = state.config[p.dataset.k];
+    p.classList.toggle("on", !!on);
+    p.classList.toggle("off", !on);
+  });
+
+  const pending = state.actions.filter((a) => a.status === "pending");
+  $("rdPending").textContent = pending.length;
+  $("rdInbox").textContent = state.inbox.length;
+  $("rdContacts").textContent = state.contacts.length;
+
+  const ap = $("approvals");
+  ap.innerHTML = "";
+  const shown = state.actions.filter((a) => a.status === "pending" || a.result).slice(0, 6);
+  if (!shown.length) ap.innerHTML = '<p class="empty">Nothing waiting.</p>';
+
+  shown.forEach((a) => {
+    const d = document.createElement("div");
+    d.className = "appr";
+    const body = a.payload?.text || (a.type === "shopify_listing" ? `${a.payload.title} — ${a.payload.price}` : "") ||
+      (a.type === "order" ? `Profit ${a.payload.profit} (${a.payload.marginPercent}%)` : "");
+    d.innerHTML = `<b></b><p dir="auto"></p>`;
+    d.querySelector("b").textContent = a.summary;
+    d.querySelector("p").textContent = body;
+
+    if (a.status === "pending") {
+      const row = document.createElement("div");
+      row.className = "row";
+      row.innerHTML = '<button class="yes" type="button">APPROVE</button><button class="no" type="button">REJECT</button>';
+      row.querySelector(".yes").onclick = () => decide(a.id, "approve", row);
+      row.querySelector(".no").onclick = () => decide(a.id, "reject", row);
+      d.appendChild(row);
+    } else {
+      const s = document.createElement("div");
+      s.className = "done";
+      s.textContent = `${a.status}: ${a.result?.note || ""}`;
+      d.appendChild(s);
+    }
+    ap.appendChild(d);
+  });
+
+  const inbox = $("inbox");
+  inbox.innerHTML = state.inbox.length ? "" : '<p class="empty">No messages yet.</p>';
+  state.inbox.forEach((m) => {
+    const d = document.createElement("div");
+    d.innerHTML = "<b></b> <span></span>";
+    d.querySelector("b").textContent = m.name;
+    d.querySelector("span").textContent = m.text;
+    inbox.appendChild(d);
+  });
+
+  const act = $("activity");
+  act.innerHTML = state.activity.length ? "" : '<p class="empty">No activity yet.</p>';
+  state.activity.forEach((x) => {
+    const d = document.createElement("div");
+    d.textContent = new Date(x.t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) + "  " + x.text;
+    act.appendChild(d);
+  });
+
+  renderAgents(pending);
+}
+
+async function decide(id, decision, row) {
+  row.querySelectorAll("button").forEach((b) => (b.disabled = true));
+  try {
+    const { action } = await api("state", { method: "POST", body: { id, decision } });
+    if (action.result?.copy) {
+      try { await navigator.clipboard.writeText(action.result.copy); } catch { /* ignore */ }
+      addMsg("سپلائر کا میسج کاپی ہو گیا۔ اب سپلائر کی چیٹ میں پیسٹ کریں۔");
+    }
+    await refresh();
+  } catch (err) {
+    addMsg(err.message, "bot err");
+    row.querySelectorAll("button").forEach((b) => (b.disabled = false));
+  }
+}
+
+/* =========================
+   ORDER CALCULATOR
+========================= */
+function calcBody(submit) {
+  const n = (id) => $(id).value;
+  return {
+    productName: n("cProduct").trim(),
+    quantity: n("cQty"),
+    unitCost: n("cCost"),
+    shipping: n("cShip") || 0,
+    sellingPrice: n("cSell"),
+    adPerUnit: n("cAd") || 0,
+    feePercent: n("cFee") || 4,
+    submit
+  };
+}
+
+async function runCalc(submit) {
+  const out = $("calcResult");
+  out.textContent = "…";
+  try {
+    const r = await api("order", { method: "POST", body: calcBody(submit) });
+    out.textContent =
+      `Total cost: ${r.totalCost}\nRevenue: ${r.revenue}\nFees: ${r.fees}\nAds: ${r.ads}\n` +
+      `Profit: ${r.profit} (${r.marginPercent}%)` +
+      (r.warning ? `\n⚠ ${r.warning}` : "") +
+      (r.queued ? "\nSent to the approval list." : "");
+    if (r.queued) refresh();
+  } catch (err) {
+    out.textContent = err.message;
+  }
+}
+
+$("calcForm").addEventListener("submit", (e) => { e.preventDefault(); runCalc(false); });
+$("calcSubmit").addEventListener("click", () => {
+  if ($("calcForm").reportValidity()) runCalc(true);
+});
+
+/* =========================
+   RADAR (left HUD)
+========================= */
+const radar = $("radar");
+const rctx = radar.getContext("2d");
+let sweep = 0;
+const blips = Array.from({ length: 6 }, () => ({ a: Math.random() * 6.28, r: 0.25 + Math.random() * 0.65 }));
+
+function drawRadar() {
+  const w = radar.width, c = w / 2;
+  rctx.clearRect(0, 0, w, w);
+  rctx.strokeStyle = "rgba(79,216,255,.35)";
+  rctx.lineWidth = 1;
+  [0.3, 0.55, 0.8, 0.98].forEach((k) => { rctx.beginPath(); rctx.arc(c, c, c * k, 0, 6.283); rctx.stroke(); });
+  rctx.beginPath(); rctx.moveTo(c, 4); rctx.lineTo(c, w - 4); rctx.moveTo(4, c); rctx.lineTo(w - 4, c); rctx.stroke();
+
+  const g = rctx.createConicGradient ? rctx.createConicGradient(sweep, c, c) : null;
+  if (g) {
+    g.addColorStop(0, "rgba(79,216,255,.55)");
+    g.addColorStop(0.12, "rgba(79,216,255,0)");
+    g.addColorStop(1, "rgba(79,216,255,0)");
+    rctx.fillStyle = g;
+    rctx.beginPath(); rctx.arc(c, c, c * 0.98, 0, 6.283); rctx.fill();
+  }
+  rctx.strokeStyle = "#4fd8ff";
+  rctx.beginPath(); rctx.moveTo(c, c); rctx.lineTo(c + Math.cos(sweep) * c * 0.98, c + Math.sin(sweep) * c * 0.98); rctx.stroke();
+
+  blips.forEach((b) => {
+    rctx.fillStyle = "#ff8a3d";
+    rctx.beginPath(); rctx.arc(c + Math.cos(b.a) * c * b.r, c + Math.sin(b.a) * c * b.r, 3, 0, 6.283); rctx.fill();
+  });
+  sweep += 0.03;
+}
+
+/* =========================
+   PIXEL OFFICE (agents)
+========================= */
+const AGENTS = [
+  { id: "core", name: "Rafi", x: 24, y: 30, color: "#4fd8ff" },
+  { id: "supplier", name: "Supplier", x: 104, y: 30, color: "#ff8a3d" },
+  { id: "shopify", name: "Shopify", x: 24, y: 78, color: "#4dffb2" },
+  { id: "whatsapp", name: "WhatsApp", x: 104, y: 78, color: "#c084fc" }
+];
+const agentWorking = { core: false, supplier: false, shopify: false, whatsapp: false };
+
+const office = $("office");
+const octx = office.getContext("2d");
+let tick = 0;
+
+function px(x, y, w, h, color) { octx.fillStyle = color; octx.fillRect(x, y, w, h); }
+
+function drawOffice() {
+  px(0, 0, 192, 120, "#0a2038");
+  for (let y = 0; y < 120; y += 8) for (let x = 0; x < 192; x += 8) {
+    if ((x + y) % 16 === 0) px(x, y, 8, 8, "#0c2846");
+  }
+  px(0, 58, 192, 3, "#16466f");   // wall between rooms
+  px(94, 0, 3, 120, "#16466f");
+
+  AGENTS.forEach((a) => {
+    const work = agentWorking[a.id];
+    px(a.x - 4, a.y + 14, 36, 8, "#1c5a8f");                       // desk
+    px(a.x + 4, a.y + 4, 20, 10, "#031321");                       // monitor
+    px(a.x + 5, a.y + 5, 18, 8, work && tick % 2 ? a.color : "#0b3b63");
+    const bob = work ? (tick % 2) : 0;
+    px(a.x + 10, a.y + 22 + bob, 8, 8, a.color);                   // body
+    px(a.x + 11, a.y + 16 + bob, 6, 6, "#f2d0b0");                 // head
+    px(a.x + 11, a.y + 15 + bob, 6, 2, "#2b1a0e");                 // hair
   });
 }
 
+function renderAgents(pending) {
+  const typeToAgent = { whatsapp: "whatsapp", shopify_listing: "shopify", supplier_message: "supplier", order: "supplier" };
+  const counts = { core: 0, supplier: 0, shopify: 0, whatsapp: 0 };
+  pending.forEach((a) => { const k = typeToAgent[a.type]; if (k) counts[k]++; });
+  Object.keys(counts).forEach((k) => { if (k !== "core") agentWorking[k] = counts[k] > 0; });
 
-if ("speechSynthesis" in window) {
-
-  speechSynthesis.onvoiceschanged = loadVoices;
-
-  loadVoices();
-
+  const list = $("agentList");
+  list.innerHTML = "";
+  AGENTS.forEach((a) => {
+    const li = document.createElement("li");
+    const n = counts[a.id];
+    const label = a.id === "core" ? "Ready" : n ? `${n} waiting for you` : "Idle";
+    li.innerHTML = `<i class="${a.id !== "core" && n ? "work" : "idle"}"></i><b></b><span></span>`;
+    li.querySelector("b").textContent = a.name;
+    li.querySelector("span").textContent = label;
+    list.appendChild(li);
+  });
 }
 
-
-function speak(text) {
-
-  if (!("speechSynthesis" in window)) return;
-
-  speechSynthesis.cancel();
-
-  const utterance =
-    new SpeechSynthesisUtterance(text);
-
-  const selected =
-    voiceSelect?.value;
-
-  if (
-    selected !== "" &&
-    voices[selected]
-  ) {
-    utterance.voice = voices[selected];
-  }
-
-  utterance.rate = 1;
-  utterance.pitch = 1;
-
-  speechSynthesis.speak(utterance);
-}
-
+setInterval(() => { tick++; drawOffice(); }, 400);
+(function loopRadar() { drawRadar(); requestAnimationFrame(loopRadar); })();
 
 /* =========================
-   VOICE INPUT
+   START
 ========================= */
-
-const SpeechRecognition =
-  window.SpeechRecognition ||
-  window.webkitSpeechRecognition;
-
-if (SpeechRecognition) {
-
-  recognition = new SpeechRecognition();
-
-  recognition.continuous = false;
-  recognition.interimResults = false;
-
-  recognition.lang = "ur-PK";
-
-  recognition.onstart = () => {
-
-    listening = true;
-
-    voiceButton?.classList.add("active");
-
-  };
-
-  recognition.onend = () => {
-
-    listening = false;
-
-    voiceButton?.classList.remove("active");
-
-  };
-
-  recognition.onerror = (event) => {
-
-    console.error(
-      "Voice recognition:",
-      event.error
-    );
-
-    listening = false;
-
-    voiceButton?.classList.remove("active");
-
-  };
-
-  recognition.onresult = (event) => {
-
-    const text =
-      event.results[0][0].transcript;
-
-    if (messageInput) {
-
-      messageInput.value = text;
-
-      messageInput.dispatchEvent(
-        new Event("input")
-      );
-
-    }
-
-  };
-
-}
-
-
-voiceButton?.addEventListener("click", () => {
-
-  if (!recognition) {
-
-    addMessage(
-      "اس موبائل براؤزر میں voice recognition دستیاب نہیں ہے۔",
-      "assistant"
-    );
-
-    return;
-
-  }
-
-  if (listening) {
-
-    recognition.stop();
-
-  } else {
-
-    recognition.lang = "ur-PK";
-
-    recognition.start();
-
-  }
-
-});
-
-
-/* =========================
-   IMAGE INPUT
-========================= */
-
-imageButton?.addEventListener("click", () => {
-  imageInput?.click();
-});
-
-
-imageInput?.addEventListener("change", () => {
-
-  const file = imageInput.files?.[0];
-
-  if (!file) return;
-
-  addMessage(
-    `Image منتخب ہوئی: ${file.name}`,
-    "user"
-  );
-
-  addMessage(
-    "Image input تیار ہے۔ Image analysis endpoint سے مکمل connection اگلے مرحلے میں فعال کیا جا سکتا ہے۔",
-    "assistant"
-  );
-
-});
-
-
-/* =========================
-   CLEAR CHAT
-========================= */
-
-$("clearChat")?.addEventListener(
-  "click",
-  () => {
-
-    if (!chatMessages) return;
-
-    chatMessages.innerHTML = "";
-
-    addMessage(
-      "چیٹ صاف ہو گئی۔ بتائیں، اب کیا کرنا ہے؟",
-      "assistant"
-    );
-
-  }
-);
-
-
-/* =========================
-   SAVE CHAT
-========================= */
-
-$("saveChat")?.addEventListener(
-  "click",
-  () => {
-
-    if (!chatMessages) return;
-
-    const text =
-      [...chatMessages.querySelectorAll(".message")]
-        .map((message) =>
-          message.innerText.trim()
-        )
-        .join("\n\n");
-
-    const blob =
-      new Blob([text], {
-        type: "text/plain;charset=utf-8"
-      });
-
-    const url =
-      URL.createObjectURL(blob);
-
-    const link =
-      document.createElement("a");
-
-    link.href = url;
-    link.download = "rafi-ai-chat.txt";
-
-    link.click();
-
-    URL.revokeObjectURL(url);
-
-  }
-);
-
-
-/* =========================
-   MOBILE / LEFT NAVIGATION
-========================= */
-
-document.querySelectorAll(
-  "[data-target]"
-).forEach((button) => {
-
-  button.addEventListener(
-    "click",
-    () => {
-
-      const target =
-        document.getElementById(
-          button.dataset.target
-        );
-
-      if (!target) return;
-
-      target.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-
-      document.querySelectorAll(
-        ".nav-command"
-      ).forEach((item) => {
-        item.classList.remove("active");
-      });
-
-      button.classList.add("active");
-
-    }
-  );
-
-});
-
-
-/* =========================
-   TOOL FORMS
-========================= */
-
-async function submitToolForm(
-  form,
-  endpoint,
-  resultElement,
-  payloadBuilder
-) {
-
-  form?.addEventListener(
-    "submit",
-    async (event) => {
-
-      event.preventDefault();
-
-      const result =
-        document.getElementById(
-          resultElement
-        );
-
-      if (!result) return;
-
-      result.textContent =
-        "Rafi process کر رہا ہے...";
-
-      try {
-
-        const response =
-          await fetch(endpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(
-              payloadBuilder()
-            )
-          });
-
-        const data =
-          await response.json()
-            .catch(() => ({}));
-
-        if (!response.ok) {
-
-          throw new Error(
-            data.error ||
-            `Request failed (${response.status})`
-          );
-
-        }
-
-        result.textContent =
-          data.reply ||
-          data.message ||
-          "Process مکمل ہو گیا۔";
-
-      } catch (error) {
-
-        console.error(error);
-
-        result.textContent =
-          error.message ||
-          "Module سے رابطہ نہیں ہو سکا۔";
-
-      }
-
-    }
-  );
-
-}
-
-
-/* PRODUCT RESEARCH */
-
-submitToolForm(
-  $("productResearchForm"),
-  "/api/productResearch",
-  "productResearchResult",
-  () => ({
-    product:
-      $("productName")?.value.trim(),
-
-    market:
-      $("targetMarket")?.value.trim()
-  })
-);
-
-
-/* SUPPLIER RESEARCH */
-
-submitToolForm(
-  $("supplierResearchForm"),
-  "/api/supplierResearch",
-  "supplierResearchResult",
-  () => ({
-    product:
-      $("supplierProduct")?.value.trim(),
-
-    quantity:
-      Number(
-        $("supplierQuantity")?.value || 0
-      )
-  })
-);
-
-
-/* ORDER APPROVAL */
-
-submitToolForm(
-  $("orderApprovalForm"),
-  "/api/orderApproval",
-  "orderApprovalResult",
-  () => ({
-    product:
-      $("approvalProduct")?.value.trim(),
-
-    cost:
-      Number(
-        $("approvalCost")?.value || 0
-      ),
-
-    profit:
-      Number(
-        $("approvalProfit")?.value || 0
-      )
-  })
-);
-
-
-/* SUPPLIER CONVERSATION */
-
-submitToolForm(
-  $("supplierConversationForm"),
-  "/api/supplierConversation",
-  "supplierConversationResult",
-  () => ({
-    message:
-      $("supplierMessage")?.value.trim()
-  })
-);
-
-
-/* =========================
-   LIVE BUTTON
-========================= */
-
-$("liveCallButton")?.addEventListener(
-  "click",
-  () => {
-
-    addMessage(
-      "Live AI mode کا interface تیار ہے۔ مکمل realtime voice connection اگلے integration مرحلے میں فعال کیا جائے گا۔",
-      "assistant"
-    );
-
-  }
-);
-
-
-/* =========================
-   INITIAL STATE
-========================= */
-
-window.addEventListener(
-  "load",
-  () => {
-
-    messageInput?.focus();
-
-  }
-);
+addMsg("السلام علیکم! میں Rafi AI ہوں۔ بولنے کے لیے گولے پر ٹیپ کریں یا لکھیں۔");
+renderAgents([]);
+drawOffice();
+refresh();
+setInterval(() => { if (TOKEN && !document.hidden) refresh(); }, 6000);
