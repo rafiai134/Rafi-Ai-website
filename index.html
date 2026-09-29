@@ -1,487 +1,143 @@
 <!DOCTYPE html>
-<html lang="ur" dir="ltr">
+<html lang="ur">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#050914">
-  <title>Rafi AI — Command Center</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#04101f">
+  <title>Rafi AI</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
 </head>
-
 <body>
 
-  <div class="app-shell">
-
-    <!-- TOP SYSTEM BAR -->
-    <header class="system-bar">
-      <div class="brand">
-        <div class="brand-core"></div>
-        <div>
-          <strong>RAFI AI</strong>
-          <span>PERSONAL INTELLIGENCE SYSTEM</span>
-        </div>
-      </div>
-
-      <div class="system-status">
-        <span class="status-dot"></span>
-        <span>AI ONLINE</span>
-        <span class="system-time" id="systemTime">--:--:--</span>
-      </div>
-    </header>
-
-    <!-- MAIN COMMAND CENTER -->
-    <main class="command-center">
-
-      <!-- LEFT CONTROL RAIL -->
-      <aside class="left-panel">
-
-        <div class="panel-title">
-          <span>COMMANDS</span>
-        </div>
-
-        <button class="nav-command active" data-target="ai-chat">
-          <span class="command-icon">◉</span>
-          <span>AI CHAT</span>
-        </button>
-
-        <button class="nav-command" data-target="product-research">
-          <span class="command-icon">⌕</span>
-          <span>PRODUCT</span>
-        </button>
-
-        <button class="nav-command" data-target="supplier-research">
-          <span class="command-icon">◎</span>
-          <span>SUPPLIER</span>
-        </button>
-
-        <button class="nav-command" data-target="order-approval">
-          <span class="command-icon">✓</span>
-          <span>ORDERS</span>
-        </button>
-
-        <button class="nav-command" data-target="supplier-conversation">
-          <span class="command-icon">◇</span>
-          <span>NEGOTIATE</span>
-        </button>
-
-        <div class="left-system-info">
-          <div>CORE</div>
-          <strong>GPT</strong>
-          <small>ACTIVE</small>
-        </div>
-
-      </aside>
-
-
-      <!-- CENTER -->
-      <section class="center-stage">
-
-        <!-- COMMAND HEADER -->
-        <div class="center-header">
-          <div>
-            <span class="eyebrow">PERSONAL AI COMMAND CENTER</span>
-            <h1>Rafi Intelligence Core</h1>
-          </div>
-
-          <div class="header-metrics">
-            <div>
-              <small>STATUS</small>
-              <strong>READY</strong>
-            </div>
-            <div>
-              <small>MODE</small>
-              <strong>ASSIST</strong>
-            </div>
-          </div>
-        </div>
-
-
-        <!-- AI CORE -->
-        <section class="ai-core-stage">
-
-          <div class="energy-ring ring-one"></div>
-          <div class="energy-ring ring-two"></div>
-          <div class="energy-ring ring-three"></div>
-
-          <div class="orbit orbit-one"></div>
-          <div class="orbit orbit-two"></div>
-
-          <div class="ai-core">
-            <div class="core-glow"></div>
-            <div class="core-inner">
-              <span>RAFI</span>
-              <small>AI</small>
-            </div>
-          </div>
-
-          <div class="core-status">
-            <span class="status-dot"></span>
-            Rafi AI Core Active
-          </div>
-
-        </section>
-
-
-        <!-- CHAT -->
-        <section id="ai-chat" class="workspace-panel chat-workspace">
-
-          <div class="workspace-header">
-            <div>
-              <span class="panel-kicker">CONVERSATION CHANNEL</span>
-              <h2>Rafi AI</h2>
-            </div>
-
-            <div class="workspace-actions">
-              <button id="clearChat" type="button">CLEAR</button>
-              <button id="saveChat" type="button">SAVE</button>
-            </div>
-          </div>
-
-
-          <div id="chatMessages" class="chat-messages">
-
-            <div class="message assistant-message">
-              <div class="message-avatar">R</div>
-              <div class="message-content">
-                <span class="message-label">RAFI AI</span>
-                <p>
-                  السلام علیکم! میں Rafi AI ہوں۔ بتائیں، آج کیا کرنا ہے؟
-                </p>
-              </div>
-            </div>
-
-          </div>
-
-
-          <div class="chat-composer">
-
-            <button
-              id="imageButton"
-              class="composer-tool"
-              type="button"
-              title="Image"
-            >＋</button>
-
-            <textarea
-              id="messageInput"
-              rows="1"
-              placeholder="Rafi کو حکم دیں..."
-            ></textarea>
-
-            <button
-              id="voiceButton"
-              class="composer-tool"
-              type="button"
-              title="Voice"
-            >◉</button>
-
-            <button
-              id="sendButton"
-              class="send-button"
-              type="button"
-            >➤</button>
-
-          </div>
-
-          <div class="chat-footer">
-
-            <button id="liveCallButton" type="button">
-              LIVE
-            </button>
-
-            <select id="voiceSelect">
-              <option value="">Voice</option>
-            </select>
-
-            <span>
-              ENTER = SEND
-            </span>
-
-          </div>
-
-        </section>
-
-
-        <!-- TOOL PANELS -->
-
-        <section class="tool-grid">
-
-          <article id="product-research" class="tool-panel">
-
-            <div class="tool-heading">
-              <span class="tool-symbol">⌕</span>
-              <div>
-                <span class="panel-kicker">RESEARCH MODULE</span>
-                <h3>Product Research</h3>
-              </div>
-            </div>
-
-            <form id="productResearchForm">
-
-              <input
-                id="productName"
-                type="text"
-                placeholder="Product name"
-              >
-
-              <input
-                id="targetMarket"
-                type="text"
-                placeholder="Target market"
-              >
-
-              <button type="submit">
-                RUN RESEARCH
-              </button>
-
-            </form>
-
-            <div id="productResearchResult" class="tool-result"></div>
-
-          </article>
-
-
-          <article id="supplier-research" class="tool-panel">
-
-            <div class="tool-heading">
-              <span class="tool-symbol">◎</span>
-              <div>
-                <span class="panel-kicker">SUPPLY MODULE</span>
-                <h3>Supplier Research</h3>
-              </div>
-            </div>
-
-            <form id="supplierResearchForm">
-
-              <input
-                id="supplierProduct"
-                type="text"
-                placeholder="Product"
-              >
-
-              <input
-                id="supplierQuantity"
-                type="number"
-                placeholder="Quantity"
-              >
-
-              <button type="submit">
-                FIND SUPPLIERS
-              </button>
-
-            </form>
-
-            <div id="supplierResearchResult" class="tool-result"></div>
-
-          </article>
-
-
-          <article id="order-approval" class="tool-panel">
-
-            <div class="tool-heading">
-              <span class="tool-symbol">✓</span>
-              <div>
-                <span class="panel-kicker">CONTROL MODULE</span>
-                <h3>Order Approval</h3>
-              </div>
-            </div>
-
-            <form id="orderApprovalForm">
-
-              <input
-                id="approvalProduct"
-                type="text"
-                placeholder="Product"
-              >
-
-              <input
-                id="approvalCost"
-                type="number"
-                step="0.01"
-                placeholder="Total cost"
-              >
-
-              <input
-                id="approvalProfit"
-                type="number"
-                step="0.01"
-                placeholder="Expected profit"
-              >
-
-              <button type="submit">
-                REVIEW ORDER
-              </button>
-
-            </form>
-
-            <div id="orderApprovalResult" class="tool-result"></div>
-
-          </article>
-
-
-          <article id="supplier-conversation" class="tool-panel">
-
-            <div class="tool-heading">
-              <span class="tool-symbol">◇</span>
-              <div>
-                <span class="panel-kicker">COMMUNICATION MODULE</span>
-                <h3>Supplier Chat</h3>
-              </div>
-            </div>
-
-            <form id="supplierConversationForm">
-
-              <input
-                id="supplierMessage"
-                type="text"
-                placeholder="Message to supplier"
-              >
-
-              <button type="submit">
-                PREPARE MESSAGE
-              </button>
-
-            </form>
-
-            <div id="supplierConversationResult" class="tool-result"></div>
-
-          </article>
-
-        </section>
-
-
-        <!-- LIVE ACTIVITY -->
-        <section class="activity-panel">
-
-          <div class="activity-heading">
-            <span class="panel-kicker">SYSTEM ACTIVITY</span>
-            <strong>LIVE ACTIVITY STREAM</strong>
-          </div>
-
-          <div class="activity-line">
-            <span class="activity-dot"></span>
-            <span>Rafi Intelligence Core initialized</span>
-            <time>NOW</time>
-          </div>
-
-          <div class="activity-line">
-            <span class="activity-dot"></span>
-            <span>Chat interface ready</span>
-            <time>READY</time>
-          </div>
-
-          <div class="activity-line">
-            <span class="activity-dot"></span>
-            <span>E-commerce modules standing by</span>
-            <time>READY</time>
-          </div>
-
-        </section>
-
-      </section>
-
-
-      <!-- RIGHT INTELLIGENCE PANEL -->
-      <aside class="right-panel">
-
-        <div class="panel-title">
-          <span>INTELLIGENCE</span>
-        </div>
-
-
-        <div class="intel-card">
-          <span>CORE STATUS</span>
-          <strong class="green-text">ONLINE</strong>
-          <small>System operational</small>
-        </div>
-
-
-        <div class="intel-card">
-          <span>CHAT ENGINE</span>
-          <strong>READY</strong>
-          <small>Conversation interface</small>
-        </div>
-
-
-        <div class="intel-card">
-          <span>RESEARCH</span>
-          <strong>STANDBY</strong>
-          <small>Product + supplier</small>
-        </div>
-
-
-        <div class="intel-card">
-          <span>ORDER CONTROL</span>
-          <strong>HUMAN APPROVAL</strong>
-          <small>No order without approval</small>
-        </div>
-
-
-        <div class="system-map">
-
-          <div class="map-grid"></div>
-
-          <div class="map-core">
-            <span></span>
-          </div>
-
-          <div class="map-line line-a"></div>
-          <div class="map-line line-b"></div>
-          <div class="map-line line-c"></div>
-
-          <small>AI NETWORK</small>
-
-        </div>
-
-
-        <div class="right-footer">
-          <span>RAFI AI</span>
-          <small>PERSONAL COMMAND SYSTEM</small>
-        </div>
-
-      </aside>
-
-    </main>
-
-
-    <!-- MOBILE COMMAND BAR -->
-    <nav class="mobile-command-bar">
-
-      <button data-target="ai-chat">
-        <span>◉</span>
-        Chat
-      </button>
-
-      <button data-target="product-research">
-        <span>⌕</span>
-        Product
-      </button>
-
-      <button data-target="supplier-research">
-        <span>◎</span>
-        Supplier
-      </button>
-
-      <button data-target="order-approval">
-        <span>✓</span>
-        Orders
-      </button>
-
-    </nav>
-
+<!-- LOGIN -->
+<div id="login" class="login" hidden>
+  <form id="loginForm" class="login-box">
+    <h2>Rafi AI</h2>
+    <p>ایڈمن ٹوکن درج کریں</p>
+    <input id="tokenInput" type="password" autocomplete="current-password" placeholder="Admin token">
+    <button type="submit">Unlock</button>
+    <small id="loginError"></small>
+  </form>
+</div>
+
+<header class="bar">
+  <div class="brand">
+    <span class="brand-dot"></span>
+    <strong>Rafi AI</strong>
   </div>
+  <div class="pills" id="pills">
+    <span class="pill" data-k="openai">AI</span>
+    <span class="pill" data-k="storage">DB</span>
+    <span class="pill" data-k="whatsapp">WA</span>
+    <span class="pill" data-k="shopify">SHOP</span>
+  </div>
+  <time id="clock">--:--</time>
+</header>
 
+<main class="grid">
 
-  <!-- Hidden image input kept for script.js -->
-  <input
-    id="imageInput"
-    type="file"
-    accept="image/*"
-    hidden
-  >
+  <!-- LEFT: vertical HUD screen -->
+  <aside class="hud panel">
+    <canvas id="radar" width="320" height="320" aria-label="Radar"></canvas>
+    <dl class="readouts">
+      <div><dt>Pending</dt><dd id="rdPending">0</dd></div>
+      <div><dt>Inbox</dt><dd id="rdInbox">0</dd></div>
+      <div><dt>Contacts</dt><dd id="rdContacts">0</dd></div>
+    </dl>
+    <nav class="launch">
+      <a href="https://web.whatsapp.com/" target="_blank" rel="noopener">WhatsApp</a>
+      <a href="https://www.alibaba.com/" target="_blank" rel="noopener">Alibaba</a>
+      <a href="https://admin.shopify.com/" target="_blank" rel="noopener">Shopify</a>
+      <a href="https://mail.google.com/" target="_blank" rel="noopener">Gmail</a>
+    </nav>
+  </aside>
 
+  <!-- CENTER: core + chat -->
+  <section class="center">
+    <div class="core-wrap">
+      <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+      <button id="core" class="core" type="button" aria-label="Talk to Rafi">
+        <span id="coreState">Tap to talk</span>
+      </button>
+    </div>
 
-  <script src="/script.js"></script>
+    <section class="chat panel">
+      <div id="chatMessages" class="messages" dir="auto"></div>
 
+      <div class="composer">
+        <button id="mic" type="button" class="round" aria-label="Voice">🎤</button>
+        <textarea id="messageInput" rows="1" dir="auto" placeholder="Rafi کو حکم دیں…"></textarea>
+        <button id="send" type="button" class="round go" aria-label="Send">➤</button>
+      </div>
+
+      <div class="chat-tools">
+        <select id="lang" aria-label="Voice language">
+          <option value="ur-PK">اردو</option>
+          <option value="hi-IN">हिन्दी</option>
+          <option value="en-US">English</option>
+        </select>
+        <label class="toggle"><input id="convo" type="checkbox"> Hands-free</label>
+        <label class="toggle"><input id="speakOn" type="checkbox" checked> Speak</label>
+        <button id="clear" type="button">Clear</button>
+      </div>
+    </section>
+
+    <details class="panel calc">
+      <summary>Order calculator</summary>
+      <form id="calcForm">
+        <input id="cProduct" placeholder="Product" required>
+        <div class="two">
+          <input id="cQty" type="number" min="1" step="1" placeholder="Quantity" required>
+          <input id="cCost" type="number" min="0" step="0.01" placeholder="Unit cost" required>
+        </div>
+        <div class="two">
+          <input id="cShip" type="number" min="0" step="0.01" placeholder="Shipping / unit">
+          <input id="cSell" type="number" min="0" step="0.01" placeholder="Selling price" required>
+        </div>
+        <div class="two">
+          <input id="cAd" type="number" min="0" step="0.01" placeholder="Ads / unit">
+          <input id="cFee" type="number" min="0" step="0.1" placeholder="Fees % (4)">
+        </div>
+        <div class="two">
+          <button type="submit">Calculate</button>
+          <button type="button" id="calcSubmit">Send for approval</button>
+        </div>
+      </form>
+      <pre id="calcResult" class="result"></pre>
+    </details>
+  </section>
+
+  <!-- RIGHT: office + approvals + activity -->
+  <aside class="side">
+    <section class="panel office">
+      <h3>Agents</h3>
+      <canvas id="office" width="192" height="120" aria-label="Agent office"></canvas>
+      <ul id="agentList" class="agents"></ul>
+    </section>
+
+    <section class="panel">
+      <h3>Needs your approval</h3>
+      <div id="approvals" class="approvals"><p class="empty">Nothing waiting.</p></div>
+    </section>
+
+    <section class="panel">
+      <h3>WhatsApp inbox</h3>
+      <div id="inbox" class="feed"><p class="empty">No messages yet.</p></div>
+    </section>
+
+    <section class="panel">
+      <h3>Activity</h3>
+      <div id="activity" class="feed"><p class="empty">No activity yet.</p></div>
+    </section>
+  </aside>
+
+</main>
+
+<script src="/script.js"></script>
 </body>
-                </html>
+</html>
