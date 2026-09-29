@@ -1,111 +1,121 @@
-let supplierConversationId = null;
-let orderApproved = false;
+const $ = (id) => document.getElementById(id);
+
+const chatMessages = $("chatMessages");
+const messageInput = $("messageInput");
+const sendButton = $("sendButton");
+const voiceButton = $("voiceButton");
+const imageButton = $("imageButton");
+const imageInput = $("imageInput");
+const voiceSelect = $("voiceSelect");
+
+let voices = [];
+let recognition = null;
+let listening = false;
 
 
 /* =========================
-   BASIC HELPERS
+   SYSTEM CLOCK
 ========================= */
 
-function getElement(id) {
-  return document.getElementById(id);
+function updateClock() {
+  const el = $("systemTime");
+  if (!el) return;
+
+  el.textContent = new Date().toLocaleTimeString("en-US", {
+    hour12: false
+  });
 }
 
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+setInterval(updateClock, 1000);
+updateClock();
+
+
+/* =========================
+   CHAT UI
+========================= */
+
+function addMessage(text, type = "assistant") {
+  if (!chatMessages) return;
+
+  const wrapper = document.createElement("div");
+  wrapper.className =
+    type === "user"
+      ? "message user-message"
+      : "message assistant-message";
+
+  const avatar = document.createElement("div");
+  avatar.className = "message-avatar";
+  avatar.textContent = type === "user" ? "U" : "R";
+
+  const content = document.createElement("div");
+  content.className = "message-content";
+
+  const label = document.createElement("span");
+  label.className = "message-label";
+  label.textContent = type === "user" ? "YOU" : "RAFI AI";
+
+  const p = document.createElement("p");
+  p.textContent = text;
+
+  content.appendChild(label);
+  content.appendChild(p);
+
+  wrapper.appendChild(avatar);
+  wrapper.appendChild(content);
+
+  chatMessages.appendChild(wrapper);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-function showResult(id, html) {
-  const element = getElement(id);
 
-  if (element) {
-    element.innerHTML = html;
-  }
+function showThinking() {
+  const old = $("thinkingMessage");
+  if (old) old.remove();
+
+  const wrapper = document.createElement("div");
+  wrapper.id = "thinkingMessage";
+  wrapper.className = "message assistant-message";
+
+  wrapper.innerHTML = `
+    <div class="message-avatar">R</div>
+    <div class="message-content">
+      <span class="message-label">RAFI AI</span>
+      <p>Rafi سوچ رہا ہے...</p>
+    </div>
+  `;
+
+  chatMessages.appendChild(wrapper);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+
+function removeThinking() {
+  const el = $("thinkingMessage");
+  if (el) el.remove();
 }
 
 
 /* =========================
-   MOBILE MENU
+   SEND MESSAGE
 ========================= */
-
-function toggleMenu() {
-  const links = document.querySelector(".nav-links");
-
-  if (!links) return;
-
-  if (links.style.display === "flex") {
-    links.style.display = "";
-  } else {
-    links.style.display = "flex";
-    links.style.flexDirection = "column";
-    links.style.position = "absolute";
-    links.style.top = "75px";
-    links.style.right = "5%";
-    links.style.padding = "18px";
-    links.style.border = "1px solid rgba(120,150,255,.18)";
-    links.style.borderRadius = "16px";
-    links.style.background = "rgba(8,12,27,.96)";
-    links.style.backdropFilter = "blur(20px)";
-  }
-}
-
-
-/* =========================
-   CHAT
-========================= */
-
-function addMessage(role, text) {
-  const container = getElement("chatMessages");
-
-  if (!container) return;
-
-  const message = document.createElement("div");
-
-  message.className = `chat-message ${role}`;
-
-  message.innerHTML = escapeHtml(text);
-
-  container.appendChild(message);
-
-  container.scrollTop = container.scrollHeight;
-}
-
 
 async function sendMessage() {
+  if (!messageInput) return;
 
-  const input = getElement("userInput");
-
-  if (!input) return;
-
-  const message = input.value.trim();
+  const message = messageInput.value.trim();
 
   if (!message) return;
 
-  addMessage("user", message);
+  addMessage(message, "user");
 
-  input.value = "";
+  messageInput.value = "";
+  messageInput.style.height = "auto";
 
-  const loading = document.createElement("div");
+  showThinking();
 
-  loading.className = "chat-message assistant";
-
-  loading.id = "rafi-loading";
-
-  loading.textContent = "Rafi سوچ رہا ہے...";
-
-  const container = getElement("chatMessages");
-
-  if (container) {
-    container.appendChild(loading);
-    container.scrollTop = container.scrollHeight;
-  }
+  sendButton?.setAttribute("disabled", "true");
 
   try {
-
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: {
@@ -116,994 +126,524 @@ async function sendMessage() {
       })
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
-    const oldLoading = getElement("rafi-loading");
-
-    if (oldLoading) {
-      oldLoading.remove();
-    }
+    removeThinking();
 
     if (!response.ok) {
       throw new Error(
-        data.error || "Rafi AI request failed"
+        data.error ||
+        `Rafi AI request failed (${response.status})`
       );
     }
 
     const reply =
       data.reply ||
-      data.output_text ||
-      "مجھے ابھی جواب نہیں ملا۔";
+      "Rafi AI نے کوئی جواب واپس نہیں کیا۔";
 
-    addMessage("assistant", reply);
+    addMessage(reply, "assistant");
 
-    speakReply(reply);
+    speak(reply);
 
   } catch (error) {
+    removeThinking();
 
-    const oldLoading = getElement("rafi-loading");
-
-    if (oldLoading) {
-      oldLoading.remove();
-    }
+    console.error("Rafi AI:", error);
 
     addMessage(
-      "assistant",
-      "معذرت، Rafi AI سے رابطہ نہیں ہو سکا۔ دوبارہ کوشش کریں۔"
+      error.message ||
+      "Rafi AI سے رابطہ نہیں ہو سکا۔",
+      "assistant"
     );
-
-    console.error("Rafi Chat Error:", error);
+  } finally {
+    sendButton?.removeAttribute("disabled");
+    messageInput?.focus();
   }
 }
 
 
-function handleEnter(event) {
+/* =========================
+   ENTER TO SEND
+========================= */
 
-  if (
-    event.key === "Enter" &&
-    !event.shiftKey
-  ) {
+messageInput?.addEventListener("keydown", (event) => {
+
+  if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
     sendMessage();
   }
-}
+
+});
+
+
+messageInput?.addEventListener("input", () => {
+
+  messageInput.style.height = "auto";
+
+  messageInput.style.height =
+    Math.min(messageInput.scrollHeight, 120) + "px";
+
+});
+
+
+sendButton?.addEventListener("click", sendMessage);
 
 
 /* =========================
-   VOICE
-========================= */
-
-let recognition = null;
-let isListening = false;
-
-function startVoice() {
-
-  const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
-
-  if (!SpeechRecognition) {
-
-    alert(
-      "اس browser میں voice recognition available نہیں ہے۔"
-    );
-
-    return;
-  }
-
-  if (isListening && recognition) {
-    recognition.stop();
-    return;
-  }
-
-  recognition = new SpeechRecognition();
-
-  recognition.lang = "ur-PK";
-
-  recognition.continuous = false;
-
-  recognition.interimResults = false;
-
-  recognition.onstart = function () {
-
-    isListening = true;
-
-    const input = getElement("userInput");
-
-    if (input) {
-      input.placeholder = "سن رہا ہوں...";
-    }
-  };
-
-  recognition.onresult = function (event) {
-
-    const transcript =
-      event.results[0][0].transcript;
-
-    const input = getElement("userInput");
-
-    if (input) {
-      input.value = transcript;
-    }
-
-    sendMessage();
-  };
-
-  recognition.onerror = function (event) {
-
-    console.error(
-      "Voice recognition error:",
-      event.error
-    );
-  };
-
-  recognition.onend = function () {
-
-    isListening = false;
-
-    const input = getElement("userInput");
-
-    if (input) {
-      input.placeholder = "Message Rafi...";
-    }
-  };
-
-  recognition.start();
-}
-
-
-function speakReply(text) {
-
-  if (!window.speechSynthesis) {
-    return;
-  }
-
-  window.speechSynthesis.cancel();
-
-  const cleanText =
-    String(text)
-      .replace(/[*#_`]/g, "")
-      .slice(0, 1500);
-
-  const speech =
-    new SpeechSynthesisUtterance(cleanText);
-
-  speech.lang = "ur-PK";
-
-  speech.rate = 0.95;
-
-  speech.pitch = 1;
-
-  const voiceSelect =
-    getElement("voiceSelect");
-
-  if (
-    voiceSelect &&
-    voiceSelect.value !== "default"
-  ) {
-
-    const voices =
-      window.speechSynthesis.getVoices();
-
-    const selected =
-      voices.find(
-        voice =>
-          voice.name === voiceSelect.value
-      );
-
-    if (selected) {
-      speech.voice = selected;
-    }
-  }
-
-  window.speechSynthesis.speak(speech);
-}
-
-
-/* =========================
-   CHAT CONTROLS
-========================= */
-
-function clearChat() {
-
-  const container =
-    getElement("chatMessages");
-
-  if (!container) return;
-
-  container.innerHTML = `
-    <div class="rafi-welcome">
-
-      <div class="welcome-avatar">R</div>
-
-      <h2>
-        Hello, I'm <span>Rafi.</span>
-      </h2>
-
-      <p>
-        Your AI assistant for knowledge, business and e-commerce.
-      </p>
-
-      <div class="suggestions">
-
-        <button
-          type="button"
-          onclick="setSuggestion('Help me research a profitable product')"
-        >
-          🔎 Product research
-        </button>
-
-        <button
-          type="button"
-          onclick="setSuggestion('Help me find an Alibaba supplier')"
-        >
-          🏭 Supplier research
-        </button>
-
-        <button
-          type="button"
-          onclick="setSuggestion('Calculate my product profit margin')"
-        >
-          💰 Calculate profit
-        </button>
-
-      </div>
-
-    </div>
-  `;
-}
-
-
-function setSuggestion(text) {
-
-  const input =
-    getElement("userInput");
-
-  if (!input) return;
-
-  input.value = text;
-
-  input.focus();
-}
-
-
-function exportChat() {
-
-  const container =
-    getElement("chatMessages");
-
-  if (!container) return;
-
-  const text =
-    container.innerText;
-
-  const blob =
-    new Blob(
-      [text],
-      {
-        type: "text/plain;charset=utf-8"
-      }
-    );
-
-  const url =
-    URL.createObjectURL(blob);
-
-  const link =
-    document.createElement("a");
-
-  link.href = url;
-
-  link.download =
-    "Rafi-AI-chat.txt";
-
-  link.click();
-
-  URL.revokeObjectURL(url);
-}
-
-
-/* =========================
-   PRODUCT RESEARCH
-========================= */
-
-async function researchProduct() {
-
-  const productName =
-    getElement("productName")?.value.trim();
-
-  const supplierPrice =
-    getElement("supplierPrice")?.value;
-
-  const shippingCost =
-    getElement("shippingCost")?.value;
-
-  const sellingPrice =
-    getElement("sellingPrice")?.value;
-
-  const competition =
-    getElement("competition")?.value.trim();
-
-  if (!productName) {
-
-    showResult(
-      "productResearchResult",
-      "Product name ضروری ہے۔"
-    );
-
-    return;
-  }
-
-  try {
-
-    const response =
-      await fetch("/api/productResearch", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          productName,
-          supplierPrice,
-          shippingCost,
-          sellingPrice,
-          competition
-        })
-      });
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-        "Product research failed"
-      );
-    }
-
-    showResult(
-      "productResearchResult",
-      `
-        <strong>${escapeHtml(data.product)}</strong><br><br>
-        Total cost: $${Number(data.totalCost).toFixed(2)}<br>
-        Selling price: $${Number(data.sellingPrice).toFixed(2)}<br>
-        Profit: $${Number(data.profit).toFixed(2)}<br>
-        Profit margin: ${Number(data.profitMargin).toFixed(2)}%<br>
-        Competition: ${escapeHtml(data.competition)}
-      `
-    );
-
-  } catch (error) {
-
-    showResult(
-      "productResearchResult",
-      "Product research مکمل نہیں ہو سکی۔"
-    );
-
-    console.error(error);
-  }
-}
-
-
-/* =========================
-   SUPPLIER RESEARCH
-========================= */
-
-async function researchSupplier() {
-
-  const supplierName =
-    getElement("supplierName")?.value.trim();
-
-  const productName =
-    getElement("supplierProductName")?.value.trim();
-
-  const unitPrice =
-    getElement("unitPrice")?.value;
-
-  const moq =
-    getElement("moq")?.value;
-
-  const stock =
-    getElement("stock")?.value.trim();
-
-  const shippingCost =
-    getElement("supplierShippingCost")?.value;
-
-  const deliveryTime =
-    getElement("deliveryTime")?.value.trim();
-
-  if (!supplierName || !productName) {
-
-    showResult(
-      "supplierResearchResult",
-      "Supplier name اور product name ضروری ہیں۔"
-    );
-
-    return;
-  }
-
-  try {
-
-    const response =
-      await fetch("/api/supplierResearch", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          supplierName,
-          productName,
-          unitPrice,
-          moq,
-          stock,
-          shippingCost,
-          deliveryTime
-        })
-      });
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-        "Supplier research failed"
-      );
-    }
-
-    showResult(
-      "supplierResearchResult",
-      `
-        <strong>${escapeHtml(data.supplier)}</strong><br><br>
-        Product: ${escapeHtml(data.product)}<br>
-        Unit price: $${Number(data.unitPrice).toFixed(2)}<br>
-        Shipping: $${Number(data.shippingCost).toFixed(2)}<br>
-        Estimated unit cost: $${Number(data.estimatedUnitCost).toFixed(2)}<br>
-        MOQ: ${escapeHtml(data.minimumOrderQuantity)}<br>
-        Stock: ${escapeHtml(data.stock)}<br>
-        Delivery: ${escapeHtml(data.deliveryTime)}
-      `
-    );
-
-  } catch (error) {
-
-    showResult(
-      "supplierResearchResult",
-      "Supplier research مکمل نہیں ہو سکی۔"
-    );
-
-    console.error(error);
-  }
-}
-
-
-/* =========================
-   ORDER APPROVAL
-========================= */
-
-async function checkApproval() {
-
-  const productName =
-    getElement("approvalProductName")?.value.trim();
-
-  const quantity =
-    getElement("approvalQuantity")?.value;
-
-  const unitCost =
-    getElement("approvalUnitCost")?.value;
-
-  const shippingCost =
-    getElement("approvalShippingCost")?.value;
-
-  const sellingPrice =
-    getElement("approvalSellingPrice")?.value;
-
-  if (!productName) {
-
-    showResult(
-      "approvalResult",
-      "Product name ضروری ہے۔"
-    );
-
-    return;
-  }
-
-  try {
-
-    const response =
-      await fetch("/api/approval", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          productName,
-          quantity,
-          unitCost,
-          shippingCost,
-          sellingPrice
-        })
-      });
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-        "Approval check failed"
-      );
-    }
-
-    orderApproved = false;
-
-    showResult(
-      "approvalResult",
-      `
-        <strong>${escapeHtml(data.productName)}</strong><br><br>
-        Quantity: ${data.quantity}<br>
-        Total cost: $${Number(data.totalCost).toFixed(2)}<br>
-        Total revenue: $${Number(data.totalRevenue).toFixed(2)}<br>
-        Estimated profit: $${Number(data.estimatedProfit).toFixed(2)}<br><br>
-        <strong>Status:</strong> Human approval required.
-      `
-    );
-
-  } catch (error) {
-
-    showResult(
-      "approvalResult",
-      "Order calculation مکمل نہیں ہو سکی۔"
-    );
-
-    console.error(error);
-  }
-}
-
-
-function getApprovalTotalCost() {
-
-  const quantity =
-    Number(
-      getElement("approvalQuantity")?.value || 0
-    );
-
-  const unitCost =
-    Number(
-      getElement("approvalUnitCost")?.value || 0
-    );
-
-  const shipping =
-    Number(
-      getElement("approvalShippingCost")?.value || 0
-    );
-
-  return (
-    quantity *
-    (unitCost + shipping)
-  );
-}
-
-
-async function approveOrder() {
-
-  const productName =
-    getElement("approvalProductName")?.value.trim();
-
-  if (!productName) {
-
-    showResult(
-      "approvalResult",
-      "پہلے order check کریں۔"
-    );
-
-    return;
-  }
-
-  try {
-
-    const response =
-      await fetch("/api/orderApproval", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          productName,
-          quantity:
-            Number(
-              getElement("approvalQuantity")?.value || 0
-            ),
-          totalCost:
-            getApprovalTotalCost(),
-          action: "approve"
-        })
-      });
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-        "Approval failed"
-      );
-    }
-
-    orderApproved = true;
-
-    showResult(
-      "approvalResult",
-      `
-        <strong>Order approved.</strong><br><br>
-        ${escapeHtml(data.status)}
-      `
-    );
-
-  } catch (error) {
-
-    showResult(
-      "approvalResult",
-      "Approval مکمل نہیں ہوئی۔"
-    );
-
-    console.error(error);
-  }
-}
-
-
-async function rejectOrder() {
-
-  const productName =
-    getElement("approvalProductName")?.value.trim();
-
-  if (!productName) return;
-
-  try {
-
-    const response =
-      await fetch("/api/orderApproval", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          productName,
-          quantity:
-            Number(
-              getElement("approvalQuantity")?.value || 0
-            ),
-          totalCost:
-            getApprovalTotalCost(),
-          action: "reject"
-        })
-      });
-
-    const data =
-      await response.json();
-
-    orderApproved = false;
-
-    showResult(
-      "approvalResult",
-      `
-        <strong>Order rejected.</strong><br><br>
-        ${escapeHtml(data.status || "Order rejected")}
-      `
-    );
-
-  } catch (error) {
-
-    console.error(error);
-
-    showResult(
-      "approvalResult",
-      "Order reject نہیں ہو سکا۔"
-    );
-  }
-}
-
-
-/* =========================
-   SUPPLIER CONVERSATION
-========================= */
-
-async function sendSupplierMessage() {
-
-  const input =
-    getElement("supplierMessage");
-
-  if (!input) return;
-
-  const message =
-    input.value.trim();
-
-  if (!message) return;
-
-  try {
-
-    const response =
-      await fetch("/api/supplierConversation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          conversationId:
-            supplierConversationId,
-          message
-        })
-      });
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-        "Supplier conversation failed"
-      );
-    }
-
-    supplierConversationId =
-      data.conversationId;
-
-    showResult(
-      "supplierConversationResult",
-      `
-        <strong>Rafi:</strong><br>
-        ${escapeHtml(data.reply)}
-      `
-    );
-
-  } catch (error) {
-
-    showResult(
-      "supplierConversationResult",
-      "Supplier AI سے رابطہ نہیں ہو سکا۔"
-    );
-
-    console.error(error);
-  }
-}
-
-
-/* =========================
-   SUPPLIER ORDER
-========================= */
-
-async function prepareSupplierOrder() {
-
-  if (!orderApproved) {
-
-    alert(
-      "Supplier order سے پہلے human approval ضروری ہے۔"
-    );
-
-    return;
-  }
-
-  const productName =
-    getElement("approvalProductName")?.value.trim();
-
-  const quantity =
-    Number(
-      getElement("approvalQuantity")?.value || 0
-    );
-
-  try {
-
-    const response =
-      await fetch("/api/supplierOrder", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          productName,
-          quantity,
-          supplierName:
-            getElement("supplierName")?.value.trim(),
-          totalCost:
-            getApprovalTotalCost(),
-          approved: true
-        })
-      });
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-        "Supplier order failed"
-      );
-    }
-
-    console.log(data);
-
-  } catch (error) {
-
-    console.error(error);
-  }
-}
-
-
-/* =========================
-   IMAGE / LIVE TOOLS
-========================= */
-
-async function editImage() {
-
-  const imageInput =
-    getElement("imageInput");
-
-  if (
-    !imageInput ||
-    !imageInput.files ||
-    !imageInput.files[0]
-  ) {
-
-    alert(
-      "پہلے ایک image منتخب کریں۔"
-    );
-
-    return;
-  }
-
-  alert(
-    "Image منتخب ہو گئی ہے۔ Image AI connection اگلے مرحلے میں فعال کیا جائے گا۔"
-  );
-}
-
-
-async function startLiveCall() {
-
-  if (!navigator.mediaDevices?.getUserMedia) {
-
-    alert(
-      "اس browser میں microphone available نہیں ہے۔"
-    );
-
-    return;
-  }
-
-  try {
-
-    await navigator.mediaDevices.getUserMedia({
-      audio: true
-    });
-
-    alert(
-      "Microphone access مل گیا ہے۔ Realtime AI call connection اگلے مرحلے میں فعال کیا جائے گا۔"
-    );
-
-  } catch (error) {
-
-    alert(
-      "Microphone permission نہیں ملی۔"
-    );
-
-    console.error(error);
-  }
-}
-
-
-/* =========================
-   CONTACT
-========================= */
-
-function submitContact(event) {
-
-  event.preventDefault();
-
-  const name =
-    getElement("contactName")?.value.trim();
-
-  alert(
-    `شکریہ ${name || "دوست"}! آپ کا message تیار ہے۔`
-  );
-}
-
-
-/* =========================
-   VOICE LIST
+   TEXT TO SPEECH
 ========================= */
 
 function loadVoices() {
 
-  if (!window.speechSynthesis) return;
+  if (!("speechSynthesis" in window)) return;
 
-  const select =
-    getElement("voiceSelect");
+  voices = speechSynthesis.getVoices();
 
-  if (!select) return;
+  if (!voiceSelect) return;
 
-  const voices =
-    window.speechSynthesis.getVoices();
+  voiceSelect.innerHTML =
+    `<option value="">Voice</option>`;
 
-  const current =
-    select.value;
+  voices.forEach((voice, index) => {
 
-  select.innerHTML =
-    `<option value="default">Default</option>`;
+    const option = document.createElement("option");
 
-  voices.forEach(voice => {
-
-    const option =
-      document.createElement("option");
-
-    option.value =
-      voice.name;
+    option.value = index;
 
     option.textContent =
-      voice.name;
+      `${voice.name} — ${voice.lang}`;
 
-    select.appendChild(option);
+    voiceSelect.appendChild(option);
+
   });
+}
+
+
+if ("speechSynthesis" in window) {
+
+  speechSynthesis.onvoiceschanged = loadVoices;
+
+  loadVoices();
+
+}
+
+
+function speak(text) {
+
+  if (!("speechSynthesis" in window)) return;
+
+  speechSynthesis.cancel();
+
+  const utterance =
+    new SpeechSynthesisUtterance(text);
+
+  const selected =
+    voiceSelect?.value;
 
   if (
-    [...select.options]
-      .some(option => option.value === current)
+    selected !== "" &&
+    voices[selected]
   ) {
-    select.value = current;
+    utterance.voice = voices[selected];
   }
+
+  utterance.rate = 1;
+  utterance.pitch = 1;
+
+  speechSynthesis.speak(utterance);
 }
+
+
+/* =========================
+   VOICE INPUT
+========================= */
+
+const SpeechRecognition =
+  window.SpeechRecognition ||
+  window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+
+  recognition = new SpeechRecognition();
+
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.lang = "ur-PK";
+
+  recognition.onstart = () => {
+
+    listening = true;
+
+    voiceButton?.classList.add("active");
+
+  };
+
+  recognition.onend = () => {
+
+    listening = false;
+
+    voiceButton?.classList.remove("active");
+
+  };
+
+  recognition.onerror = (event) => {
+
+    console.error(
+      "Voice recognition:",
+      event.error
+    );
+
+    listening = false;
+
+    voiceButton?.classList.remove("active");
+
+  };
+
+  recognition.onresult = (event) => {
+
+    const text =
+      event.results[0][0].transcript;
+
+    if (messageInput) {
+
+      messageInput.value = text;
+
+      messageInput.dispatchEvent(
+        new Event("input")
+      );
+
+    }
+
+  };
+
+}
+
+
+voiceButton?.addEventListener("click", () => {
+
+  if (!recognition) {
+
+    addMessage(
+      "اس موبائل براؤزر میں voice recognition دستیاب نہیں ہے۔",
+      "assistant"
+    );
+
+    return;
+
+  }
+
+  if (listening) {
+
+    recognition.stop();
+
+  } else {
+
+    recognition.lang = "ur-PK";
+
+    recognition.start();
+
+  }
+
+});
 
 
 /* =========================
    IMAGE INPUT
 ========================= */
 
-function setupImageInput() {
+imageButton?.addEventListener("click", () => {
+  imageInput?.click();
+});
 
-  const input =
-    getElement("imageInput");
 
-  if (!input) return;
+imageInput?.addEventListener("change", () => {
 
-  input.addEventListener(
-    "change",
-    function () {
+  const file = imageInput.files?.[0];
 
-      if (!this.files?.length) {
-        return;
-      }
+  if (!file) return;
 
-      const file =
-        this.files[0];
-
-      addMessage(
-        "user",
-        `Image selected: ${file.name}`
-      );
-    }
+  addMessage(
+    `Image منتخب ہوئی: ${file.name}`,
+    "user"
   );
-}
+
+  addMessage(
+    "Image input تیار ہے۔ Image analysis endpoint سے مکمل connection اگلے مرحلے میں فعال کیا جا سکتا ہے۔",
+    "assistant"
+  );
+
+});
 
 
 /* =========================
-   INITIALIZE
+   CLEAR CHAT
 ========================= */
 
-function initializeRafiAI() {
+$("clearChat")?.addEventListener(
+  "click",
+  () => {
 
-  setupImageInput();
+    if (!chatMessages) return;
 
-  loadVoices();
+    chatMessages.innerHTML = "";
 
-  if (window.speechSynthesis) {
+    addMessage(
+      "چیٹ صاف ہو گئی۔ بتائیں، اب کیا کرنا ہے؟",
+      "assistant"
+    );
 
-    window.speechSynthesis.onvoiceschanged =
-      loadVoices;
   }
+);
 
-  console.log(
-    "Rafi AI initialized successfully."
+
+/* =========================
+   SAVE CHAT
+========================= */
+
+$("saveChat")?.addEventListener(
+  "click",
+  () => {
+
+    if (!chatMessages) return;
+
+    const text =
+      [...chatMessages.querySelectorAll(".message")]
+        .map((message) =>
+          message.innerText.trim()
+        )
+        .join("\n\n");
+
+    const blob =
+      new Blob([text], {
+        type: "text/plain;charset=utf-8"
+      });
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const link =
+      document.createElement("a");
+
+    link.href = url;
+    link.download = "rafi-ai-chat.txt";
+
+    link.click();
+
+    URL.revokeObjectURL(url);
+
+  }
+);
+
+
+/* =========================
+   MOBILE / LEFT NAVIGATION
+========================= */
+
+document.querySelectorAll(
+  "[data-target]"
+).forEach((button) => {
+
+  button.addEventListener(
+    "click",
+    () => {
+
+      const target =
+        document.getElementById(
+          button.dataset.target
+        );
+
+      if (!target) return;
+
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+      document.querySelectorAll(
+        ".nav-command"
+      ).forEach((item) => {
+        item.classList.remove("active");
+      });
+
+      button.classList.add("active");
+
+    }
   );
+
+});
+
+
+/* =========================
+   TOOL FORMS
+========================= */
+
+async function submitToolForm(
+  form,
+  endpoint,
+  resultElement,
+  payloadBuilder
+) {
+
+  form?.addEventListener(
+    "submit",
+    async (event) => {
+
+      event.preventDefault();
+
+      const result =
+        document.getElementById(
+          resultElement
+        );
+
+      if (!result) return;
+
+      result.textContent =
+        "Rafi process کر رہا ہے...";
+
+      try {
+
+        const response =
+          await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(
+              payloadBuilder()
+            )
+          });
+
+        const data =
+          await response.json()
+            .catch(() => ({}));
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.error ||
+            `Request failed (${response.status})`
+          );
+
+        }
+
+        result.textContent =
+          data.reply ||
+          data.message ||
+          "Process مکمل ہو گیا۔";
+
+      } catch (error) {
+
+        console.error(error);
+
+        result.textContent =
+          error.message ||
+          "Module سے رابطہ نہیں ہو سکا۔";
+
+      }
+
+    }
+  );
+
 }
 
 
-document.addEventListener(
-  "DOMContentLoaded",
-  initializeRafiAI
+/* PRODUCT RESEARCH */
+
+submitToolForm(
+  $("productResearchForm"),
+  "/api/productResearch",
+  "productResearchResult",
+  () => ({
+    product:
+      $("productName")?.value.trim(),
+
+    market:
+      $("targetMarket")?.value.trim()
+  })
+);
+
+
+/* SUPPLIER RESEARCH */
+
+submitToolForm(
+  $("supplierResearchForm"),
+  "/api/supplierResearch",
+  "supplierResearchResult",
+  () => ({
+    product:
+      $("supplierProduct")?.value.trim(),
+
+    quantity:
+      Number(
+        $("supplierQuantity")?.value || 0
+      )
+  })
+);
+
+
+/* ORDER APPROVAL */
+
+submitToolForm(
+  $("orderApprovalForm"),
+  "/api/orderApproval",
+  "orderApprovalResult",
+  () => ({
+    product:
+      $("approvalProduct")?.value.trim(),
+
+    cost:
+      Number(
+        $("approvalCost")?.value || 0
+      ),
+
+    profit:
+      Number(
+        $("approvalProfit")?.value || 0
+      )
+  })
+);
+
+
+/* SUPPLIER CONVERSATION */
+
+submitToolForm(
+  $("supplierConversationForm"),
+  "/api/supplierConversation",
+  "supplierConversationResult",
+  () => ({
+    message:
+      $("supplierMessage")?.value.trim()
+  })
+);
+
+
+/* =========================
+   LIVE BUTTON
+========================= */
+
+$("liveCallButton")?.addEventListener(
+  "click",
+  () => {
+
+    addMessage(
+      "Live AI mode کا interface تیار ہے۔ مکمل realtime voice connection اگلے integration مرحلے میں فعال کیا جائے گا۔",
+      "assistant"
+    );
+
+  }
+);
+
+
+/* =========================
+   INITIAL STATE
+========================= */
+
+window.addEventListener(
+  "load",
+  () => {
+
+    messageInput?.focus();
+
+  }
 );
