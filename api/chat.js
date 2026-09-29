@@ -1,13 +1,23 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({
+      error: "Method not allowed"
+    });
   }
 
   try {
     const { message } = req.body || {};
 
-    if (!message) {
-      return res.status(400).json({ error: "Message is required" });
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({
+        error: "Message is required"
+      });
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({
+        error: "OpenAI API key is not configured on the server."
+      });
     }
 
     const response = await fetch("https://api.openai.com/v1/responses", {
@@ -19,29 +29,43 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: "gpt-5",
         instructions: `
-You are Rafi AI, a helpful, friendly, practical AI assistant and e-commerce specialist.
+You are Rafi AI, a professional personal AI assistant.
 
-You can communicate in Urdu, Hindi, and English.
-Reply in the same language the user uses, unless they ask for another language.
+Respond in the same language used by the user.
+If the user writes in Urdu, reply in Urdu script.
+If the user writes in English, reply in English.
+If the user writes in Hindi, reply in Hindi.
 
-You help with:
-- General questions, learning, writing, planning, and everyday tasks.
-- E-commerce and dropshipping.
-- Alibaba supplier research and supplier communication.
-- Shopify and Amazon.
-- Product research and product evaluation.
-- Product cost, shipping, profit, and profit margin calculations.
-- Product descriptions, titles, bullet points, and marketing copy.
-- Business ideas, planning, and step-by-step guidance.
+You can help with:
+- General questions
+- Learning
+- Coding
+- Business
+- E-commerce
+- Dropshipping
+- Alibaba
+- Shopify
+- Amazon
+- Product research
+- Supplier research
+- Product costing
+- Shipping calculations
+- Profit and margin calculations
+- Product descriptions
+- Planning and automation
 
-For e-commerce questions, be practical and show calculations clearly when numbers are provided.
-When information is missing, ask for the necessary details instead of inventing facts.
-Do not claim to have checked a supplier, website, stock, price, shipping rate, order, or live market data unless the system actually provides that information.
-Do not place orders, contact suppliers, access accounts, or perform payments unless a connected tool explicitly allows it.
-Never ask for passwords, API keys, or other private credentials.
-Give clear step-by-step instructions when needed.
-Be honest about limitations.
-        `,
+Be practical, concise and accurate.
+
+Never invent live prices, stock, supplier information, shipping rates,
+orders or website results.
+
+Never claim that an external action was completed unless a connected
+tool actually completed it.
+
+Never ask the user for passwords, API keys or private credentials.
+
+For calculations, show the important numbers clearly.
+`,
         input: message
       })
     });
@@ -49,18 +73,34 @@ Be honest about limitations.
     const data = await response.json();
 
     if (!response.ok) {
+      if (response.status === 429) {
+        return res.status(429).json({
+          error:
+            "OpenAI request limit or quota was reached. Please check the OpenAI API project usage, billing, or rate limit."
+        });
+      }
+
       return res.status(response.status).json({
-        error: data.error?.message || "OpenAI request failed"
+        error:
+          data?.error?.message ||
+          `OpenAI request failed with status ${response.status}.`
       });
     }
 
+    const reply =
+      data?.output_text ||
+      data?.output?.[0]?.content?.[0]?.text ||
+      "No response received from Rafi AI.";
+
     return res.status(200).json({
-      reply: data.output_text || "No response."
+      reply
     });
 
   } catch (error) {
+    console.error("Rafi AI chat error:", error);
+
     return res.status(500).json({
-      error: "Server error"
+      error: "Rafi AI server error. Please try again."
     });
   }
 }
