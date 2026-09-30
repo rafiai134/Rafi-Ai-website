@@ -27,6 +27,7 @@ jobs:
           gradle-version: "8.7"
 
       - name: Create temporary signing key
+        working-directory: android-companion/app
         run: |
           keytool -genkeypair -v \
             -keystore rafi-release.keystore \
