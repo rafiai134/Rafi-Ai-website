@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Rafi AI Companion</string>
+    <string name="service_description">Executes commands sent by your Rafi AI server after you explicitly enable this accessibility service.</string>
+</resources>
