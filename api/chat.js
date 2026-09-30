@@ -94,6 +94,20 @@ const DEVICE_COMMANDS = { home:"Go to Android home screen.", back:"Press Android
       },
       required: ["quantity", "unitCost", "sellingPrice"]
     }
+  },
+  {
+    type: "function",
+    name: "device_command",
+    description: "Queue a safe Android device command for the installed Rafi AI Companion. Supported commands: home, back, recents, notifications, open_app, open_url. Never claim it succeeded until the device reports completion.",
+    parameters: {
+      type: "object",
+      properties: {
+        command: { type: "string", enum: ["home", "back", "recents", "notifications", "open_app", "open_url"] },
+        packageName: { type: "string" },
+        url: { type: "string" }
+      },
+      required: ["command"]
+    }
   }
 ];
 
