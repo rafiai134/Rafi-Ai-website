@@ -14,7 +14,7 @@ const PLATFORMS = {
   amazon: "https://www.amazon.com/"
 };
 
-const tools = [
+const DEVICE_COMMANDS = { home:"Go to Android home screen.", back:"Press Android back.", recents:"Open Android recent apps.", notifications:"Open Android notifications.", open_app:"Open an installed Android app by package name.", open_url:"Open a URL in the Android browser." };\n\nconst tools = [
   {
     type: "function",
     name: "open_platform",
@@ -97,7 +97,7 @@ const tools = [
   }
 ];
 
-async function runTool(name, args, ui) {
+async function queueDevice(command,args) {\n  if (!process.env.DEVICE_TOKEN) return {ok:false,note:"Android bridge is not configured yet."};\n  if (!Object.keys(DEVICE_COMMANDS).includes(command)) return {ok:false,note:"Command not allowed."};\n  if (command==="open_app" && !args.packageName) return {ok:false,note:"packageName is required."};\n  if (command==="open_url" && !args.url) return {ok:false,note:"url is required."};\n  const q=await kvGet("device_queue",[]);\n  const item={id:"d"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),command,args:{packageName:args.packageName||null,url:args.url||null},status:"pending",createdAt:Date.now()};\n  q.unshift(item); await kvSet("device_queue",q.slice(0,80)); await log("Android command queued: "+command,"device");\n  return {ok:true,note:"Android command queued."};\n}\n\nasync function runTool(name, args, ui) {
   switch (name) {
     case "open_platform": {
       const url = PLATFORMS[String(args.name || "").toLowerCase()];
@@ -136,7 +136,7 @@ async function runTool(name, args, ui) {
       await addAction("shopify_listing", `Shopify draft: ${args.title}`, args);
       return { ok: true, note: "Queued for approval. Nothing created yet." };
     }
-    case "calc_order": {
+    case "device_command": return queueDevice(args.command,args);\n    case "calc_order": {
       const r = calcOrder(args);
       return r || { error: "Invalid numbers" };
     }
@@ -153,7 +153,7 @@ Replies are read aloud, so keep them short (1-3 sentences) unless asked for deta
 Rules:
 - Use tools for actions. Messages, supplier messages and Shopify listings only go into the approval queue. Tell the user they must tap APPROVE. Never say something was sent/created before approval.
 - You cannot read live Alibaba results, prices, stock or shipping. Never invent them. Give the search link and ask the user for supplier details.
-- You cannot control the phone. You can only open links for the user.
+- Phone control is available only through the installed Rafi AI Android Companion. Use device_command for supported navigation/app commands and never claim success until the device reports it.\n- Messages and business transactions require explicit approval.
 - Never place orders or make payments. Never ask for passwords or API keys.
 - For profit questions call calc_order and mention fees and any warning.
 `;
