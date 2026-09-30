@@ -15,18 +15,39 @@ jobs:
         working-directory: android-companion
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: "8.7"
-      - name: Build debug APK
-        run: gradle assembleDebug
-      - name: Upload APK
+
+      - name: Create temporary signing key
+        run: |
+          keytool -genkeypair -v \
+            -keystore rafi-release.keystore \
+            -storepass rafi-ai-local \
+            -keypass rafi-ai-local \
+            -alias rafi-ai \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 3650 \
+            -dname "CN=Rafi AI, OU=Companion, O=Rafi AI, L=Pakistan, ST=Pakistan, C=PK"
+
+      - name: Build signed release APK
+        run: gradle assembleRelease
+        env:
+          RAFI_KEYSTORE_PATH: rafi-release.keystore
+          RAFI_KEYSTORE_PASSWORD: rafi-ai-local
+          RAFI_KEY_ALIAS: rafi-ai
+          RAFI_KEY_PASSWORD: rafi-ai-local
+
+      - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: rafi-ai-companion-debug
-          path: android-companion/app/build/outputs/apk/debug/app-debug.apk
+          name: rafi-ai-companion-release
+          path: android-companion/app/build/outputs/apk/release/app-release.apk
