@@ -13,6 +13,22 @@ android {
         versionCode 1
         versionName '1.0'
     }
+
+    signingConfigs {
+        release {
+            storeFile file(System.getenv('RAFI_KEYSTORE_PATH') ?: 'rafi-release.keystore')
+            storePassword System.getenv('RAFI_KEYSTORE_PASSWORD') ?: 'rafi-ai-local'
+            keyAlias System.getenv('RAFI_KEY_ALIAS') ?: 'rafi-ai'
+            keyPassword System.getenv('RAFI_KEY_PASSWORD') ?: 'rafi-ai-local'
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+        }
+    }
 }
 
 dependencies {
