@@ -7,6 +7,9 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.graphics.Path;
+import android.accessibilityservice.GestureDescription;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -105,6 +108,22 @@ public class RafiAccessibilityService extends AccessibilityService {
                     ok = true;
                     result = "url launch requested";
                 } else result = "missing url";
+            } else if ("tap".equals(name)) {
+                float x = args == null ? -1 : (float)args.optDouble("x", -1);
+                float y = args == null ? -1 : (float)args.optDouble("y", -1);
+                ok = tap(x, y);
+                result = ok ? "screen tapped" : "tap failed";
+            } else if ("tap_text".equals(name)) {
+                String text = args == null ? "" : args.optString("text", "");
+                ok = tapText(text);
+                result = ok ? "text tapped" : "text not found";
+            } else if ("type_text".equals(name)) {
+                String text = args == null ? "" : args.optString("text", "");
+                ok = typeText(text);
+                result = ok ? "text entered" : "typing failed";
+            } else if ("scroll".equals(name)) {
+                ok = scrollForward();
+                result = ok ? "scrolled" : "scroll failed";
             } else if ("open_app".equals(name)) {
                 String pkg = args == null ? "" : args.optString("packageName", "");
                 if (!pkg.isEmpty()) {
@@ -122,6 +141,58 @@ public class RafiAccessibilityService extends AccessibilityService {
         }
 
         if (!id.isEmpty()) postResult(id, ok ? "done" : "failed", result);
+    }
+
+    private boolean tap(float x, float y) {
+        if (x < 0 || y < 0) return false;
+        Path path = new Path();
+        path.moveTo(x, y);
+        GestureDescription.StrokeDescription stroke = new GestureDescription.StrokeDescription(path, 0, 80);
+        return dispatchGesture(new GestureDescription.Builder().addStroke(stroke).build(), null, null);
+    }
+
+    private AccessibilityNodeInfo findTextNode(AccessibilityNodeInfo node, String text) {
+        if (node == null) return null;
+        if (text.equalsIgnoreCase(String.valueOf(node.getText()))) return node;
+        for (int i = 0; i < node.getChildCount(); i++) {
+            AccessibilityNodeInfo hit = findTextNode(node.getChild(i), text);
+            if (hit != null) return hit;
+        }
+        return null;
+    }
+
+    private boolean tapText(String text) {
+        AccessibilityNodeInfo root = getRootInActiveWindow();
+        AccessibilityNodeInfo hit = findTextNode(root, text);
+        if (hit == null) return false;
+        boolean ok = hit.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+        hit.recycle();
+        return ok;
+    }
+
+    private boolean typeText(String text) {
+        AccessibilityNodeInfo root = getRootInActiveWindow();
+        if (root == null) return false;
+        AccessibilityNodeInfo focus = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+        if (focus == null) return false;
+        android.os.Bundle b = new android.os.Bundle();
+        b.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text);
+        boolean ok = focus.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, b);
+        focus.recycle();
+        return ok;
+    }
+
+    private boolean scrollForward() {
+        AccessibilityNodeInfo root = getRootInActiveWindow();
+        if (root == null) return false;
+        return scrollNode(root);
+    }
+
+    private boolean scrollNode(AccessibilityNodeInfo node) {
+        if (node == null) return false;
+        if (node.isScrollable() && node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)) return true;
+        for (int i = 0; i < node.getChildCount(); i++) if (scrollNode(node.getChild(i))) return true;
+        return false;
     }
 
     private void postResult(String id, String status, String result) {
