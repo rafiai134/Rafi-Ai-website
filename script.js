@@ -479,145 +479,194 @@ let tick = 0;
 
 function px(x, y, w, h, color) { octx.fillStyle = color; octx.fillRect(x, y, w, h); }
 
-function drawSeat(a) {
-  // Architectural room/station — not a generic box.
-  const room = [
-    {x:18,y:18,w:372,h:150},{x:430,y:18,w:372,h:150},
-    {x:18,y:192,w:372,h:150},{x:430,y:192,w:372,h:150}
-  ][a.seat];
+function drawSeat(a){
+  // Stonic-style agent town: compact rooms, desks and tiny residents inside a shared floor.
+  const rooms=[
+    {x:22,y:24,w:330,h:126,label:"RAFI / CORE"},
+    {x:468,y:24,w:330,h:126,label:"SUPPLIER"},
+    {x:22,y:204,w:330,h:126,label:"SHOPIFY"},
+    {x:468,y:204,w:330,h:126,label:"WHATSAPP"}
+  ];
+  const r=rooms[a.seat];
   octx.save();
-  octx.strokeStyle = a.color;
-  octx.globalAlpha = .32;
-  octx.lineWidth = 1.5;
-  octx.strokeRect(room.x,room.y,room.w,room.h);
-  octx.globalAlpha = .08;
-  octx.fillStyle = a.color;
-  octx.fillRect(room.x+1,room.y+1,room.w-2,room.h-2);
-  octx.globalAlpha = 1;
-  octx.fillStyle = a.color;
-  octx.font = "600 10px Arial";
-  octx.fillText(a.name,room.x+15,room.y+18);
-  octx.fillStyle = "#6f8ea7";
-  octx.font = "8px Arial";
-  octx.fillText(["VOICE / ORCHESTRATION","SUPPLIER RESEARCH","STORE AUTOMATION","COMMUNICATIONS"][a.seat],room.x+15,room.y+31);
+  octx.fillStyle="rgba(8,18,30,.78)";
+  octx.fillRect(r.x,r.y,r.w,r.h);
+  octx.strokeStyle="rgba(120,190,220,.28)";
+  octx.lineWidth=1;
+  octx.strokeRect(r.x,r.y,r.w,r.h);
+  // room divider / doorway
+  octx.strokeStyle=a.color;
+  octx.globalAlpha=.55;
+  octx.beginPath();
+  octx.moveTo(r.x+22,r.y+20);octx.lineTo(r.x+92,r.y+20);
+  octx.stroke();
+  octx.globalAlpha=1;
+  octx.fillStyle="#8aa5b8";
+  octx.font="600 8px Arial";
+  octx.fillText(r.label,r.x+22,r.y+16);
 
-  // floor light strips
-  octx.fillStyle = "rgba(84,220,255,.16)";
-  octx.fillRect(room.x+15,room.y+room.h-15,room.w-30,1);
-  octx.fillStyle = a.color;
-  octx.globalAlpha = .55;
-  octx.fillRect(room.x+15,room.y+room.h-15,90,1);
+  // workstation
+  const dx=r.x+r.w*.54, dy=r.y+r.h*.58;
+  octx.fillStyle="#152d40";
+  octx.fillRect(dx-42,dy-12,84,25);
+  octx.strokeStyle="rgba(120,190,220,.25)";
+  octx.strokeRect(dx-42,dy-12,84,25);
+  octx.fillStyle="#07121e";
+  octx.fillRect(dx-27,dy-9,54,16);
+  octx.strokeStyle=a.color;octx.globalAlpha=.45;
+  octx.strokeRect(dx-27,dy-9,54,16);
+  // chair
+  octx.globalAlpha=1;
+  octx.fillStyle="#243d50";
+  octx.fillRect(dx-10,dy+17,20,8);
+  octx.fillRect(dx-4,dy+24,8,8);
   octx.restore();
 }
 
-function drawRobot(x,y,a,scale=1){
-  const s=scale, moving=agentWorking[a.id];
-  const bob=moving?Math.sin(tick*.28)*4:0;
+function drawRobot(x,y,a,scale=.46){
+  // Small resident avatar — intentionally compact like an agent-town character, not a large robot.
+  const s=scale, moving=agentWorking[a.id], bob=moving?Math.sin(tick*.24)*2:0;
   octx.save();
   octx.translate(x,y+bob);
-  octx.shadowBlur=moving?26:14;
+  octx.shadowBlur=moving?16:7;
   octx.shadowColor=a.color;
 
-  // antenna + signal
-  octx.strokeStyle=a.color;octx.lineWidth=2;
-  octx.beginPath();octx.moveTo(0,-34*s);octx.lineTo(0,-46*s);octx.stroke();
-  octx.fillStyle=a.color;octx.beginPath();octx.arc(0,-49*s,3*s,0,6.28);octx.fill();
+  // shadow
+  octx.fillStyle="rgba(0,0,0,.45)";
+  octx.beginPath();octx.ellipse(0,25*s,27*s,7*s,0,0,6.28);octx.fill();
+
+  // legs/body
+  octx.strokeStyle=a.color;octx.lineWidth=5*s;octx.lineCap="round";
+  octx.beginPath();
+  octx.moveTo(-7*s,16*s);octx.lineTo(-9*s,30*s);
+  octx.moveTo(7*s,16*s);octx.lineTo(9*s,30*s);
+  octx.stroke();
+  octx.fillStyle="#132c3e";octx.strokeStyle=a.color;octx.lineWidth=1.6*s;
+  octx.beginPath();octx.roundRect(-15*s,0,30*s,20*s,5*s);octx.fill();octx.stroke();
+  octx.fillStyle=a.color;octx.globalAlpha=.8;
+  octx.beginPath();octx.arc(0,10*s,3*s,0,6.28);octx.fill();
 
   // head
-  octx.fillStyle="#b9ecff";
-  octx.strokeStyle=a.color;octx.lineWidth=2;
-  octx.beginPath();octx.roundRect(-24*s,-32*s,48*s,34*s,8*s);octx.fill();octx.stroke();
-  // visor
-  octx.fillStyle="#061b30";
-  octx.beginPath();octx.roundRect(-18*s,-25*s,36*s,18*s,5*s);octx.fill();
+  octx.globalAlpha=1;octx.fillStyle="#d4edf7";octx.strokeStyle=a.color;
+  octx.beginPath();octx.arc(0,-10*s,12*s,0,6.28);octx.fill();octx.stroke();
+  octx.fillStyle="#071522";
+  octx.beginPath();octx.ellipse(0,-9*s,9*s,5*s,0,0,6.28);octx.fill();
   octx.fillStyle=a.color;
-  octx.beginPath();octx.arc(-8*s,-16*s,3*s,0,6.28);octx.arc(8*s,-16*s,3*s,0,6.28);octx.fill();
-
-  // torso
-  octx.fillStyle="#0b2c47";
-  octx.strokeStyle=a.color;
-  octx.beginPath();octx.roundRect(-29*s,5*s,58*s,52*s,9*s);octx.fill();octx.stroke();
-  octx.fillStyle=a.color;
-  octx.beginPath();octx.arc(0,25*s,6*s,0,6.28);octx.fill();
+  octx.beginPath();octx.arc(-4*s,-9*s,1.5*s,0,6.28);octx.arc(4*s,-9*s,1.5*s,0,6.28);octx.fill();
 
   // arms
-  octx.strokeStyle=a.color;octx.lineWidth=7*s;octx.lineCap="round";
-  octx.beginPath();octx.moveTo(-27*s,15*s);octx.lineTo(-42*s,38*s);octx.moveTo(27*s,15*s);octx.lineTo(42*s,38*s);octx.stroke();
-  // legs
-  octx.beginPath();octx.moveTo(-15*s,57*s);octx.lineTo(-18*s,84*s);octx.moveTo(15*s,57*s);octx.lineTo(18*s,84*s);octx.stroke();
-  octx.lineWidth=5*s;
-  octx.beginPath();octx.moveTo(-23*s,84*s);octx.lineTo(-10*s,84*s);octx.moveTo(10*s,84*s);octx.lineTo(23*s,84*s);octx.stroke();
+  octx.strokeStyle=a.color;octx.lineWidth=4*s;
+  octx.beginPath();
+  octx.moveTo(-13*s,4*s);octx.lineTo(-22*s,15*s);
+  octx.moveTo(13*s,4*s);octx.lineTo(22*s,15*s);
+  octx.stroke();
 
   octx.restore();
 }
 
-function drawOffice() {
+function drawOffice(){
   const W=office.width,H=office.height;
   octx.clearRect(0,0,W,H);
+
+  // Shared dark command-center floor.
   const bg=octx.createLinearGradient(0,0,W,H);
-  bg.addColorStop(0,"#03101e");bg.addColorStop(.5,"#061b2c");bg.addColorStop(1,"#020c18");
+  bg.addColorStop(0,"#02070d");bg.addColorStop(.5,"#06131e");bg.addColorStop(1,"#02070d");
   octx.fillStyle=bg;octx.fillRect(0,0,W,H);
 
-  // subtle floor grid
-  octx.strokeStyle="rgba(84,220,255,.08)";octx.lineWidth=1;
-  for(let x=0;x<=W;x+=28){octx.beginPath();octx.moveTo(x,0);octx.lineTo(x,H);octx.stroke();}
-  for(let y=0;y<=H;y+=28){octx.beginPath();octx.moveTo(0,y);octx.lineTo(W,y);octx.stroke();}
+  // Fine floor grid, kept subtle so the town remains the focus.
+  octx.strokeStyle="rgba(80,190,230,.055)";octx.lineWidth=1;
+  for(let x=0;x<W;x+=20){octx.beginPath();octx.moveTo(x,0);octx.lineTo(x,H);octx.stroke();}
+  for(let y=0;y<H;y+=20){octx.beginPath();octx.moveTo(0,y);octx.lineTo(W,y);octx.stroke();}
 
   const rooms=[
-    {x:18,y:18,w:372,h:150,a:AGENTS[0],label:"RAFI CORE / VOICE"},
-    {x:430,y:18,w:372,h:150,a:AGENTS[1],label:"SUPPLIER / RESEARCH"},
-    {x:18,y:192,w:372,h:150,a:AGENTS[2],label:"SHOPIFY / STORE"},
-    {x:430,y:192,w:372,h:150,a:AGENTS[3],label:"WHATSAPP / COMMS"}
+    {x:22,y:24,w:330,h:126},
+    {x:468,y:24,w:330,h:126},
+    {x:22,y:204,w:330,h:126},
+    {x:468,y:204,w:330,h:126}
   ];
-
-  // Four architectural rooms with doors and ceiling lights
-  rooms.forEach(r=>{
-    octx.strokeStyle=r.a.color;octx.globalAlpha=.28;octx.lineWidth=1.5;octx.strokeRect(r.x,r.y,r.w,r.h);
-    octx.globalAlpha=1;
-    octx.fillStyle="rgba(84,220,255,.03)";octx.fillRect(r.x+2,r.y+2,r.w-4,r.h-4);
-    octx.fillStyle=r.a.color;octx.globalAlpha=.65;octx.fillRect(r.x+16,r.y+9,80,2);
-    octx.globalAlpha=1;
-    octx.font="600 9px Arial";octx.fillStyle=r.a.color;octx.fillText(r.label,r.x+15,r.y+27);
-    octx.strokeStyle="rgba(84,220,255,.15)";octx.strokeRect(r.x+18,r.y+40,r.w-36,r.h-62);
-    // workstation
-    octx.fillStyle="#08263f";octx.fillRect(r.x+45,r.y+76,110,34);
-    octx.strokeStyle="rgba(84,220,255,.22)";octx.strokeRect(r.x+45,r.y+76,110,34);
-    octx.fillStyle="#0c4265";octx.fillRect(r.x+55,r.y+84,42,20);
-    // door
-    octx.strokeStyle=r.a.color;octx.globalAlpha=.5;octx.strokeRect(r.x+r.w-35,r.y+r.h-35,18,34);octx.globalAlpha=1;
-  });
-
-  // Central command nexus + four visible routed lines
-  const cx=W/2,cy=H/2;
-  octx.save();
-  octx.shadowBlur=18;octx.shadowColor="#54dcff";
-  octx.strokeStyle="#54dcff";octx.globalAlpha=.7;octx.lineWidth=2;
   rooms.forEach((r,i)=>{
-    const sx=r.x+r.w/2,sy=i<2?r.y+r.h:r.y;
-    octx.beginPath();octx.moveTo(sx,sy);octx.lineTo(cx,cy);octx.stroke();
-    octx.fillStyle="#54dcff";octx.beginPath();octx.arc(sx,sy,3,0,6.28);octx.fill();
+    const a=AGENTS[i];
+    octx.fillStyle="rgba(10,25,38,.55)";
+    octx.fillRect(r.x,r.y,r.w,r.h);
+    octx.strokeStyle="rgba(105,175,205,.24)";
+    octx.strokeRect(r.x,r.y,r.w,r.h);
   });
-  octx.globalAlpha=.9;octx.beginPath();octx.arc(cx,cy,34,0,6.28);octx.stroke();
-  octx.globalAlpha=.18;octx.beginPath();octx.arc(cx,cy,48,0,6.28);octx.stroke();
-  octx.globalAlpha=1;octx.fillStyle="#54dcff";octx.font="600 8px Arial";octx.textAlign="center";octx.fillText("RAFI COMMAND NEXUS",cx,cy+3);
+
+  // Central corridor / command nexus, inspired by the routed network in the reference.
+  const cx=W/2,cy=H/2;
+  octx.strokeStyle="rgba(75,205,240,.24)";
+  octx.lineWidth=1;
+  octx.strokeRect(cx-82,cy-48,164,96);
+  octx.fillStyle="rgba(50,150,190,.06)";
+  octx.fillRect(cx-82,cy-48,164,96);
+
+  // Four routed live connections.
+  rooms.forEach((r,i)=>{
+    const sx=r.x+r.w/2;
+    const sy=i<2?r.y+r.h:r.y;
+    octx.save();
+    octx.strokeStyle=AGENTS[i].color;
+    octx.globalAlpha=.5;
+    octx.lineWidth=1.5;
+    octx.shadowBlur=8;octx.shadowColor=AGENTS[i].color;
+    octx.beginPath();
+    octx.moveTo(sx,sy);
+    octx.lineTo(cx,cy);
+    octx.stroke();
+    // moving data pulse
+    const phase=((tick*.025)+(i*.23))%1;
+    const px=sx+(cx-sx)*phase, py=sy+(cy-sy)*phase;
+    octx.globalAlpha=.9;
+    octx.fillStyle=AGENTS[i].color;
+    octx.beginPath();octx.arc(px,py,2.5,0,6.28);octx.fill();
+    octx.restore();
+  });
+
+  // Core orb.
+  octx.save();
+  octx.translate(cx,cy);
+  octx.shadowBlur=24;octx.shadowColor="#48d9ff";
+  octx.strokeStyle="#48d9ff";octx.globalAlpha=.65;
+  octx.beginPath();octx.arc(0,0,25,0,6.28);octx.stroke();
+  octx.globalAlpha=.16;octx.beginPath();octx.arc(0,0,39,0,6.28);octx.stroke();
+  octx.fillStyle="rgba(65,220,255,.16)";
+  octx.beginPath();octx.arc(0,0,17,0,6.28);octx.fill();
+  octx.fillStyle="#7be7ff";octx.globalAlpha=.95;
+  octx.beginPath();octx.arc(0,0,6,0,6.28);octx.fill();
+  octx.globalAlpha=1;octx.fillStyle="#86a8ba";
+  octx.font="600 7px Arial";octx.textAlign="center";
+  octx.fillText("RAFI CORE",0,53);
+  octx.textAlign="left";
   octx.restore();
 
-  // Seats + robots
+  // Desks, chairs and four residents.
   AGENTS.forEach(a=>drawSeat(a));
   AGENTS.forEach(a=>{
     const m=agentMotion[a.id];
     if(m){
-      drawRobot(m.x,m.y,a,1.0);
-      octx.fillStyle=a.color;octx.font="600 8px Arial";octx.textAlign="center";
-      octx.fillText(m.label||"TASK",m.x,m.y-58);
+      drawRobot(m.x,m.y,a,.62);
+      octx.fillStyle=a.color;
+      octx.font="600 7px Arial";
+      octx.textAlign="center";
+      octx.fillText(m.label||"TASK",m.x,m.y-24);
       octx.textAlign="left";
     }else{
-      const room=rooms[a.seat];
-      drawRobot(room.x+220,room.y+82,a,.72);
+      const r=rooms[a.seat];
+      // seated near the desk; all four remain visible at once.
+      drawRobot(r.x+r.w*.54,r.y+r.h*.56,a,.46);
     }
   });
+
+  // Tiny room activity indicators.
+  AGENTS.forEach(a=>{
+    const r=rooms[a.seat];
+    octx.fillStyle=a.color;
+    octx.globalAlpha=agentWorking[a.id]?.9:.35;
+    octx.fillRect(r.x+22,r.y+r.h-8,agentWorking[a.id]?52:20,2);
+    octx.globalAlpha=1;
+  });
 }
- 
+
 function triggerAgentMove(agentId, task) {
   const agent = AGENTS.find((a) => a.id === agentId);
   if (!agent) return;
