@@ -555,8 +555,31 @@ function drawOffice() {
   for (let y = 0; y < H; y += 20) for (let x = 0; x < W; x += 20) {
     if ((x + y) % 40 === 0) px(x, y, 20, 20, "#09233c");
   }
+
+  // Four dedicated agent rooms with a shared central command corridor.
+  const rooms = [
+    {x:18,y:18,w:372,h:150,a:AGENTS[0],label:"RAFI CORE / VOICE"},
+    {x:430,y:18,w:372,h:150,a:AGENTS[1],label:"SUPPLIER / RESEARCH"},
+    {x:18,y:192,w:372,h:150,a:AGENTS[2],label:"SHOPIFY / STORE"},
+    {x:430,y:192,w:372,h:150,a:AGENTS[3],label:"WHATSAPP / COMMS"}
+  ];
+  rooms.forEach(r => {
+    octx.strokeStyle = "rgba(84,220,255,.22)";
+    octx.lineWidth = 1;
+    octx.strokeRect(r.x,r.y,r.w,r.h);
+    octx.fillStyle = "rgba(84,220,255,.035)";
+    octx.fillRect(r.x+1,r.y+1,r.w-2,r.h-2);
+    octx.font = "bold 8px Arial";
+    octx.fillStyle = r.a.color;
+    octx.fillText(r.label,r.x+12,r.y+15);
+  });
+
   px(W/2 - 2, 0, 4, H, "#16466f");
   px(0, H/2 - 2, W, 4, "#16466f");
+  octx.beginPath();
+  octx.arc(W/2, H/2, 42, 0, Math.PI*2);
+  octx.strokeStyle = "rgba(84,220,255,.25)";
+  octx.stroke();
 
   const center = {x: W/2 - 45, y: H/2 - 42};
   octx.beginPath();
