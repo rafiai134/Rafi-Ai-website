@@ -99,6 +99,19 @@ const tools = [
   },
   {
     type: "function",
+    name: "delegate_agent",
+    description: "Assign a task to one of Rafi AI's visual agents. Agents: core, supplier, shopify, whatsapp. Use this when the user asks Rafi to have an agent work on a task. This creates a visible agent movement/task event; it does not claim external work is completed.",
+    parameters: {
+      type: "object",
+      properties: {
+        agent: { type: "string", enum: ["core", "supplier", "shopify", "whatsapp"] },
+        task: { type: "string" }
+      },
+      required: ["agent", "task"]
+    }
+  },
+  {
+    type: "function",
     name: "device_command",
     description: "Queue a safe Android device command for the installed Rafi AI Companion. Supported commands: home, back, recents, notifications, open_app, open_url. Never claim it succeeded until the device reports completion.",
     parameters: {
@@ -162,6 +175,14 @@ async function runTool(name, args, ui) {
     case "list_on_shopify": {
       await addAction("shopify_listing", `Shopify draft: ${args.title}`, args);
       return { ok: true, note: "Queued for approval. Nothing created yet." };
+    }
+    case "delegate_agent": {
+      const allowed = ["core", "supplier", "shopify", "whatsapp"];
+      if (!allowed.includes(args.agent)) return { error: "Unknown agent" };
+      const task = String(args.task || "").slice(0, 500);
+      ui.push({ type: "agent_move", agent: args.agent, task });
+      await log("Agent " + args.agent + " received task: " + task, args.agent);
+      return { ok: true, note: "Task assigned to the visual agent. External work is not claimed complete." };
     }
     case "device_command": return queueDevice(args.command,args);
     case "calc_order": {
