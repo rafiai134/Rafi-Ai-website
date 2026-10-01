@@ -144,6 +144,10 @@ let wakeRec = null;
 let wakeRetry = null;
 
 function startListening() {
+  if (wakeRec && wakeListening) {
+    try { wakeRec.stop(); } catch {}
+    wakeListening = false;
+  }
   if (!SR) {
     addMsg("اس براؤزر میں آواز پہچاننے کی سہولت نہیں۔ Chrome استعمال کریں۔", "bot err");
     return;
@@ -165,12 +169,16 @@ function startListening() {
   rec.onend = () => {
     listening = false;
     $("mic").classList.remove("on");
-    if (!busy) setCore(null, "Tap to talk");
+    if (!busy) {
+      setCore(null, "Listening for Rafi");
+      if (localStorage.getItem("rafi_mic_granted") === "1") setTimeout(startWakeWord, 350);
+    }
   };
   rec.onerror = () => {
     listening = false;
     $("mic").classList.remove("on");
-    setCore(null, "Tap to talk");
+    setCore(null, "Listening for Rafi");
+    if (localStorage.getItem("rafi_mic_granted") === "1") setTimeout(startWakeWord, 500);
   };
   rec.onresult = (e) => {
     const text = e.results[0][0].transcript;
@@ -183,13 +191,23 @@ function stopListening() {
   if (rec && listening) rec.stop();
 }
 
-$("mic").addEventListener("click", () => (listening ? stopListening() : startListening()));
+$("mic").addEventListener("click", async () => {
+  if (listening) return stopListening();
+  try {
+    if (navigator.mediaDevices?.getUserMedia) {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop());
+      localStorage.setItem("rafi_mic_granted", "1");
+    }
+  } catch {}
+  startListening();
+});
 $("core").addEventListener("click", () => (listening ? stopListening() : startListening()));
 
 // Wake phrase: once microphone permission is granted, Rafi keeps a lightweight
 // continuous recognizer listening for "Hello Rafi AI" / "ہیلو رافی AI".
 function startWakeWord() {
-  if (!SR || wakeListening || location.protocol !== "https:") return;
+  if (!SR || wakeListening || listening || busy || location.protocol !== "https:") return;
   wakeRec = new SR();
   wakeRec.lang = $("lang").value === "en-US" ? "en-US" : "en-US";
   wakeRec.continuous = true;
