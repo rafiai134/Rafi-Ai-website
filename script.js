@@ -466,10 +466,10 @@ function drawRadar() {
    PIXEL OFFICE (agents)
 ========================= */
 const AGENTS = [
-  { id: "core", name: "RAFI CORE", x: 90, y: 68, color: "#4fd8ff", seat: 0 },
-  { id: "supplier", name: "SUPPLIER", x: 510, y: 68, color: "#ff8a3d", seat: 1 },
-  { id: "shopify", name: "SHOPIFY", x: 90, y: 210, color: "#4dffb2", seat: 2 },
-  { id: "whatsapp", name: "WHATSAPP", x: 510, y: 210, color: "#c084fc", seat: 3 }
+  { id: "core", name: "RAFI CORE", x: 238, y: 100, color: "#4fd8ff", seat: 0 },
+  { id: "supplier", name: "SUPPLIER", x: 650, y: 100, color: "#ff8a3d", seat: 1 },
+  { id: "shopify", name: "SHOPIFY", x: 238, y: 274, color: "#4dffb2", seat: 2 },
+  { id: "whatsapp", name: "WHATSAPP", x: 650, y: 274, color: "#c084fc", seat: 3 }
 ];
 const agentWorking = { core: false, supplier: false, shopify: false, whatsapp: false };
 const agentMotion = {};
@@ -621,38 +621,58 @@ function drawOffice() {
 function triggerAgentMove(agentId, task) {
   const agent = AGENTS.find((a) => a.id === agentId);
   if (!agent) return;
+
+  // Visual orchestration route: real station -> command nexus -> work bay -> nexus -> station.
   agentWorking[agentId] = true;
-  renderAgents([]);
-  const seatPoint = { x: agent.x + 45, y: agent.y + 42 };
-  const corePoint = { x: office.width / 2 - 24, y: office.height / 2 - 24 };
+
+  const seatPoint = { x: agent.x, y: agent.y };
+  const nexus = { x: office.width / 2, y: office.height / 2 };
   const workPoint = agentId === "core"
-    ? { x: corePoint.x, y: corePoint.y }
-    : { x: corePoint.x + (agent.seat % 2 ? 70 : -70), y: corePoint.y + (agent.seat > 1 ? 55 : -55) };
-  const path = [seatPoint, corePoint, workPoint, seatPoint];
-  let segment = 0, progress = 0;
+    ? { x: nexus.x, y: nexus.y - 18 }
+    : {
+        x: nexus.x + (agent.seat % 2 ? 86 : -86),
+        y: nexus.y + (agent.seat > 1 ? 58 : -58)
+      };
+
+  const path = [seatPoint, nexus, workPoint, nexus, seatPoint];
+  let segment = 0;
+  let progress = 0;
+  const speed = agentId === "core" ? .075 : .052;
+
   const step = () => {
-    progress += .055;
+    progress += speed;
     const p = Math.min(progress, 1);
-    const from = path[segment], to = path[segment + 1];
+    const from = path[segment];
+    const to = path[segment + 1];
+    const arc = Math.sin(p * Math.PI) * (segment === 1 || segment === 2 ? 10 : 4);
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const len = Math.max(1, Math.hypot(dx, dy));
+    const nx = -dy / len;
+    const ny = dx / len;
+
     agentMotion[agentId] = {
-      x: from.x + (to.x - from.x) * p,
-      y: from.y + (to.y - from.y) * p,
-      label: segment === 0 ? "DELEGATING" : segment === 1 ? "WORKING" : "RETURNING"
+      x: from.x + dx * p + nx * arc,
+      y: from.y + dy * p + ny * arc,
+      label: segment === 0 ? "DELEGATING" : segment === 1 ? "WORKING" : segment === 2 ? "HANDOFF" : "RETURNING"
     };
+
     drawOffice();
+
     if (p < 1) return requestAnimationFrame(step);
     if (segment < path.length - 2) {
       segment++;
       progress = 0;
       return requestAnimationFrame(step);
     }
+
     setTimeout(() => {
       delete agentMotion[agentId];
       agentWorking[agentId] = false;
       drawOffice();
-      renderAgents([]);
-    }, 700);
+    }, 500);
   };
+
   if (task) addMsg("🤖 " + agent.name + " کو task ملا: " + task);
   requestAnimationFrame(step);
 }
