@@ -36,7 +36,7 @@
       var busy=r.classList.contains('has-task');
       var d=document.createElement('div'); d.className='arow'+(busy?' busy':'');
       d.innerHTML='<i></i><b></b><span></span>';
-      d.querySelector('b').textContent=name+' · '+sub;
+      d.querySelector('b').textContent=name+' \u00b7 '+sub;
       d.querySelector('span').textContent=busy?'WORKING':'IDLE';
       box.appendChild(d);
     });
@@ -50,3 +50,6 @@
     nb.addEventListener('input',function(){ try{ localStorage.setItem('rafi_notes',nb.value); }catch(e){} });
   }
 })();
+
+/* load the voice upgrade after script.js and enhance.js */
+(function(){var s=document.createElement('script');s.src='/voice.js?v=1';document.body.appendChild(s);})();
