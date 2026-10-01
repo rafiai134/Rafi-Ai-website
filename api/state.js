@@ -30,18 +30,25 @@ export default async function handler(req, res) {
   if (!auth(req, res)) return;
 
   if (req.method === "GET") {
-    const [actions, activity, inbox, contacts] = await Promise.all([
+    const [actions, activity, inbox, contacts, agentTasks, deviceQueue] = await Promise.all([
       kvGet("actions", []),
       kvGet("activity", []),
       kvGet("inbox", []),
-      kvGet("contacts", {})
+      kvGet("contacts", {}),
+      kvGet("agent_tasks", []),
+      kvGet("device_queue", [])
     ]);
     return res.status(200).json({
       config: config(),
       actions: actions.slice(0, 20),
       activity: activity.slice(0, 15),
       inbox: inbox.slice(0, 8),
-      contacts: Object.keys(contacts)
+      contacts: Object.keys(contacts),
+      agentTasks: agentTasks.slice(0, 24),
+      device: {
+        pending: deviceQueue.filter((x) => x.status === "pending").length,
+        last: deviceQueue[0] || null
+      }
     });
   }
 
