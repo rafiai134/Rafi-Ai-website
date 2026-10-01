@@ -14,7 +14,7 @@ const PLATFORMS = {
   amazon: "https://www.amazon.com/"
 };
 
-const DEVICE_COMMANDS = { home:"Go to Android home screen.", back:"Press Android back.", recents:"Open Android recent apps.", notifications:"Open Android notifications.", open_app:"Open an installed Android app by package name.", open_url:"Open a URL in the Android browser." };
+const DEVICE_COMMANDS = { home:"Go to Android home screen.", back:"Press Android back.", recents:"Open Android recent apps.", notifications:"Open Android notifications.", open_app:"Open an installed Android app by package name.", open_url:"Open a URL in the Android browser.", tap:"Tap the Android screen at x,y.", tap_text:"Find visible text and tap it.", type_text:"Type text into the focused field.", scroll:"Scroll the current Android screen." };
 
 const tools = [
   {
@@ -117,9 +117,10 @@ const tools = [
     parameters: {
       type: "object",
       properties: {
-        command: { type: "string", enum: ["home", "back", "recents", "notifications", "open_app", "open_url"] },
+        command: { type: "string", enum: ["home", "back", "recents", "notifications", "open_app", "open_url", "tap", "tap_text", "type_text", "scroll"] },
         packageName: { type: "string" },
-        url: { type: "string" }
+        url: { type: "string" },
+        x: { type: "number" }, y: { type: "number" }, text: { type: "string" }
       },
       required: ["command"]
     }
@@ -131,8 +132,11 @@ async function queueDevice(command,args) {
   if (!Object.keys(DEVICE_COMMANDS).includes(command)) return {ok:false,note:"Command not allowed."};
   if (command==="open_app" && !args.packageName) return {ok:false,note:"packageName is required."};
   if (command==="open_url" && !args.url) return {ok:false,note:"url is required."};
+  if (command==="tap" && (!Number.isFinite(Number(args.x)) || !Number.isFinite(Number(args.y)))) return {ok:false,note:"x and y are required."};
+  if (command==="tap_text" && !args.text) return {ok:false,note:"text is required."};
+  if (command==="type_text" && !args.text) return {ok:false,note:"text is required."};
   const q=await kvGet("device_queue",[]);
-  const item={id:"d"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),command,args:{packageName:args.packageName||null,url:args.url||null},status:"pending",createdAt:Date.now()};
+  const item={id:"d"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),command,args:{packageName:args.packageName||null,url:args.url||null,x:Number.isFinite(Number(args.x))?Number(args.x):null,y:Number.isFinite(Number(args.y))?Number(args.y):null,text:args.text||null},status:"pending",createdAt:Date.now()};
   q.unshift(item); await kvSet("device_queue",q.slice(0,80)); await log("Android command queued: "+command,"device");
   return {ok:true,note:"Android command queued."};
 }
@@ -212,7 +216,7 @@ Replies are read aloud, so keep them short (1-3 sentences) unless asked for deta
 Rules:
 - Use tools for actions. Messages, supplier messages and Shopify listings only go into the approval queue. Tell the user they must tap APPROVE. Never say something was sent/created before approval.
 - You cannot read live Alibaba results, prices, stock or shipping. Never invent them. Give the search link and ask the user for supplier details.
-- Phone control is available only through the installed Rafi AI Android Companion. Use device_command for supported navigation/app commands and never claim success until the device reports it.
+- Phone control is available through the installed Rafi AI Android Companion. Use device_command for navigation, opening apps/URLs, tapping coordinates/text, typing into focused fields, and scrolling. Never claim success until the device reports it.
 - Messages and business transactions require explicit approval.
 - Never place orders or make payments. Never ask for passwords or API keys.
 - For profit questions call calc_order and mention fees and any warning.
