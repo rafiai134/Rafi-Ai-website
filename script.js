@@ -211,11 +211,11 @@ function startWakeWord() {
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (!e.results[i].isFinal) continue;
       const heard = e.results[i][0].transcript.trim();
-      if (/\\b(hello|hey|hi)\\s+rafi(?:\\s+ai)?\\b/i.test(heard) || /ہیلو\\s*رافی(?:\\s*آئی|\\s*ai)?/i.test(heard)) {
+      if (/\b(hello|hey|hi)\s+rafi(?:\s+ai)?\b/i.test(heard) || /ہیلو\s*رافی(?:\s*آئی|\s*ai)?/i.test(heard)) {
         try { wakeRec.stop(); } catch {}
         const command = heard
-          .replace(/^.*?\\b(hello|hey|hi)\\s+rafi(?:\\s+ai)?\\b/i, "")
-          .replace(/^.*?ہیلو\\s*رافی(?:\\s*آئی|\\s*ai)?/i, "")
+          .replace(/^.*?\b(hello|hey|hi)\s+rafi(?:\s+ai)?\b/i, "")
+          .replace(/^.*?ہیلو\s*رافی(?:\s*آئی|\s*ai)?/i, "")
           .trim();
         if (command) sendMessage(command);
         else setTimeout(startListening, 120);
@@ -489,11 +489,11 @@ function startWakeWord() {
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (!e.results[i].isFinal) continue;
       const heard = e.results[i][0].transcript.trim();
-      if (/\\b(hello|hey|hi)\\s+rafi(?:\\s+ai)?\\b/i.test(heard) || /ہیلو\\s*رافی(?:\\s*آئی|\\s*ai)?/i.test(heard)) {
+      if (/\b(hello|hey|hi)\s+rafi(?:\s+ai)?\b/i.test(heard) || /ہیلو\s*رافی(?:\s*آئی|\s*ai)?/i.test(heard)) {
         try { wakeRec.stop(); } catch {}
         const command = heard
-          .replace(/^.*?\\b(hello|hey|hi)\\s+rafi(?:\\s+ai)?\\b/i, "")
-          .replace(/^.*?ہیلو\\s*رافی(?:\\s*آئی|\\s*ai)?/i, "")
+          .replace(/^.*?\b(hello|hey|hi)\s+rafi(?:\s+ai)?\b/i, "")
+          .replace(/^.*?ہیلو\s*رافی(?:\s*آئی|\s*ai)?/i, "")
           .trim();
         if (command) sendMessage(command);
         else setTimeout(startListening, 120);
