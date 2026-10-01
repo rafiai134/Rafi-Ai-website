@@ -12,6 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/enhance.css">
 </head>
 <body>
 
@@ -121,12 +122,14 @@
         </div>
         <div class="core-node">
           <div class="core-wrap">
+            <span class="orb-tag" id="orbTag" data-state="idle">IDLE</span>
             <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
             <button id="core" class="core" type="button" aria-label="Talk to Rafi">
               <span id="coreState">RAFI AI</span>
             </button>
           </div>
-          <small>AI ORCHESTRATOR</small>
+          <button id="startAi" class="start-ai" type="button">START AI</button>
+          <br><small>AI ORCHESTRATOR</small>
         </div>
         <div class="flow-wires right" aria-hidden="true">
           <span></span><span></span><span></span><span></span>
@@ -191,6 +194,12 @@
         <span class="status-chip">● ACTIVE</span>
       </div>
 
+      <div class="chat-tabs" role="tablist">
+        <button type="button" class="active" data-tab="voice">VOICE</button>
+        <button type="button" data-tab="agent">AGENT</button>
+        <button type="button" data-tab="notes">NOTES</button>
+      </div>
+
       <div id="chatMessages" class="messages" dir="auto"></div>
 
       <div class="composer">
@@ -208,6 +217,12 @@
         <span class="toggle">WAKE: “RAFI AI”</span>
         <label class="toggle"><input id="speakOn" type="checkbox" checked> Speak</label>
         <button id="clear" type="button">CLEAR</button>
+      </div>
+
+      <div id="agentPane" class="tab-pane"></div>
+      <div id="notesPane" class="tab-pane">
+        <textarea id="notesBox" dir="auto" placeholder="اپنے نوٹس یہاں لکھیں…"></textarea>
+        <p class="notes-hint">نوٹس صرف اسی فون/براؤزر میں محفوظ ہوتے ہیں۔</p>
       </div>
     </section>
 
@@ -230,5 +245,6 @@
 </main>
 
 <script src="/script.js"></script>
+<script src="/enhance.js"></script>
 </body>
 </html>
