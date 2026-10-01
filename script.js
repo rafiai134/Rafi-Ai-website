@@ -416,6 +416,51 @@ function drawOffice() {
   });
 }
 
+function triggerAgentMove(agentId, task) {
+  const agent = AGENTS.find((a) => a.id === agentId);
+  if (!agent) return;
+  agentWorking[agentId] = true;
+  renderAgents([]);
+  const canvas = office;
+  const start = { x: agent.x, y: agent.y };
+  const targets = {
+    core: { x: 24, y: 30 },
+    supplier: { x: 104, y: 30 },
+    shopify: { x: 24, y: 78 },
+    whatsapp: { x: 104, y: 78 }
+  };
+  const target = targets[agentId] || start;
+  let progress = 0;
+  const original = { x: agent.x, y: agent.y };
+  const step = () => {
+    progress += 0.04;
+    const p = Math.min(progress, 1);
+    agent.x = original.x + (target.x - original.x) * p;
+    agent.y = original.y + (target.y - original.y) * p;
+    drawOffice();
+    if (p < 1) requestAnimationFrame(step);
+    else {
+      setTimeout(() => {
+        agent.x = original.x;
+        agent.y = original.y;
+        agentWorking[agentId] = false;
+        drawOffice();
+        renderAgents([]);
+      }, 900);
+    }
+  };
+  drawOffice();
+  requestAnimationFrame(step);
+  if (task) addMsg("🤖 " + agent.name + " کو task ملا: " + task);
+}
+
+function runAgentUi(ui) {
+  if (!Array.isArray(ui)) return;
+  ui.filter((x) => x && x.type === "agent_move").forEach((x) => {
+    triggerAgentMove(x.agent || "core", x.task || "");
+  });
+}
+
 function renderAgents(pending) {
   const typeToAgent = { whatsapp: "whatsapp", shopify_listing: "shopify", supplier_message: "supplier", order: "supplier" };
   const counts = { core: 0, supplier: 0, shopify: 0, whatsapp: 0 };
