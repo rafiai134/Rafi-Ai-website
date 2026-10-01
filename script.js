@@ -250,8 +250,7 @@ function enableWakeWord() {
     $("voiceStatus").textContent = "● VOICE UNSUPPORTED";
     return;
   }
-  // Start silently when permission already exists; otherwise request it once.
-  armVoiceSilent();
+  $("voiceStatus").textContent = "● READY";
 }
 
 if (SR) {
@@ -466,207 +465,150 @@ function drawRadar() {
    PIXEL OFFICE (agents)
 ========================= */
 const AGENTS = [
-  { id: "core", name: "RAFI CORE", color: "#4fd8ff", seat: 0 },
-  { id: "supplier", name: "SUPPLIER", color: "#ff914d", seat: 1 },
-  { id: "shopify", name: "SHOPIFY", color: "#4dffb3", seat: 2 },
-  { id: "whatsapp", name: "WHATSAPP", color: "#c084fc", seat: 3 }
+  { id:"core", name:"RAFI", color:"#5de4ff", seat:0 },
+  { id:"supplier", name:"SUPPLIER", color:"#ff9b55", seat:1 },
+  { id:"shopify", name:"SHOPIFY", color:"#61e8a2", seat:2 },
+  { id:"whatsapp", name:"WHATSAPP", color:"#d69cff", seat:3 }
 ];
-const agentWorking = { core: false, supplier: false, shopify: false, whatsapp: false };
+const agentWorking = { core:false, supplier:false, shopify:false, whatsapp:false };
 const agentMotion = {};
-const office = $("office");
-const octx = office.getContext("2d");
+const office = $("office"), octx = office.getContext("2d");
 let tick = 0;
 
-const ROOM_LAYOUT = [
-  {
-    x: 72, y: 30, w: 320, h: 132, label: "RAFI CORE",
-    door: { x: 360, y: 162 }, station: { x: 250, y: 103 }
-  },
-  {
-    x: 430, y: 30, w: 318, h: 132, label: "SUPPLIER",
-    door: { x: 460, y: 162 }, station: { x: 580, y: 103 }
-  },
-  {
-    x: 150, y: 190, w: 300, h: 132, label: "SHOPIFY",
-    door: { x: 360, y: 190 }, station: { x: 295, y: 255 }
-  },
-  {
-    x: 410, y: 190, w: 300, h: 132, label: "WHATSAPP",
-    door: { x: 440, y: 190 }, station: { x: 555, y: 255 }
-  }
+// A small top-down office floor, deliberately irregular like the reference video.
+// Walls, door openings, desks and tiny residents are the scene; no UI cards or routing lines.
+const ROOMS = [
+  {id:0,x:72,y:42,w:500,h:148, label:"RAFI CORE", color:"#5de4ff", door:{x:322,y:190}, people:[{x:245,y:112,rot:0},{x:385,y:112,rot:0}]},
+  {id:1,x:88,y:190,w:238,h:132, label:"SUPPLIER", color:"#ff9b55", door:{x:218,y:190}, people:[{x:205,y:258,rot:0}]},
+  {id:2,x:326,y:190,w:228,h:132, label:"SHOPIFY", color:"#61e8a2", door:{x:456,y:190}, people:[{x:448,y:258,rot:0}]},
+  {id:3,x:554,y:112,w:190,h:210, label:"WHATSAPP", color:"#d69cff", door:{x:554,y:220}, people:[]}
 ];
 
-function roomPath(r, gap) {
-  const d = r.door;
-  const left = r.x, right = r.x + r.w, top = r.y, bottom = r.y + r.h;
-  const horizontalDoor = d.y === bottom || d.y === top;
-  const half = gap / 2;
+function wall(r){
+  const x=r.x,y=r.y,w=r.w,h=r.h,d=r.door,g=34;
+  octx.save();
+  octx.strokeStyle="rgba(126,204,235,.48)"; octx.lineWidth=3;
   octx.beginPath();
-  if (horizontalDoor) {
-    const y = d.y;
-    octx.moveTo(left, top); octx.lineTo(right, top); 
-    octx.moveTo(left, bottom); octx.lineTo(d.x-half, bottom);
-    octx.moveTo(d.x+half, bottom); octx.lineTo(right, bottom);
+  // wall with a physical doorway gap
+  if(d.y===y+h){
+    octx.moveTo(x,y);octx.lineTo(x+w,y);octx.lineTo(x+w,y+h);
+    octx.moveTo(x+w,y+h);octx.lineTo(d.x+g/2,y+h);
+    octx.moveTo(d.x-g/2,y+h);octx.lineTo(x,y+h);octx.lineTo(x,y);
+  } else if(d.y===y){
+    octx.moveTo(x,y);octx.lineTo(d.x-g/2,y);
+    octx.moveTo(d.x+g/2,y);octx.lineTo(x+w,y);octx.lineTo(x+w,y+h);octx.lineTo(x,y+h);octx.lineTo(x,y);
+  } else if(d.x===x){
+    octx.moveTo(x,y);octx.lineTo(x+w,y);octx.lineTo(x+w,y+h);octx.lineTo(x,y+h);
+    octx.moveTo(x,y);octx.lineTo(x,y+d.y-y-g/2);
+    octx.moveTo(x,y+d.y-y+g/2);octx.lineTo(x,y+h);
   } else {
-    octx.moveTo(left, top); octx.lineTo(left, bottom);
-    octx.moveTo(right, top); octx.lineTo(right, d.y-half);
-    octx.moveTo(right, d.y+half); octx.lineTo(right, bottom);
+    octx.moveTo(x,y);octx.lineTo(x+w,y);octx.lineTo(x+w,y+d.y-y-g/2);
+    octx.moveTo(x+w,y+d.y-y+g/2);octx.lineTo(x+w,y+h);octx.lineTo(x,y+h);octx.lineTo(x,y);
+  }
+  octx.stroke();
+
+  // Door leaf + swing arc
+  octx.strokeStyle="rgba(116,222,255,.72)"; octx.lineWidth=1.5;
+  octx.beginPath();
+  if(d.y===y+h){ octx.moveTo(d.x-g/2,d.y);octx.lineTo(d.x-g/2,d.y-g);octx.quadraticCurveTo(d.x,d.y-g*1.55,d.x+g/2,d.y-g);octx.stroke(); }
+  else if(d.y===y){ octx.moveTo(d.x-g/2,d.y);octx.lineTo(d.x-g/2,d.y+g);octx.quadraticCurveTo(d.x,d.y+g*1.55,d.x+g/2,d.y+g);octx.stroke(); }
+  else if(d.x===x){ octx.moveTo(d.x,d.y-g/2);octx.lineTo(d.x+g,d.y-g/2);octx.quadraticCurveTo(d.x+g*1.55,d.y,d.x+g,d.y+g/2);octx.stroke(); }
+  else { octx.moveTo(d.x,d.y-g/2);octx.lineTo(d.x-g,d.y-g/2);octx.quadraticCurveTo(d.x-g*1.55,d.y,d.x-g,d.y+g/2);octx.stroke(); }
+  octx.restore();
+}
+
+function floor(r){
+  octx.save();
+  octx.fillStyle="rgba(14,42,59,.96)";octx.fillRect(r.x,r.y,r.w,r.h);
+  octx.strokeStyle="rgba(107,193,225,.045)";octx.lineWidth=1;
+  for(let xx=r.x+10;xx<r.x+r.w;xx+=18){octx.beginPath();octx.moveTo(xx,r.y);octx.lineTo(xx,r.y+r.h);octx.stroke();}
+  for(let yy=r.y+10;yy<r.y+r.h;yy+=18){octx.beginPath();octx.moveTo(r.x,yy);octx.lineTo(r.x+r.w,yy);octx.stroke();}
+  octx.restore();
+}
+
+function desk(x,y,rot=0){
+  octx.save();octx.translate(x,y);octx.rotate(rot);
+  octx.fillStyle="#213f51";octx.strokeStyle="rgba(133,207,232,.38)";octx.lineWidth=1;
+  octx.fillRect(-24,-10,48,20);octx.strokeRect(-24,-10,48,20);
+  octx.fillStyle="#081b29";octx.fillRect(-17,-8,34,9);
+  octx.fillStyle="#31566b";octx.fillRect(-7,11,14,8);
+  octx.restore();
+}
+function chair(x,y,rot=0){
+  octx.save();octx.translate(x,y);octx.rotate(rot);
+  octx.fillStyle="#35586a";octx.fillRect(-6,-5,12,11);octx.fillRect(-4,6,8,5);octx.restore();
+}
+function shelf(x,y,w=34,h=10){
+  octx.fillStyle="#26485a";octx.fillRect(x,y,w,h);
+  octx.fillStyle="#7aa7ba";for(let i=0;i<4;i++)octx.fillRect(x+4+i*7,y+3,4,3);
+}
+function plant(x,y){
+  octx.fillStyle="#6a4a32";octx.fillRect(x-4,y+5,8,7);
+  octx.fillStyle="#2f9b78";octx.beginPath();octx.arc(x,y,6,0,6.28);octx.arc(x+6,y+2,5,0,6.28);octx.arc(x-5,y+3,5,0,6.28);octx.fill();
+}
+function drawRobot(x,y,a,scale=.28){
+  const s=scale,b=agentWorking[a.id]?Math.sin(tick*.2)*1.2:0;
+  octx.save();octx.translate(x,y+b);octx.shadowBlur=agentWorking[a.id]?10:3;octx.shadowColor=a.color;
+  octx.fillStyle="rgba(0,0,0,.38)";octx.beginPath();octx.ellipse(0,9*s,10*s,3*s,0,0,6.28);octx.fill();
+  // tiny humanoid resident, not a large robot
+  octx.fillStyle="#d9edf4";octx.strokeStyle=a.color;octx.lineWidth=1*s;
+  octx.beginPath();octx.arc(0,-7*s,5.5*s,0,6.28);octx.fill();octx.stroke();
+  octx.fillStyle="#183246";octx.fillRect(-4*s,-8*s,8*s,4*s);
+  octx.fillStyle=a.color;octx.fillRect(-2.4*s,-7*s,1.5*s,1.3*s);octx.fillRect(.9*s,-7*s,1.5*s,1.3*s);
+  octx.fillStyle="#29495b";octx.fillRect(-5*s,-1*s,10*s,10*s);octx.strokeRect(-5*s,-1*s,10*s,10*s);
+  octx.strokeStyle=a.color;octx.lineWidth=1.5*s;octx.beginPath();octx.moveTo(-3*s,9*s);octx.lineTo(-4*s,14*s);octx.moveTo(3*s,9*s);octx.lineTo(4*s,14*s);octx.stroke();
+  octx.restore();
+}
+function roomFurniture(r,index){
+  if(index===0){
+    desk(r.x+170,r.y+63);chair(r.x+170,r.y+84);desk(r.x+315,r.y+63);chair(r.x+315,r.y+84);
+    desk(r.x+245,r.y+118);chair(r.x+245,r.y+139);shelf(r.x+24,r.y+24,86,10);shelf(r.x+r.w-120,r.y+24,82,10);plant(r.x+25,r.y+r.h-25);
+  } else if(index===1){
+    desk(r.x+115,r.y+70);chair(r.x+115,r.y+92);desk(r.x+190,r.y+70);chair(r.x+190,r.y+92);shelf(r.x+18,r.y+20,68,10);plant(r.x+r.w-25,r.y+r.h-25);
+  } else if(index===2){
+    desk(r.x+90,r.y+70);chair(r.x+90,r.y+92);desk(r.x+168,r.y+70);chair(r.x+168,r.y+92);shelf(r.x+20,r.y+20,64,10);plant(r.x+r.w-25,r.y+r.h-25);
+  } else {
+    desk(r.x+62,r.y+72);chair(r.x+62,r.y+94);desk(r.x+130,r.y+72);chair(r.x+130,r.y+94);
+    desk(r.x+96,r.y+150);chair(r.x+96,r.y+171);shelf(r.x+18,r.y+20,70,10);shelf(r.x+18,r.y+184,70,10);plant(r.x+r.w-28,r.y+r.h-28);
   }
 }
-
-function drawDoor(r) {
-  const d = r.door, isBottom = d.y >= r.y + r.h - 2;
-  octx.save();
-  octx.strokeStyle = "rgba(112,215,255,.75)";
-  octx.lineWidth = 2;
-  octx.globalAlpha = .8;
-  octx.beginPath();
-  if (isBottom) {
-    octx.moveTo(d.x-13, d.y); octx.lineTo(d.x-13, d.y-13);
-    octx.quadraticCurveTo(d.x, d.y-26, d.x+13, d.y-13);
-    octx.stroke();
-    octx.strokeStyle = "rgba(84,220,255,.22)";
-    octx.beginPath(); octx.moveTo(d.x-13,d.y); octx.lineTo(d.x+13,d.y); octx.stroke();
-  } else {
-    octx.moveTo(d.x, d.y-13); octx.lineTo(d.x+13, d.y-13);
-    octx.quadraticCurveTo(d.x+26, d.y, d.x+13, d.y+13);
-    octx.stroke();
-  }
-  octx.restore();
+function drawRoom(r,i){
+  floor(r); roomFurniture(r,i); wall(r);
+  octx.fillStyle="rgba(215,242,252,.78)";octx.font="600 7px Arial";octx.fillText(r.label,r.x+12,r.y+13);
+  octx.fillStyle=r.color;octx.globalAlpha=.8;octx.beginPath();octx.arc(r.x+r.w-12,r.y+12,2.5,0,6.28);octx.fill();octx.globalAlpha=1;
 }
-
-function drawDesk(x,y,color,rot=0) {
-  octx.save(); octx.translate(x,y); octx.rotate(rot);
-  octx.fillStyle="#17374d"; octx.strokeStyle="rgba(120,205,235,.35)";
-  octx.lineWidth=1; octx.fillRect(-28,-12,56,24); octx.strokeRect(-28,-12,56,24);
-  octx.fillStyle="#071a2a"; octx.fillRect(-20,-9,40,12);
-  octx.strokeStyle=color; octx.globalAlpha=.55; octx.strokeRect(-20,-9,40,12);
-  octx.globalAlpha=1; octx.fillStyle="#294c62"; octx.fillRect(-9,14,18,6);
-  octx.restore();
-}
-
-function drawChair(x,y,rot=0) {
-  octx.save(); octx.translate(x,y); octx.rotate(rot);
-  octx.fillStyle="#31566d"; octx.fillRect(-7,-6,14,13); octx.fillRect(-5,7,10,5);
-  octx.restore();
-}
-
-function drawPlant(x,y) {
-  octx.save(); octx.fillStyle="#1c6d66"; octx.beginPath();octx.arc(x,y-5,7,0,6.28);octx.arc(x+6,y,6,0,6.28);octx.arc(x-5,y,6,0,6.28);octx.fill();
-  octx.fillStyle="#734f35";octx.fillRect(x-5,y+4,10,7);octx.restore();
-}
-
-function drawCabinet(x,y,w=22,h=30) {
-  octx.fillStyle="#18354a";octx.fillRect(x,y,w,h);
-  octx.strokeStyle="rgba(125,200,225,.28)";octx.strokeRect(x,y,w,h);
-  octx.fillStyle="#6d9ab0";octx.fillRect(x+5,y+7,4,2);octx.fillRect(x+5,y+17,4,2);
-}
-
-function drawRobot(x,y,a,scale=.34) {
-  const s=scale, moving=agentWorking[a.id], bob=moving?Math.sin(tick*.22)*1.4:0;
-  octx.save(); octx.translate(x,y+bob);
-  octx.shadowBlur=moving?12:5; octx.shadowColor=a.color;
-  octx.fillStyle="rgba(0,0,0,.38)";
-  octx.beginPath();octx.ellipse(0,8*s,10*s,3*s,0,0,6.28);octx.fill();
-  octx.fillStyle="#28475b";octx.strokeStyle=a.color;octx.lineWidth=1.3*s;
-  octx.fillRect(-5*s,-1*s,10*s,9*s);octx.strokeRect(-5*s,-1*s,10*s,9*s);
-  octx.strokeStyle=a.color;octx.lineWidth=2*s;octx.lineCap="round";
-  octx.beginPath();octx.moveTo(-3*s,8*s);octx.lineTo(-4*s,14*s);octx.moveTo(3*s,8*s);octx.lineTo(4*s,14*s);octx.stroke();
-  octx.fillStyle="#d8eef7";octx.beginPath();octx.arc(0,-6*s,6*s,0,6.28);octx.fill();octx.stroke();
-  octx.fillStyle="#071522";octx.fillRect(-4*s,-7*s,8*s,4*s);
-  octx.fillStyle=a.color;octx.fillRect(-2.5*s,-6*s,1.5*s,1.5*s);octx.fillRect(1*s,-6*s,1.5*s,1.5*s);
-  octx.restore();
-}
-
-function drawRoom(r,a) {
-  octx.save();
-  // Floor area
-  const g=octx.createLinearGradient(r.x,r.y,r.x+r.w,r.y+r.h);
-  g.addColorStop(0,"rgba(22,55,76,.92)");g.addColorStop(1,"rgba(8,28,45,.94)");
-  octx.fillStyle=g;octx.fillRect(r.x,r.y,r.w,r.h);
-
-  // Tile floor
-  octx.strokeStyle="rgba(110,205,235,.045)";octx.lineWidth=1;
-  for(let x=r.x+10;x<r.x+r.w;x+=18){octx.beginPath();octx.moveTo(x,r.y);octx.lineTo(x,r.y+r.h);octx.stroke();}
-  for(let y=r.y+10;y<r.y+r.h;y+=18){octx.beginPath();octx.moveTo(r.x,y);octx.lineTo(r.x+r.w,y);octx.stroke();}
-
-  // Furniture / office clutter like a real top-down room
-  drawDesk(r.x+92,r.y+47,a.color,-.04); drawChair(r.x+92,r.y+67);
-  drawDesk(r.x+185,r.y+49,a.color,.02); drawChair(r.x+185,r.y+69);
-  drawDesk(r.x+95,r.y+104,a.color,.02); drawChair(r.x+95,r.y+124);
-  drawCabinet(r.x+r.w-42,r.y+20,24,34);
-  drawCabinet(r.x+r.w-42,r.y+r.h-52,24,34);
-  drawPlant(r.x+25,r.y+r.h-26);
-
-  // Small wall display / whiteboard
-  octx.fillStyle="#23485e";octx.fillRect(r.x+18,r.y+16,70,12);
-  octx.strokeStyle="rgba(140,225,245,.28)";octx.strokeRect(r.x+18,r.y+16,70,12);
-  octx.fillStyle=a.color;octx.globalAlpha=.75;octx.fillRect(r.x+24,r.y+21,28,2);octx.fillRect(r.x+57,r.y+21,21,2);octx.globalAlpha=1;
-
-  // Open wall with a real doorway
-  octx.strokeStyle="rgba(116,210,235,.52)";octx.lineWidth=3;roomPath(r,28);octx.stroke();
-  drawDoor(r);
-
-  // tiny room sign, integrated into the floor plan
-  octx.fillStyle="rgba(220,245,255,.72)";octx.font="600 7px Arial";octx.fillText(a.name,r.x+100,r.y+18);
-  octx.restore();
-}
-
 function drawOffice(){
-  const W=office.width,H=office.height;
-  octx.clearRect(0,0,W,H);
-  const bg=octx.createLinearGradient(0,0,W,H);
-  bg.addColorStop(0,"#02070d");bg.addColorStop(.5,"#061827");bg.addColorStop(1,"#02070d");
+  const W=office.width,H=office.height;octx.clearRect(0,0,W,H);
+  const bg=octx.createLinearGradient(0,0,W,H);bg.addColorStop(0,"#02070c");bg.addColorStop(.5,"#061724");bg.addColorStop(1,"#02070c");
   octx.fillStyle=bg;octx.fillRect(0,0,W,H);
 
-  // Shared office floor + corridor, not four separate UI boxes.
-  octx.fillStyle="rgba(20,62,82,.42)";octx.fillRect(55,16,710,328);
-  octx.strokeStyle="rgba(90,190,220,.16)";octx.lineWidth=1;octx.strokeRect(55,16,710,328);
+  // Shared office footprint — one irregular workplace, not four cards.
+  octx.fillStyle="rgba(8,24,36,.85)";octx.fillRect(58,26,704,308);
+  octx.strokeStyle="rgba(96,190,220,.13)";octx.lineWidth=1;octx.strokeRect(58,26,704,308);
 
-  // Central hallway / meeting area
-  octx.fillStyle="rgba(16,44,61,.92)";octx.fillRect(330,150,160,60);
-  octx.strokeStyle="rgba(110,210,240,.25)";octx.strokeRect(330,150,160,60);
-  for(let x=340;x<485;x+=22){octx.fillStyle="rgba(84,220,255,.08)";octx.fillRect(x,178,12,3);}
+  ROOMS.forEach((r,i)=>drawRoom(r,i));
 
-  ROOM_LAYOUT.forEach((r,i)=>drawRoom(r,AGENTS[i]));
+  // Tiny hallway markings only; no agent-to-agent neon routing lines.
+  octx.fillStyle="rgba(84,190,220,.12)";
+  octx.fillRect(305,190,22,132); octx.fillRect(554,204,20,18);
 
-  // Central orchestration lines run through the office, like a live routing layer.
-  const nexus={x:410,y:180};
-  ROOM_LAYOUT.forEach((r,i)=>{
-    const d=r.door;
-    octx.save();octx.strokeStyle=AGENTS[i].color;octx.globalAlpha=.34;octx.lineWidth=1.2;
-    octx.setLineDash([5,5]);octx.beginPath();octx.moveTo(d.x,d.y);octx.lineTo(nexus.x,nexus.y);octx.stroke();octx.setLineDash([]);
-    const p=((tick*.018)+i*.2)%1;
-    const px=d.x+(nexus.x-d.x)*p,py=d.y+(nexus.y-d.y)*p;
-    octx.globalAlpha=.9;octx.fillStyle=AGENTS[i].color;octx.beginPath();octx.arc(px,py,2,0,6.28);octx.fill();octx.restore();
-  });
-
-  // Rafi core at the center of the office.
-  octx.save();octx.translate(nexus.x,nexus.y);octx.shadowBlur=20;octx.shadowColor="#54dcff";
-  octx.strokeStyle="#54dcff";octx.globalAlpha=.45;octx.beginPath();octx.arc(0,0,23,0,6.28);octx.stroke();
-  octx.globalAlpha=.14;octx.beginPath();octx.arc(0,0,32,0,6.28);octx.stroke();
-  octx.fillStyle="#63e5ff";octx.globalAlpha=.9;octx.beginPath();octx.arc(0,0,5,0,6.28);octx.fill();
-  octx.globalAlpha=.75;octx.fillStyle="#9ed4e8";octx.font="600 7px Arial";octx.textAlign="center";octx.fillText("RAFI",0,43);octx.textAlign="left";octx.restore();
-
-  // Four small residents stay inside their actual rooms unless delegated.
-  AGENTS.forEach(a=>{
+  AGENTS.forEach((a,i)=>{
     const m=agentMotion[a.id];
     if(m){
-      drawRobot(m.x,m.y,a,.38);
+      drawRobot(m.x,m.y,a,.32);
       octx.fillStyle=a.color;octx.font="600 7px Arial";octx.textAlign="center";octx.fillText(m.label,m.x,m.y-12);octx.textAlign="left";
-    }else{
-      const r=ROOM_LAYOUT[a.seat], s=r.station;
-      drawRobot(s.x,s.y,a,.34);
+    } else {
+      const r=ROOMS[i], p=r.people[0] || {x:r.x+r.w/2,y:r.y+r.h/2};
+      drawRobot(p.x,p.y,a,.28);
     }
   });
 
-  // Status lights in each room.
-  AGENTS.forEach(a=>{
-    const r=ROOM_LAYOUT[a.seat];
-    octx.fillStyle=a.color;octx.globalAlpha=agentWorking[a.id]?.9:.45;
-    octx.beginPath();octx.arc(r.x+r.w-16,r.y+14,3,0,6.28);octx.fill();octx.globalAlpha=1;
-  });
+  // The four residents are physically in their rooms; the core has a subtle central glow.
+  octx.save();octx.shadowBlur=16;octx.shadowColor="#54dcff";octx.fillStyle="#5de4ff";octx.globalAlpha=.8;
+  octx.beginPath();octx.arc(316,207,4,0,6.28);octx.fill();octx.restore();
+  tick++; requestAnimationFrame(drawOffice);
 }
+requestAnimationFrame(drawOffice);
 
 function triggerAgentMove(agentId, task) {
   const agent = AGENTS.find((a) => a.id === agentId);
