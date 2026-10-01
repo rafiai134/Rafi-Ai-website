@@ -466,10 +466,10 @@ function drawRadar() {
    PIXEL OFFICE (agents)
 ========================= */
 const AGENTS = [
-  { id: "core", name: "RAFI CORE", x: 238, y: 100, color: "#4fd8ff", seat: 0 },
-  { id: "supplier", name: "SUPPLIER", x: 650, y: 100, color: "#ff8a3d", seat: 1 },
-  { id: "shopify", name: "SHOPIFY", x: 238, y: 274, color: "#4dffb2", seat: 2 },
-  { id: "whatsapp", name: "WHATSAPP", x: 650, y: 274, color: "#c084fc", seat: 3 }
+  { id: "core", name: "RAFI CORE", color: "#4fd8ff", seat: 0 },
+  { id: "supplier", name: "SUPPLIER", color: "#ff914d", seat: 1 },
+  { id: "shopify", name: "SHOPIFY", color: "#4dffb3", seat: 2 },
+  { id: "whatsapp", name: "WHATSAPP", color: "#c084fc", seat: 3 }
 ];
 const agentWorking = { core: false, supplier: false, shopify: false, whatsapp: false };
 const agentMotion = {};
@@ -477,252 +477,233 @@ const office = $("office");
 const octx = office.getContext("2d");
 let tick = 0;
 
-function px(x, y, w, h, color) { octx.fillStyle = color; octx.fillRect(x, y, w, h); }
+const ROOM_LAYOUT = [
+  {
+    x: 72, y: 30, w: 320, h: 132, label: "RAFI CORE",
+    door: { x: 360, y: 162 }, station: { x: 250, y: 103 }
+  },
+  {
+    x: 430, y: 30, w: 318, h: 132, label: "SUPPLIER",
+    door: { x: 460, y: 162 }, station: { x: 580, y: 103 }
+  },
+  {
+    x: 150, y: 190, w: 300, h: 132, label: "SHOPIFY",
+    door: { x: 360, y: 190 }, station: { x: 295, y: 255 }
+  },
+  {
+    x: 410, y: 190, w: 300, h: 132, label: "WHATSAPP",
+    door: { x: 440, y: 190 }, station: { x: 555, y: 255 }
+  }
+];
 
-function drawSeat(a){
-  // Stonic-style agent town: compact rooms, desks and tiny residents inside a shared floor.
-  const rooms=[
-    {x:22,y:24,w:330,h:126,label:"RAFI / CORE"},
-    {x:468,y:24,w:330,h:126,label:"SUPPLIER"},
-    {x:22,y:204,w:330,h:126,label:"SHOPIFY"},
-    {x:468,y:204,w:330,h:126,label:"WHATSAPP"}
-  ];
-  const r=rooms[a.seat];
-  octx.save();
-  octx.fillStyle="rgba(8,18,30,.78)";
-  octx.fillRect(r.x,r.y,r.w,r.h);
-  octx.strokeStyle="rgba(120,190,220,.28)";
-  octx.lineWidth=1;
-  octx.strokeRect(r.x,r.y,r.w,r.h);
-  // room divider / doorway
-  octx.strokeStyle=a.color;
-  octx.globalAlpha=.55;
+function roomPath(r, gap) {
+  const d = r.door;
+  const left = r.x, right = r.x + r.w, top = r.y, bottom = r.y + r.h;
+  const horizontalDoor = d.y === bottom || d.y === top;
+  const half = gap / 2;
   octx.beginPath();
-  octx.moveTo(r.x+22,r.y+20);octx.lineTo(r.x+92,r.y+20);
-  octx.stroke();
-  octx.globalAlpha=1;
-  octx.fillStyle="#8aa5b8";
-  octx.font="600 8px Arial";
-  octx.fillText(r.label,r.x+22,r.y+16);
+  if (horizontalDoor) {
+    const y = d.y;
+    octx.moveTo(left, top); octx.lineTo(right, top); 
+    octx.moveTo(left, bottom); octx.lineTo(d.x-half, bottom);
+    octx.moveTo(d.x+half, bottom); octx.lineTo(right, bottom);
+  } else {
+    octx.moveTo(left, top); octx.lineTo(left, bottom);
+    octx.moveTo(right, top); octx.lineTo(right, d.y-half);
+    octx.moveTo(right, d.y+half); octx.lineTo(right, bottom);
+  }
+}
 
-  // workstation
-  const dx=r.x+r.w*.54, dy=r.y+r.h*.58;
-  octx.fillStyle="#152d40";
-  octx.fillRect(dx-42,dy-12,84,25);
-  octx.strokeStyle="rgba(120,190,220,.25)";
-  octx.strokeRect(dx-42,dy-12,84,25);
-  octx.fillStyle="#07121e";
-  octx.fillRect(dx-27,dy-9,54,16);
-  octx.strokeStyle=a.color;octx.globalAlpha=.45;
-  octx.strokeRect(dx-27,dy-9,54,16);
-  // chair
-  octx.globalAlpha=1;
-  octx.fillStyle="#243d50";
-  octx.fillRect(dx-10,dy+17,20,8);
-  octx.fillRect(dx-4,dy+24,8,8);
+function drawDoor(r) {
+  const d = r.door, isBottom = d.y >= r.y + r.h - 2;
+  octx.save();
+  octx.strokeStyle = "rgba(112,215,255,.75)";
+  octx.lineWidth = 2;
+  octx.globalAlpha = .8;
+  octx.beginPath();
+  if (isBottom) {
+    octx.moveTo(d.x-13, d.y); octx.lineTo(d.x-13, d.y-13);
+    octx.quadraticCurveTo(d.x, d.y-26, d.x+13, d.y-13);
+    octx.stroke();
+    octx.strokeStyle = "rgba(84,220,255,.22)";
+    octx.beginPath(); octx.moveTo(d.x-13,d.y); octx.lineTo(d.x+13,d.y); octx.stroke();
+  } else {
+    octx.moveTo(d.x, d.y-13); octx.lineTo(d.x+13, d.y-13);
+    octx.quadraticCurveTo(d.x+26, d.y, d.x+13, d.y+13);
+    octx.stroke();
+  }
   octx.restore();
 }
 
-function drawRobot(x,y,a,scale=.46){
-  // Small resident avatar — intentionally compact like an agent-town character, not a large robot.
-  const s=scale, moving=agentWorking[a.id], bob=moving?Math.sin(tick*.24)*2:0;
+function drawDesk(x,y,color,rot=0) {
+  octx.save(); octx.translate(x,y); octx.rotate(rot);
+  octx.fillStyle="#17374d"; octx.strokeStyle="rgba(120,205,235,.35)";
+  octx.lineWidth=1; octx.fillRect(-28,-12,56,24); octx.strokeRect(-28,-12,56,24);
+  octx.fillStyle="#071a2a"; octx.fillRect(-20,-9,40,12);
+  octx.strokeStyle=color; octx.globalAlpha=.55; octx.strokeRect(-20,-9,40,12);
+  octx.globalAlpha=1; octx.fillStyle="#294c62"; octx.fillRect(-9,14,18,6);
+  octx.restore();
+}
+
+function drawChair(x,y,rot=0) {
+  octx.save(); octx.translate(x,y); octx.rotate(rot);
+  octx.fillStyle="#31566d"; octx.fillRect(-7,-6,14,13); octx.fillRect(-5,7,10,5);
+  octx.restore();
+}
+
+function drawPlant(x,y) {
+  octx.save(); octx.fillStyle="#1c6d66"; octx.beginPath();octx.arc(x,y-5,7,0,6.28);octx.arc(x+6,y,6,0,6.28);octx.arc(x-5,y,6,0,6.28);octx.fill();
+  octx.fillStyle="#734f35";octx.fillRect(x-5,y+4,10,7);octx.restore();
+}
+
+function drawCabinet(x,y,w=22,h=30) {
+  octx.fillStyle="#18354a";octx.fillRect(x,y,w,h);
+  octx.strokeStyle="rgba(125,200,225,.28)";octx.strokeRect(x,y,w,h);
+  octx.fillStyle="#6d9ab0";octx.fillRect(x+5,y+7,4,2);octx.fillRect(x+5,y+17,4,2);
+}
+
+function drawRobot(x,y,a,scale=.34) {
+  const s=scale, moving=agentWorking[a.id], bob=moving?Math.sin(tick*.22)*1.4:0;
+  octx.save(); octx.translate(x,y+bob);
+  octx.shadowBlur=moving?12:5; octx.shadowColor=a.color;
+  octx.fillStyle="rgba(0,0,0,.38)";
+  octx.beginPath();octx.ellipse(0,8*s,10*s,3*s,0,0,6.28);octx.fill();
+  octx.fillStyle="#28475b";octx.strokeStyle=a.color;octx.lineWidth=1.3*s;
+  octx.fillRect(-5*s,-1*s,10*s,9*s);octx.strokeRect(-5*s,-1*s,10*s,9*s);
+  octx.strokeStyle=a.color;octx.lineWidth=2*s;octx.lineCap="round";
+  octx.beginPath();octx.moveTo(-3*s,8*s);octx.lineTo(-4*s,14*s);octx.moveTo(3*s,8*s);octx.lineTo(4*s,14*s);octx.stroke();
+  octx.fillStyle="#d8eef7";octx.beginPath();octx.arc(0,-6*s,6*s,0,6.28);octx.fill();octx.stroke();
+  octx.fillStyle="#071522";octx.fillRect(-4*s,-7*s,8*s,4*s);
+  octx.fillStyle=a.color;octx.fillRect(-2.5*s,-6*s,1.5*s,1.5*s);octx.fillRect(1*s,-6*s,1.5*s,1.5*s);
+  octx.restore();
+}
+
+function drawRoom(r,a) {
   octx.save();
-  octx.translate(x,y+bob);
-  octx.shadowBlur=moving?16:7;
-  octx.shadowColor=a.color;
+  // Floor area
+  const g=octx.createLinearGradient(r.x,r.y,r.x+r.w,r.y+r.h);
+  g.addColorStop(0,"rgba(22,55,76,.92)");g.addColorStop(1,"rgba(8,28,45,.94)");
+  octx.fillStyle=g;octx.fillRect(r.x,r.y,r.w,r.h);
 
-  // shadow
-  octx.fillStyle="rgba(0,0,0,.45)";
-  octx.beginPath();octx.ellipse(0,25*s,27*s,7*s,0,0,6.28);octx.fill();
+  // Tile floor
+  octx.strokeStyle="rgba(110,205,235,.045)";octx.lineWidth=1;
+  for(let x=r.x+10;x<r.x+r.w;x+=18){octx.beginPath();octx.moveTo(x,r.y);octx.lineTo(x,r.y+r.h);octx.stroke();}
+  for(let y=r.y+10;y<r.y+r.h;y+=18){octx.beginPath();octx.moveTo(r.x,y);octx.lineTo(r.x+r.w,y);octx.stroke();}
 
-  // legs/body
-  octx.strokeStyle=a.color;octx.lineWidth=5*s;octx.lineCap="round";
-  octx.beginPath();
-  octx.moveTo(-7*s,16*s);octx.lineTo(-9*s,30*s);
-  octx.moveTo(7*s,16*s);octx.lineTo(9*s,30*s);
-  octx.stroke();
-  octx.fillStyle="#132c3e";octx.strokeStyle=a.color;octx.lineWidth=1.6*s;
-  octx.beginPath();octx.roundRect(-15*s,0,30*s,20*s,5*s);octx.fill();octx.stroke();
-  octx.fillStyle=a.color;octx.globalAlpha=.8;
-  octx.beginPath();octx.arc(0,10*s,3*s,0,6.28);octx.fill();
+  // Furniture / office clutter like a real top-down room
+  drawDesk(r.x+92,r.y+47,a.color,-.04); drawChair(r.x+92,r.y+67);
+  drawDesk(r.x+185,r.y+49,a.color,.02); drawChair(r.x+185,r.y+69);
+  drawDesk(r.x+95,r.y+104,a.color,.02); drawChair(r.x+95,r.y+124);
+  drawCabinet(r.x+r.w-42,r.y+20,24,34);
+  drawCabinet(r.x+r.w-42,r.y+r.h-52,24,34);
+  drawPlant(r.x+25,r.y+r.h-26);
 
-  // head
-  octx.globalAlpha=1;octx.fillStyle="#d4edf7";octx.strokeStyle=a.color;
-  octx.beginPath();octx.arc(0,-10*s,12*s,0,6.28);octx.fill();octx.stroke();
-  octx.fillStyle="#071522";
-  octx.beginPath();octx.ellipse(0,-9*s,9*s,5*s,0,0,6.28);octx.fill();
-  octx.fillStyle=a.color;
-  octx.beginPath();octx.arc(-4*s,-9*s,1.5*s,0,6.28);octx.arc(4*s,-9*s,1.5*s,0,6.28);octx.fill();
+  // Small wall display / whiteboard
+  octx.fillStyle="#23485e";octx.fillRect(r.x+18,r.y+16,70,12);
+  octx.strokeStyle="rgba(140,225,245,.28)";octx.strokeRect(r.x+18,r.y+16,70,12);
+  octx.fillStyle=a.color;octx.globalAlpha=.75;octx.fillRect(r.x+24,r.y+21,28,2);octx.fillRect(r.x+57,r.y+21,21,2);octx.globalAlpha=1;
 
-  // arms
-  octx.strokeStyle=a.color;octx.lineWidth=4*s;
-  octx.beginPath();
-  octx.moveTo(-13*s,4*s);octx.lineTo(-22*s,15*s);
-  octx.moveTo(13*s,4*s);octx.lineTo(22*s,15*s);
-  octx.stroke();
+  // Open wall with a real doorway
+  octx.strokeStyle="rgba(116,210,235,.52)";octx.lineWidth=3;roomPath(r,28);octx.stroke();
+  drawDoor(r);
 
+  // tiny room sign, integrated into the floor plan
+  octx.fillStyle="rgba(220,245,255,.72)";octx.font="600 7px Arial";octx.fillText(a.name,r.x+100,r.y+18);
   octx.restore();
 }
 
 function drawOffice(){
   const W=office.width,H=office.height;
   octx.clearRect(0,0,W,H);
-
-  // Shared dark command-center floor.
   const bg=octx.createLinearGradient(0,0,W,H);
-  bg.addColorStop(0,"#02070d");bg.addColorStop(.5,"#06131e");bg.addColorStop(1,"#02070d");
+  bg.addColorStop(0,"#02070d");bg.addColorStop(.5,"#061827");bg.addColorStop(1,"#02070d");
   octx.fillStyle=bg;octx.fillRect(0,0,W,H);
 
-  // Fine floor grid, kept subtle so the town remains the focus.
-  octx.strokeStyle="rgba(80,190,230,.055)";octx.lineWidth=1;
-  for(let x=0;x<W;x+=20){octx.beginPath();octx.moveTo(x,0);octx.lineTo(x,H);octx.stroke();}
-  for(let y=0;y<H;y+=20){octx.beginPath();octx.moveTo(0,y);octx.lineTo(W,y);octx.stroke();}
+  // Shared office floor + corridor, not four separate UI boxes.
+  octx.fillStyle="rgba(20,62,82,.42)";octx.fillRect(55,16,710,328);
+  octx.strokeStyle="rgba(90,190,220,.16)";octx.lineWidth=1;octx.strokeRect(55,16,710,328);
 
-  const rooms=[
-    {x:22,y:24,w:330,h:126},
-    {x:468,y:24,w:330,h:126},
-    {x:22,y:204,w:330,h:126},
-    {x:468,y:204,w:330,h:126}
-  ];
-  rooms.forEach((r,i)=>{
-    const a=AGENTS[i];
-    octx.fillStyle="rgba(10,25,38,.55)";
-    octx.fillRect(r.x,r.y,r.w,r.h);
-    octx.strokeStyle="rgba(105,175,205,.24)";
-    octx.strokeRect(r.x,r.y,r.w,r.h);
+  // Central hallway / meeting area
+  octx.fillStyle="rgba(16,44,61,.92)";octx.fillRect(330,150,160,60);
+  octx.strokeStyle="rgba(110,210,240,.25)";octx.strokeRect(330,150,160,60);
+  for(let x=340;x<485;x+=22){octx.fillStyle="rgba(84,220,255,.08)";octx.fillRect(x,178,12,3);}
+
+  ROOM_LAYOUT.forEach((r,i)=>drawRoom(r,AGENTS[i]));
+
+  // Central orchestration lines run through the office, like a live routing layer.
+  const nexus={x:410,y:180};
+  ROOM_LAYOUT.forEach((r,i)=>{
+    const d=r.door;
+    octx.save();octx.strokeStyle=AGENTS[i].color;octx.globalAlpha=.34;octx.lineWidth=1.2;
+    octx.setLineDash([5,5]);octx.beginPath();octx.moveTo(d.x,d.y);octx.lineTo(nexus.x,nexus.y);octx.stroke();octx.setLineDash([]);
+    const p=((tick*.018)+i*.2)%1;
+    const px=d.x+(nexus.x-d.x)*p,py=d.y+(nexus.y-d.y)*p;
+    octx.globalAlpha=.9;octx.fillStyle=AGENTS[i].color;octx.beginPath();octx.arc(px,py,2,0,6.28);octx.fill();octx.restore();
   });
 
-  // Central corridor / command nexus, inspired by the routed network in the reference.
-  const cx=W/2,cy=H/2;
-  octx.strokeStyle="rgba(75,205,240,.24)";
-  octx.lineWidth=1;
-  octx.strokeRect(cx-82,cy-48,164,96);
-  octx.fillStyle="rgba(50,150,190,.06)";
-  octx.fillRect(cx-82,cy-48,164,96);
+  // Rafi core at the center of the office.
+  octx.save();octx.translate(nexus.x,nexus.y);octx.shadowBlur=20;octx.shadowColor="#54dcff";
+  octx.strokeStyle="#54dcff";octx.globalAlpha=.45;octx.beginPath();octx.arc(0,0,23,0,6.28);octx.stroke();
+  octx.globalAlpha=.14;octx.beginPath();octx.arc(0,0,32,0,6.28);octx.stroke();
+  octx.fillStyle="#63e5ff";octx.globalAlpha=.9;octx.beginPath();octx.arc(0,0,5,0,6.28);octx.fill();
+  octx.globalAlpha=.75;octx.fillStyle="#9ed4e8";octx.font="600 7px Arial";octx.textAlign="center";octx.fillText("RAFI",0,43);octx.textAlign="left";octx.restore();
 
-  // Four routed live connections.
-  rooms.forEach((r,i)=>{
-    const sx=r.x+r.w/2;
-    const sy=i<2?r.y+r.h:r.y;
-    octx.save();
-    octx.strokeStyle=AGENTS[i].color;
-    octx.globalAlpha=.5;
-    octx.lineWidth=1.5;
-    octx.shadowBlur=8;octx.shadowColor=AGENTS[i].color;
-    octx.beginPath();
-    octx.moveTo(sx,sy);
-    octx.lineTo(cx,cy);
-    octx.stroke();
-    // moving data pulse
-    const phase=((tick*.025)+(i*.23))%1;
-    const px=sx+(cx-sx)*phase, py=sy+(cy-sy)*phase;
-    octx.globalAlpha=.9;
-    octx.fillStyle=AGENTS[i].color;
-    octx.beginPath();octx.arc(px,py,2.5,0,6.28);octx.fill();
-    octx.restore();
-  });
-
-  // Core orb.
-  octx.save();
-  octx.translate(cx,cy);
-  octx.shadowBlur=24;octx.shadowColor="#48d9ff";
-  octx.strokeStyle="#48d9ff";octx.globalAlpha=.65;
-  octx.beginPath();octx.arc(0,0,25,0,6.28);octx.stroke();
-  octx.globalAlpha=.16;octx.beginPath();octx.arc(0,0,39,0,6.28);octx.stroke();
-  octx.fillStyle="rgba(65,220,255,.16)";
-  octx.beginPath();octx.arc(0,0,17,0,6.28);octx.fill();
-  octx.fillStyle="#7be7ff";octx.globalAlpha=.95;
-  octx.beginPath();octx.arc(0,0,6,0,6.28);octx.fill();
-  octx.globalAlpha=1;octx.fillStyle="#86a8ba";
-  octx.font="600 7px Arial";octx.textAlign="center";
-  octx.fillText("RAFI CORE",0,53);
-  octx.textAlign="left";
-  octx.restore();
-
-  // Desks, chairs and four residents.
-  AGENTS.forEach(a=>drawSeat(a));
+  // Four small residents stay inside their actual rooms unless delegated.
   AGENTS.forEach(a=>{
     const m=agentMotion[a.id];
     if(m){
-      drawRobot(m.x,m.y,a,.62);
-      octx.fillStyle=a.color;
-      octx.font="600 7px Arial";
-      octx.textAlign="center";
-      octx.fillText(m.label||"TASK",m.x,m.y-24);
-      octx.textAlign="left";
+      drawRobot(m.x,m.y,a,.38);
+      octx.fillStyle=a.color;octx.font="600 7px Arial";octx.textAlign="center";octx.fillText(m.label,m.x,m.y-12);octx.textAlign="left";
     }else{
-      const r=rooms[a.seat];
-      // seated near the desk; all four remain visible at once.
-      drawRobot(r.x+r.w*.54,r.y+r.h*.56,a,.46);
+      const r=ROOM_LAYOUT[a.seat], s=r.station;
+      drawRobot(s.x,s.y,a,.34);
     }
   });
 
-  // Tiny room activity indicators.
+  // Status lights in each room.
   AGENTS.forEach(a=>{
-    const r=rooms[a.seat];
-    octx.fillStyle=a.color;
-    octx.globalAlpha=agentWorking[a.id]?.9:.35;
-    octx.fillRect(r.x+22,r.y+r.h-8,agentWorking[a.id]?52:20,2);
-    octx.globalAlpha=1;
+    const r=ROOM_LAYOUT[a.seat];
+    octx.fillStyle=a.color;octx.globalAlpha=agentWorking[a.id]?.9:.45;
+    octx.beginPath();octx.arc(r.x+r.w-16,r.y+14,3,0,6.28);octx.fill();octx.globalAlpha=1;
   });
 }
 
 function triggerAgentMove(agentId, task) {
   const agent = AGENTS.find((a) => a.id === agentId);
   if (!agent) return;
-
-  // Visual orchestration route: real station -> command nexus -> work bay -> nexus -> station.
+  const room = ROOM_LAYOUT[agent.seat];
   agentWorking[agentId] = true;
 
-  const seatPoint = { x: agent.x, y: agent.y };
-  const nexus = { x: office.width / 2, y: office.height / 2 };
-  const workPoint = agentId === "core"
-    ? { x: nexus.x, y: nexus.y - 18 }
-    : {
-        x: nexus.x + (agent.seat % 2 ? 86 : -86),
-        y: nexus.y + (agent.seat > 1 ? 58 : -58)
-      };
-
-  const path = [seatPoint, nexus, workPoint, nexus, seatPoint];
-  let segment = 0;
-  let progress = 0;
+  const nexus = { x: 410, y: 180 };
+  const door = { x: room.door.x, y: room.door.y };
+  const station = { x: room.station.x, y: room.station.y };
+  const work = {
+    x: nexus.x + (agent.seat % 2 ? 48 : -48),
+    y: nexus.y + (agent.seat > 1 ? 18 : -18)
+  };
+  const path = [station, door, nexus, work, nexus, door, station];
+  let segment = 0, progress = 0;
   const speed = agentId === "core" ? .075 : .052;
 
   const step = () => {
     progress += speed;
     const p = Math.min(progress, 1);
-    const from = path[segment];
-    const to = path[segment + 1];
-    const arc = Math.sin(p * Math.PI) * (segment === 1 || segment === 2 ? 10 : 4);
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
+    const from = path[segment], to = path[segment + 1];
+    const dx = to.x - from.x, dy = to.y - from.y;
     const len = Math.max(1, Math.hypot(dx, dy));
-    const nx = -dy / len;
-    const ny = dx / len;
-
+    const nx = -dy / len, ny = dx / len;
+    const arc = Math.sin(p * Math.PI) * 5;
     agentMotion[agentId] = {
-      x: from.x + dx * p + nx * arc,
-      y: from.y + dy * p + ny * arc,
-      label: segment === 0 ? "DELEGATING" : segment === 1 ? "WORKING" : segment === 2 ? "HANDOFF" : "RETURNING"
+      x: from.x + dx*p + nx*arc,
+      y: from.y + dy*p + ny*arc,
+      label: segment < 2 ? "LEAVING ROOM" : segment === 2 ? "WORKING" : segment === 3 ? "HANDOFF" : "RETURNING"
     };
-
     drawOffice();
-
-    if (p < 1) return requestAnimationFrame(step);
-    if (segment < path.length - 2) {
-      segment++;
-      progress = 0;
-      return requestAnimationFrame(step);
-    }
-
-    setTimeout(() => {
-      delete agentMotion[agentId];
-      agentWorking[agentId] = false;
-      drawOffice();
-    }, 500);
+    if(p<1) return requestAnimationFrame(step);
+    if(segment<path.length-2){ segment++; progress=0; return requestAnimationFrame(step); }
+    setTimeout(()=>{ delete agentMotion[agentId]; agentWorking[agentId]=false; drawOffice(); },500);
   };
-
-  if (task) addMsg("🤖 " + agent.name + " کو task ملا: " + task);
+  if(task) addMsg("🤖 " + agent.name + " کو task ملا: " + task);
   requestAnimationFrame(step);
 }
 
