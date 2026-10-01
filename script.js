@@ -353,7 +353,9 @@ function speak(text) {
 }
 
 function afterSpeak() {
-  if ($("convo").checked) setTimeout(startListening, 400);
+  // Return to the wake-word listener; never open the command microphone
+  // automatically after a reply.
+  if (voiceArmed && !busy) setTimeout(startWakeWord, 450);
 }
 
 if ("speechSynthesis" in window) speechSynthesis.onvoiceschanged = () => {};
