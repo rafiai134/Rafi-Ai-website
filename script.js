@@ -3,7 +3,7 @@ const $ = (id) => document.getElementById(id);
 let TOKEN = localStorage.getItem("rafi_token") || "";
 let history = [];
 let busy = false;
-let state = { actions: [], activity: [], inbox: [], contacts: [], config: {} };
+let state = { actions: [], activity: [], inbox: [], contacts: [], config: {}, agentTasks: [], device: {} };
 
 /* =========================
    API + LOGIN
@@ -291,6 +291,7 @@ function render() {
   });
 
   renderAgents(pending);
+  renderAgentTasks();
 }
 
 async function decide(id, decision, row) {
@@ -459,6 +460,23 @@ function runAgentUi(ui) {
   if (!Array.isArray(ui)) return;
   ui.filter((x) => x && x.type === "agent_move").forEach((x) => {
     triggerAgentMove(x.agent || "core", x.task || "");
+  });
+}
+
+function renderAgentTasks() {
+  const list = $("agentList");
+  if (!list || !Array.isArray(state.agentTasks)) return;
+  const byAgent = { core: [], supplier: [], shopify: [], whatsapp: [] };
+  state.agentTasks.forEach((t) => {
+    if (byAgent[t.agent]) byAgent[t.agent].push(t);
+  });
+  document.querySelectorAll(".flow-agent").forEach((el) => {
+    const key = el.classList.contains("supplier-agent") ? "supplier" :
+      el.classList.contains("commerce-agent") ? "shopify" :
+      el.classList.contains("comms-agent") ? "whatsapp" : "core";
+    const task = byAgent[key]?.find((t) => t.status === "queued");
+    el.classList.toggle("has-task", !!task);
+    el.title = task ? task.task : "No queued task";
   });
 }
 
