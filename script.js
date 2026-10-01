@@ -606,9 +606,10 @@ function drawOffice(){
   // The four residents are physically in their rooms; the core has a subtle central glow.
   octx.save();octx.shadowBlur=16;octx.shadowColor="#54dcff";octx.fillStyle="#5de4ff";octx.globalAlpha=.8;
   octx.beginPath();octx.arc(316,207,4,0,6.28);octx.fill();octx.restore();
-  tick++; requestAnimationFrame(drawOffice);
+  tick++;
 }
-requestAnimationFrame(drawOffice);
+function officeLoop(){ drawOffice(); requestAnimationFrame(officeLoop); }
+officeLoop();
 
 function triggerAgentMove(agentId, task) {
   const agent = AGENTS.find((a) => a.id === agentId);
