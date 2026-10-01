@@ -180,9 +180,19 @@ async function runTool(name, args, ui) {
       const allowed = ["core", "supplier", "shopify", "whatsapp"];
       if (!allowed.includes(args.agent)) return { error: "Unknown agent" };
       const task = String(args.task || "").slice(0, 500);
-      ui.push({ type: "agent_move", agent: args.agent, task });
+      const tasks = await kvGet("agent_tasks", []);
+      const item = {
+        id: "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        agent: args.agent,
+        task,
+        status: "queued",
+        createdAt: Date.now()
+      };
+      tasks.unshift(item);
+      await kvSet("agent_tasks", tasks.slice(0, 100));
+      ui.push({ type: "agent_move", agent: args.agent, task, taskId: item.id });
       await log("Agent " + args.agent + " received task: " + task, args.agent);
-      return { ok: true, note: "Task assigned to the visual agent. External work is not claimed complete." };
+      return { ok: true, taskId: item.id, note: "Task assigned and stored in the agent queue. External work is not claimed complete." };
     }
     case "device_command": return queueDevice(args.command,args);
     case "calc_order": {
