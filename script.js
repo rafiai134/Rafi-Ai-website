@@ -108,7 +108,7 @@ async function sendMessage(textOverride) {
     speak(data.reply);
   } catch (err) {
     if (err.message !== "Unauthorized") addMsg(err.message, "bot err");
-    setCore(null, "Listening for Rafi");
+    setCore(null, "RAFI AI");
   } finally {
     busy = false;
     agentWorking.core = false;
@@ -134,7 +134,7 @@ $("clear").addEventListener("click", () => {
 });
 
 /* =========================
-   VOICE / WAKE SYSTEM
+   VOICE / SILENT WAKE
 ========================= */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null;
@@ -144,102 +144,55 @@ let wakeRec = null;
 let wakeRetry = null;
 let voiceArmed = false;
 
-function beepSequence() {
-  try {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return;
-    const ctx = new Ctx();
-    [0, 0.16, 0.32].forEach((delay, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = [660, 880, 1040][i];
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime + delay);
-      gain.gain.exponentialRampToValueAtTime(0.11, ctx.currentTime + delay + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + delay + 0.12);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(ctx.currentTime + delay);
-      osc.stop(ctx.currentTime + delay + 0.13);
-    });
-    setTimeout(() => ctx.close().catch(() => {}), 800);
-  } catch {}
-}
-
-async function armVoice() {
-  if (!SR) {
-    addMsg("اس براؤزر میں Voice Recognition دستیاب نہیں۔ Chrome استعمال کریں۔", "bot err");
-    return;
-  }
+async function armVoiceSilent() {
+  if (!SR) return;
   try {
     if (navigator.mediaDevices?.getUserMedia) {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((t) => t.stop());
+      stream.getTracks().forEach(t => t.stop());
       localStorage.setItem("rafi_mic_granted", "1");
     }
   } catch {}
   voiceArmed = true;
-  beepSequence();
-  $("mic").classList.add("on");
-  $("voiceStatus").textContent = "● WAKE LISTENING";
-  setCore("listening", "LISTENING FOR RAFI");
+  $("mic").classList.remove("on");
+  $("voiceStatus").textContent = "● READY";
+  setCore(null, "RAFI AI");
   startWakeWord();
 }
 
 function startListening() {
-  if (wakeRec && wakeListening) {
-    try { wakeRec.stop(); } catch {}
-    wakeListening = false;
-  }
-  if (!SR) return;
-  if (listening || busy) return;
-  if (window.speechSynthesis) speechSynthesis.cancel();
-
+  if (!SR || listening || busy) return;
+  if (wakeRec && wakeListening) { try { wakeRec.stop(); } catch {} }
+  if (speechSynthesis) speechSynthesis.cancel();
   rec = new SR();
   rec.lang = $("lang").value;
   rec.interimResults = false;
   rec.continuous = false;
-  rec.onstart = () => {
-    localStorage.setItem("rafi_mic_granted", "1");
-    listening = true;
-    voiceArmed = true;
-    $("mic").classList.add("on");
-    setCore("listening", "LISTENING FOR COMMAND");
-  };
+  rec.onstart = () => { listening = true; };
   rec.onend = () => {
     listening = false;
-    if (!busy) {
-      $("mic").classList.toggle("on", voiceArmed);
-      setCore(null, voiceArmed ? "LISTENING FOR RAFI" : "START AI");
-      if (voiceArmed) setTimeout(startWakeWord, 350);
-    }
+    if (voiceArmed && !busy) setTimeout(startWakeWord, 250);
   };
   rec.onerror = () => {
     listening = false;
-    $("mic").classList.toggle("on", voiceArmed);
-    setCore(null, voiceArmed ? "LISTENING FOR RAFI" : "START AI");
-    if (voiceArmed) setTimeout(startWakeWord, 500);
+    if (voiceArmed && !busy) setTimeout(startWakeWord, 500);
   };
-  rec.onresult = (e) => sendMessage(e.results[0][0].transcript);
+  rec.onresult = e => sendMessage(e.results[0][0].transcript);
   try { rec.start(); } catch {}
 }
 
-function stopListening() {
-  if (rec && listening) rec.stop();
+function stopVoiceEngine() {
+  voiceArmed = false;
+  listening = false;
+  wakeListening = false;
+  clearTimeout(wakeRetry);
+  try { wakeRec?.stop(); } catch {}
+  try { rec?.stop(); } catch {}
 }
 
 async function toggleVoice() {
-  if (listening) return stopListening();
-  if (voiceArmed) {
-    voiceArmed = false;
-    if (wakeRec) { try { wakeRec.stop(); } catch {} }
-    wakeListening = false;
-    clearTimeout(wakeRetry);
-    $("mic").classList.remove("on");
-    $("voiceStatus").textContent = "● VOICE OFF";
-    setCore(null, "START AI");
-    return;
-  }
-  return armVoice();
+  // Button only grants/restarts voice. No beeps and no ON/OFF animation.
+  if (!voiceArmed) await armVoiceSilent();
 }
 
 $("mic").addEventListener("click", toggleVoice);
@@ -253,49 +206,39 @@ function startWakeWord() {
   wakeRec.interimResults = false;
   wakeRec.onstart = () => {
     wakeListening = true;
-    $("mic").classList.add("on");
-    $("voiceStatus").textContent = "● WAKE LISTENING";
-    setCore(null, "LISTENING FOR RAFI");
+    $("mic").classList.remove("on");
+    $("voiceStatus").textContent = "● READY";
+    setCore(null, "RAFI AI");
   };
   wakeRec.onend = () => {
     wakeListening = false;
     clearTimeout(wakeRetry);
-    if (voiceArmed && !listening && !busy) {
-      $("voiceStatus").textContent = "● RECONNECTING";
-      wakeRetry = setTimeout(startWakeWord, 900);
-    }
+    if (voiceArmed && !listening && !busy) wakeRetry = setTimeout(startWakeWord, 500);
   };
-  wakeRec.onerror = (e) => {
+  wakeRec.onerror = e => {
     wakeListening = false;
     if (e.error === "not-allowed" || e.error === "service-not-allowed") {
       voiceArmed = false;
-      $("mic").classList.remove("on");
-      $("voiceStatus").textContent = "● VOICE OFF";
-      setCore(null, "START AI");
+      $("voiceStatus").textContent = "● VOICE PERMISSION";
+      setCore(null, "RAFI AI");
       return;
     }
-    if (voiceArmed) {
-      clearTimeout(wakeRetry);
-      wakeRetry = setTimeout(startWakeWord, 1000);
-    }
+    if (voiceArmed) wakeRetry = setTimeout(startWakeWord, 900);
   };
-  wakeRec.onresult = (e) => {
-    for (let i = e.resultIndex; i < e.results.length; i++) {
+  wakeRec.onresult = e => {
+    for (let i=e.resultIndex;i<e.results.length;i++) {
       if (!e.results[i].isFinal) continue;
-      const heard = e.results[i][0].transcript.trim();
-      const match = /\b(hello|hey|hi)\s+rafi(?:\s+ai)?\b/i.test(heard) ||
-        /ہیلو\s*رافی(?:\s*(?:آئی|آئی|ai))?/i.test(heard);
+      const heard=e.results[i][0].transcript.trim();
+      const match=/\b(hello|hey|hi)?\s*rafi(?:\s+ai)?\b/i.test(heard) ||
+        /ہیلو?\s*رافی(?:\s*(?:آئی|آئی|ai))?/i.test(heard);
       if (!match) continue;
       try { wakeRec.stop(); } catch {}
-      const command = heard
-        .replace(/^.*?\b(hello|hey|hi)\s+rafi(?:\s+ai)?\b/i, "")
-        .replace(/^.*?ہیلو\s*رافی(?:\s*(?:آئی|آئی|ai))?/i, "")
+      const command=heard
+        .replace(/^.*?\b(hello|hey|hi)?\s*rafi(?:\s+ai)?\b/i,"")
+        .replace(/^.*?ہیلو?\s*رافی(?:\s*(?:آئی|آئی|ai))?/i,"")
         .trim();
-      if (command) {
-        sendMessage(command);
-      } else {
-        setTimeout(startListening, 180);
-      }
+      if (command) sendMessage(command);
+      else setTimeout(startListening,120);
       break;
     }
   };
@@ -303,20 +246,17 @@ function startWakeWord() {
 }
 
 function enableWakeWord() {
-  // Do not auto-open the microphone or start recognition on page load.
-  // The user arms voice once with the mic button; only then do we listen
-  // for the explicit "Rafi AI" wake phrase.
   if (!SR) {
-    setCore(null, "VOICE UNSUPPORTED");
+    $("voiceStatus").textContent = "● VOICE UNSUPPORTED";
     return;
   }
-  voiceArmed = false;
-  setCore(null, "START AI");
+  // Start silently when permission already exists; otherwise request it once.
+  armVoiceSilent();
 }
 
 if (SR) {
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && voiceArmed && !listening && !busy && !wakeListening) startWakeWord();
+    if (!document.hidden && voiceArmed && !busy && !listening && !wakeListening) startWakeWord();
   });
   window.addEventListener("load", enableWakeWord);
 }
@@ -346,8 +286,8 @@ function speak(text) {
   u.lang = $("lang").value;
   const v = pickVoice(u.lang);
   if (v) u.voice = v;
-  u.onstart = () => setCore("speaking", "Speaking…");
-  u.onend = () => { setCore(null, "Listening for Rafi"); afterSpeak(); };
+  u.onstart = () => setCore("speaking", "RAFI AI");
+  u.onend = () => { setCore(null, "RAFI AI"); afterSpeak(); };
   u.onerror = () => { setCore(null, "Listening for Rafi"); afterSpeak(); };
   speechSynthesis.speak(u);
 }
