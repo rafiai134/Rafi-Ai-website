@@ -226,11 +226,17 @@ function startWakeWord() {
   try { wakeRec.start(); } catch {}
 }
 
-function enableWakeWord() {
-  if (!SR) return;
-  // Browser security requires one user gesture before microphone access.
-  // After permission is granted, wake listening stays active automatically.
-  if (localStorage.getItem("rafi_mic_granted") === "1") startWakeWord();
+async function enableWakeWord() {
+  if (!SR || !navigator.mediaDevices?.getUserMedia) return;
+  if (localStorage.getItem("rafi_mic_granted") === "1") return startWakeWord();
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((t) => t.stop());
+    localStorage.setItem("rafi_mic_granted", "1");
+    startWakeWord();
+  } catch {
+    // The browser may require the user to allow microphone access once.
+  }
 }
 
 if (SR) {
