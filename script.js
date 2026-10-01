@@ -385,37 +385,83 @@ function drawRadar() {
    PIXEL OFFICE (agents)
 ========================= */
 const AGENTS = [
-  { id: "core", name: "Rafi", x: 24, y: 30, color: "#4fd8ff" },
-  { id: "supplier", name: "Supplier", x: 104, y: 30, color: "#ff8a3d" },
-  { id: "shopify", name: "Shopify", x: 24, y: 78, color: "#4dffb2" },
-  { id: "whatsapp", name: "WhatsApp", x: 104, y: 78, color: "#c084fc" }
+  { id: "core", name: "RAFI CORE", x: 90, y: 68, color: "#4fd8ff", seat: 0 },
+  { id: "supplier", name: "SUPPLIER", x: 510, y: 68, color: "#ff8a3d", seat: 1 },
+  { id: "shopify", name: "SHOPIFY", x: 90, y: 210, color: "#4dffb2", seat: 2 },
+  { id: "whatsapp", name: "WHATSAPP", x: 510, y: 210, color: "#c084fc", seat: 3 }
 ];
 const agentWorking = { core: false, supplier: false, shopify: false, whatsapp: false };
-
+const agentMotion = {};
 const office = $("office");
 const octx = office.getContext("2d");
 let tick = 0;
 
 function px(x, y, w, h, color) { octx.fillStyle = color; octx.fillRect(x, y, w, h); }
 
-function drawOffice() {
-  px(0, 0, 192, 120, "#0a2038");
-  for (let y = 0; y < 120; y += 8) for (let x = 0; x < 192; x += 8) {
-    if ((x + y) % 16 === 0) px(x, y, 8, 8, "#0c2846");
-  }
-  px(0, 58, 192, 3, "#16466f");   // wall between rooms
-  px(94, 0, 3, 120, "#16466f");
+function drawSeat(a) {
+  const w = 145, h = 104;
+  px(a.x - 16, a.y + 38, w, 8, "#16466f");
+  px(a.x + 8, a.y + 18, 92, 8, "#0c3558");
+  px(a.x + 18, a.y - 2, 74, 40, "#031321");
+  px(a.x + 23, a.y + 3, 64, 30, agentWorking[a.id] && tick % 2 ? a.color : "#0b3b63");
+  px(a.x + 27, a.y + 7, 12, 3, "rgba(255,255,255,.35)");
+  px(a.x + 50, a.y + 7, 27, 3, "rgba(255,255,255,.18)");
+  octx.font = "bold 11px Arial";
+  octx.fillStyle = a.color;
+  octx.fillText(a.name, a.x + 18, a.y + 58);
+  octx.font = "9px Arial";
+  octx.fillStyle = "#7f9ab2";
+  octx.fillText(agentWorking[a.id] ? "WORKING / MOVING" : "READY / SEATED", a.x + 18, a.y + 73);
+}
 
-  AGENTS.forEach((a) => {
-    const work = agentWorking[a.id];
-    px(a.x - 4, a.y + 14, 36, 8, "#1c5a8f");                       // desk
-    px(a.x + 4, a.y + 4, 20, 10, "#031321");                       // monitor
-    px(a.x + 5, a.y + 5, 18, 8, work && tick % 2 ? a.color : "#0b3b63");
-    const bob = work ? (tick % 2) : 0;
-    px(a.x + 10, a.y + 22 + bob, 8, 8, a.color);                   // body
-    px(a.x + 11, a.y + 16 + bob, 6, 6, "#f2d0b0");                 // head
-    px(a.x + 11, a.y + 15 + bob, 6, 2, "#2b1a0e");                 // hair
-  });
+function drawBot(x, y, a, scale = 1) {
+  const bob = agentWorking[a.id] ? Math.sin(tick * .35) * 3 : 0;
+  const s = scale;
+  octx.save();
+  octx.shadowBlur = agentWorking[a.id] ? 18 : 8;
+  octx.shadowColor = a.color;
+  px(x + 12*s, y + 32*s + bob, 30*s, 38*s, a.color);
+  px(x + 17*s, y + 10*s + bob, 20*s, 24*s, "#dffcff");
+  px(x + 14*s, y + 7*s + bob, 26*s, 8*s, "#071b2e");
+  px(x + 20*s, y + 17*s + bob, 4*s, 4*s, a.color);
+  px(x + 30*s, y + 17*s + bob, 4*s, 4*s, a.color);
+  px(x + 5*s, y + 38*s + bob, 8*s, 22*s, a.color);
+  px(x + 42*s, y + 38*s + bob, 8*s, 22*s, a.color);
+  octx.restore();
+}
+
+function drawOffice() {
+  const W = office.width, H = office.height;
+  octx.clearRect(0, 0, W, H);
+  px(0, 0, W, H, "#061a2e");
+  for (let y = 0; y < H; y += 20) for (let x = 0; x < W; x += 20) {
+    if ((x + y) % 40 === 0) px(x, y, 20, 20, "#09233c");
+  }
+  px(W/2 - 2, 0, 4, H, "#16466f");
+  px(0, H/2 - 2, W, 4, "#16466f");
+
+  const center = {x: W/2 - 45, y: H/2 - 42};
+  octx.beginPath();
+  octx.arc(W/2, H/2, 58, 0, Math.PI*2);
+  octx.strokeStyle = "rgba(84,220,255,.25)";
+  octx.stroke();
+  octx.font = "bold 10px Arial";
+  octx.fillStyle = "#54dcff";
+  octx.fillText("RAFI COMMAND CORE", center.x, center.y + 76);
+
+  AGENTS.forEach(drawSeat);
+
+  for (const a of AGENTS) {
+    const m = agentMotion[a.id];
+    if (m) {
+      drawBot(m.x, m.y, a, 1.15);
+      octx.font = "9px Arial";
+      octx.fillStyle = a.color;
+      octx.fillText(m.label || "TASK", m.x - 4, m.y - 8);
+    } else {
+      drawBot(a.x + 45, a.y + 46, a, .72);
+    }
+  }
 }
 
 function triggerAgentMove(agentId, task) {
@@ -423,53 +469,48 @@ function triggerAgentMove(agentId, task) {
   if (!agent) return;
   agentWorking[agentId] = true;
   renderAgents([]);
-  const canvas = office;
-  const start = { x: agent.x, y: agent.y };
-  const targets = {
-    core: { x: 24, y: 30 },
-    supplier: { x: 104, y: 30 },
-    shopify: { x: 24, y: 78 },
-    whatsapp: { x: 104, y: 78 }
-  };
-  const target = targets[agentId] || start;
-  let progress = 0;
-  const original = { x: agent.x, y: agent.y };
+  const seatPoint = { x: agent.x + 45, y: agent.y + 42 };
+  const corePoint = { x: office.width / 2 - 24, y: office.height / 2 - 24 };
+  const workPoint = agentId === "core"
+    ? { x: corePoint.x, y: corePoint.y }
+    : { x: corePoint.x + (agent.seat % 2 ? 70 : -70), y: corePoint.y + (agent.seat > 1 ? 55 : -55) };
+  const path = [seatPoint, corePoint, workPoint, seatPoint];
+  let segment = 0, progress = 0;
   const step = () => {
-    progress += 0.04;
+    progress += .055;
     const p = Math.min(progress, 1);
-    agent.x = original.x + (target.x - original.x) * p;
-    agent.y = original.y + (target.y - original.y) * p;
+    const from = path[segment], to = path[segment + 1];
+    agentMotion[agentId] = {
+      x: from.x + (to.x - from.x) * p,
+      y: from.y + (to.y - from.y) * p,
+      label: segment === 0 ? "DELEGATING" : segment === 1 ? "WORKING" : "RETURNING"
+    };
     drawOffice();
-    if (p < 1) requestAnimationFrame(step);
-    else {
-      setTimeout(() => {
-        agent.x = original.x;
-        agent.y = original.y;
-        agentWorking[agentId] = false;
-        drawOffice();
-        renderAgents([]);
-      }, 900);
+    if (p < 1) return requestAnimationFrame(step);
+    if (segment < path.length - 2) {
+      segment++;
+      progress = 0;
+      return requestAnimationFrame(step);
     }
+    setTimeout(() => {
+      delete agentMotion[agentId];
+      agentWorking[agentId] = false;
+      drawOffice();
+      renderAgents([]);
+    }, 700);
   };
-  drawOffice();
-  requestAnimationFrame(step);
   if (task) addMsg("🤖 " + agent.name + " کو task ملا: " + task);
+  requestAnimationFrame(step);
 }
 
 function runAgentUi(ui) {
   if (!Array.isArray(ui)) return;
-  ui.filter((x) => x && x.type === "agent_move").forEach((x) => {
-    triggerAgentMove(x.agent || "core", x.task || "");
-  });
+  ui.filter((x) => x && x.type === "agent_move").forEach((x) => triggerAgentMove(x.agent || "core", x.task || ""));
 }
 
 function renderAgentTasks() {
-  const list = $("agentList");
-  if (!list || !Array.isArray(state.agentTasks)) return;
   const byAgent = { core: [], supplier: [], shopify: [], whatsapp: [] };
-  state.agentTasks.forEach((t) => {
-    if (byAgent[t.agent]) byAgent[t.agent].push(t);
-  });
+  state.agentTasks.forEach((t) => { if (byAgent[t.agent]) byAgent[t.agent].push(t); });
   document.querySelectorAll(".flow-agent").forEach((el) => {
     const key = el.classList.contains("supplier-agent") ? "supplier" :
       el.classList.contains("commerce-agent") ? "shopify" :
@@ -485,21 +526,20 @@ function renderAgents(pending) {
   const counts = { core: 0, supplier: 0, shopify: 0, whatsapp: 0 };
   pending.forEach((a) => { const k = typeToAgent[a.type]; if (k) counts[k]++; });
   Object.keys(counts).forEach((k) => { if (k !== "core") agentWorking[k] = counts[k] > 0; });
-
   const list = $("agentList");
   list.innerHTML = "";
   AGENTS.forEach((a) => {
     const li = document.createElement("li");
     const n = counts[a.id];
-    const label = a.id === "core" ? "Ready" : n ? `${n} waiting for you` : "Idle";
-    li.innerHTML = `<i class="${a.id !== "core" && n ? "work" : "idle"}"></i><b></b><span></span>`;
+    const queued = state.agentTasks?.some((t) => t.agent === a.id && t.status === "queued");
+    li.innerHTML = `<i class="${n || queued ? "work" : "idle"}"></i><b></b><span></span>`;
     li.querySelector("b").textContent = a.name;
-    li.querySelector("span").textContent = label;
+    li.querySelector("span").textContent = n ? `${n} approval(s)` : queued ? "Task queued" : "Idle";
     list.appendChild(li);
   });
 }
 
-setInterval(() => { tick++; drawOffice(); }, 400);
+setInterval(() => { tick++; drawOffice(); }, 100);
 (function loopRadar() { drawRadar(); requestAnimationFrame(loopRadar); })();
 
 /* =========================
