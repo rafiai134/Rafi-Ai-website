@@ -99,6 +99,7 @@ async function sendMessage(textOverride) {
     const data = await api("chat", { method: "POST", body: { message, history: history.slice(-12) } });
     history.push({ role: "user", content: message }, { role: "assistant", content: data.reply });
     addMsg(data.reply, "bot", data.ui || []);
+    runAgentUi(data.ui || []);
 
     const first = (data.ui || []).find((u) => u.type === "open");
     if (first) window.open(first.url, "_blank", "noopener"); // may be blocked; the button stays visible
