@@ -180,6 +180,7 @@ async function armVoice() {
   voiceArmed = true;
   beepSequence();
   $("mic").classList.add("on");
+  $("voiceStatus").textContent = "● WAKE LISTENING";
   setCore("listening", "LISTENING FOR RAFI");
   startWakeWord();
 }
@@ -228,8 +229,17 @@ function stopListening() {
 
 async function toggleVoice() {
   if (listening) return stopListening();
-  if (!voiceArmed) return armVoice();
-  startListening();
+  if (voiceArmed) {
+    voiceArmed = false;
+    if (wakeRec) { try { wakeRec.stop(); } catch {} }
+    wakeListening = false;
+    clearTimeout(wakeRetry);
+    $("mic").classList.remove("on");
+    $("voiceStatus").textContent = "● VOICE OFF";
+    setCore(null, "START AI");
+    return;
+  }
+  return armVoice();
 }
 
 $("mic").addEventListener("click", toggleVoice);
@@ -244,16 +254,27 @@ function startWakeWord() {
   wakeRec.onstart = () => {
     wakeListening = true;
     $("mic").classList.add("on");
+    $("voiceStatus").textContent = "● WAKE LISTENING";
     setCore(null, "LISTENING FOR RAFI");
   };
   wakeRec.onend = () => {
     wakeListening = false;
     clearTimeout(wakeRetry);
-    if (voiceArmed && !listening && !busy) wakeRetry = setTimeout(startWakeWord, 600);
+    if (voiceArmed && !listening && !busy) {
+      $("voiceStatus").textContent = "● RECONNECTING";
+      wakeRetry = setTimeout(startWakeWord, 900);
+    }
   };
   wakeRec.onerror = (e) => {
     wakeListening = false;
-    if (e.error !== "not-allowed" && e.error !== "service-not-allowed" && voiceArmed) {
+    if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+      voiceArmed = false;
+      $("mic").classList.remove("on");
+      $("voiceStatus").textContent = "● VOICE OFF";
+      setCore(null, "START AI");
+      return;
+    }
+    if (voiceArmed) {
       clearTimeout(wakeRetry);
       wakeRetry = setTimeout(startWakeWord, 1000);
     }
@@ -266,7 +287,6 @@ function startWakeWord() {
         /ہیلو\s*رافی(?:\s*(?:آئی|آئی|ai))?/i.test(heard);
       if (!match) continue;
       try { wakeRec.stop(); } catch {}
-      beepSequence();
       const command = heard
         .replace(/^.*?\b(hello|hey|hi)\s+rafi(?:\s+ai)?\b/i, "")
         .replace(/^.*?ہیلو\s*رافی(?:\s*(?:آئی|آئی|ai))?/i, "")
@@ -283,14 +303,15 @@ function startWakeWord() {
 }
 
 function enableWakeWord() {
-  if (!SR) return;
-  if (localStorage.getItem("rafi_mic_granted") === "1") {
-    voiceArmed = true;
-    setCore(null, "LISTENING FOR RAFI");
-    startWakeWord();
-  } else {
-    setCore(null, "START AI");
+  // Do not auto-open the microphone or start recognition on page load.
+  // The user arms voice once with the mic button; only then do we listen
+  // for the explicit "Rafi AI" wake phrase.
+  if (!SR) {
+    setCore(null, "VOICE UNSUPPORTED");
+    return;
   }
+  voiceArmed = false;
+  setCore(null, "START AI");
 }
 
 if (SR) {
