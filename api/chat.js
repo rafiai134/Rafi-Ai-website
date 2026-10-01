@@ -222,16 +222,44 @@ Rules:
 - For profit questions call calc_order and mention fees and any warning.
 `;
 
+async function localFallback(message, ui) {
+  const m = String(message || "").toLowerCase();
+  const pushAgent = async (agent, task) => {
+    const tasks = await kvGet("agent_tasks", []);
+    const item = { id:"t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6), agent, task:String(task).slice(0,500), status:"queued", createdAt:Date.now() };
+    tasks.unshift(item); await kvSet("agent_tasks", tasks.slice(0,100));
+    ui.push({type:"agent_move", agent, task:item.task, taskId:item.id});
+    await log("Local fallback assigned "+agent+": "+item.task, agent);
+    return item;
+  };
+  if (/home|گھر|ہوم/.test(m)) return {reply:"فون کو Home پر بھیج رہا ہوں۔", tool:await queueDevice("home",{}), ui};
+  if (/back|واپس|بیک/.test(m)) return {reply:"فون پر Back کمانڈ بھیج رہا ہوں۔", tool:await queueDevice("back",{}), ui};
+  if (/recents|recent apps|حالیہ ایپس|ریسنٹ/.test(m)) return {reply:"Recent Apps کمانڈ بھیج رہا ہوں۔", tool:await queueDevice("recents",{}), ui};
+  if (/notification|notifications|نوٹیفکیشن/.test(m)) return {reply:"Notifications کھولنے کی کمانڈ بھیج رہا ہوں۔", tool:await queueDevice("notifications",{}), ui};
+  if (/supplier|سپلائر|alibaba|علی بابا/.test(m)) { const t=await pushAgent("supplier",message); return {reply:"Supplier Agent کو task دے دیا ہے۔",taskId:t.id,ui}; }
+  if (/shopify|store|اسٹور|شاپفائی/.test(m)) { const t=await pushAgent("shopify",message); return {reply:"Shopify Agent کو task دے دیا ہے۔",taskId:t.id,ui}; }
+  if (/whatsapp|واٹس.?ایپ|message|میسج/.test(m)) { const t=await pushAgent("whatsapp",message); return {reply:"WhatsApp Agent کو task دے دیا ہے۔",taskId:t.id,ui}; }
+  if (/agent|ایجنٹ|delegate|کام کرو|task/.test(m)) { const t=await pushAgent("core",message); return {reply:"Rafi Core نے task queue میں ڈال دیا ہے۔",taskId:t.id,ui}; }
+  const hit=Object.keys(PLATFORMS).find(k=>m.includes(k));
+  if (hit && /open|کھولو|کھول/.test(m)) { ui.push({type:"open",label:hit,url:PLATFORMS[hit]}); await log("Local fallback opening "+hit,"core"); return {reply:hit+" کھولنے کا لنک تیار ہے۔",ui}; }
+  return {reply:"Rafi AI core online ہے۔ AI credit کے بغیر بھی agent delegation، Android commands اور dashboard controls دستیاب ہیں۔",ui};
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   if (!auth(req, res)) return;
 
   try {
-    if (!config().openai) return res.status(500).json({ error: "OPENAI_API_KEY is not set." });
+
 
     const { message, history } = req.body || {};
     if (!message || typeof message !== "string") {
       return res.status(400).json({ error: "Message is required" });
+    }
+
+    const ui = [];
+    if (!config().openai) {
+      return res.status(200).json(await localFallback(message, ui));
     }
 
     const past = Array.isArray(history)
@@ -242,7 +270,6 @@ export default async function handler(req, res) {
       : [];
 
     let input = [...past, { role: "user", content: message.slice(0, 4000) }];
-    const ui = [];
     let reply = "";
 
     for (let i = 0; i < 5; i++) {
