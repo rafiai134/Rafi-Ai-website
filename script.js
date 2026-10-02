@@ -195,8 +195,7 @@ async function toggleVoice() {
   if (!voiceArmed) await armVoiceSilent();
 }
 
-$("mic").addEventListener("click", toggleVoice);
-$("core").addEventListener("click", toggleVoice);
+// Voice click handlers are owned by voice.js to prevent duplicate microphone starts.
 
 function startWakeWord() {
   if (!SR || !voiceArmed || wakeListening || listening || busy || location.protocol !== "https:") return;
