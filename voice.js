@@ -147,12 +147,12 @@
       setCore(null, 'RAFI AI');
     }
     if (voiceArmed) { startListening(); return; }
-    var tries = 0;
-    var t = setInterval(function () {
-      tries++;
-      if (voiceArmed) { clearInterval(t); startListening(); }
-      else if (tries > 30) clearInterval(t);
-    }, 150);
+    // First tap grants microphone access and arms the silent wake listener.
+    if (typeof armVoiceSilent === 'function') {
+      armVoiceSilent().then(function () {
+        if (voiceArmed) startListening();
+      });
+    }
   }
   g('mic').addEventListener('click', tapTalk);
   g('core').addEventListener('click', tapTalk);
