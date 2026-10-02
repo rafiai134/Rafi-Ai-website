@@ -7,7 +7,7 @@
   <meta name="description" content="Rafi AI command center">
   <title>Rafi AI — Command Center</title>
   <link rel="manifest" href="/manifest.json">
-  <link rel="icon" type="image/webp" href="/icon-192.webp?v=2">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg?v=robot-app">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -35,62 +35,32 @@
       <small>PERSONAL COMMAND CENTER</small>
     </div>
   </div>
-
   <div class="system-route" aria-label="System status">
-    <span class="route-node"><i></i> CORE</span>
-    <span class="route-line"></span>
-    <span class="route-node"><i></i> AGENTS</span>
-    <span class="route-line"></span>
-    <span class="route-node"><i></i> AUTOMATION</span>
+    <span class="route-node"><i></i> CORE</span><span class="route-line"></span><span class="route-node"><i></i> AGENTS</span><span class="route-line"></span><span class="route-node"><i></i> AUTOMATION</span>
   </div>
-
   <div class="top-status">
-    <div class="pills" id="pills">
-      <span class="pill" data-k="openai">AI</span>
-      <span class="pill" data-k="storage">DB</span>
-      <span class="pill" data-k="whatsapp">WA</span>
-      <span class="pill" data-k="shopify">SHOP</span>
-    </div>
+    <div class="pills" id="pills"><span class="pill" data-k="openai">AI</span><span class="pill" data-k="storage">DB</span><span class="pill" data-k="whatsapp">WA</span><span class="pill" data-k="shopify">SHOP</span></div>
     <time id="clock">--:--:--</time>
   </div>
 </header>
 
 <main class="command-grid">
 
-  <!-- LEFT HUD / QUICK CONTROL -->
   <aside class="left-rail">
     <section class="panel identity-card">
       <div class="section-label">SYSTEM / ONLINE</div>
-      <div class="identity">
-        <div class="avatar-orb"></div>
-        <div>
-          <b>Rafi AI</b>
-          <span>Voice + Business Agent</span>
-        </div>
-      </div>
-      <div class="mini-metrics">
-        <div><span>Pending</span><b id="rdPending">0</b></div>
-        <div><span>Inbox</span><b id="rdInbox">0</b></div>
-        <div><span>Contacts</span><b id="rdContacts">0</b></div>
-      </div>
+      <div class="identity"><div class="avatar-orb"></div><div><b>Rafi AI</b><span>Voice + Business Agent</span></div></div>
+      <div class="mini-metrics"><div><span>Pending</span><b id="rdPending">0</b></div><div><span>Inbox</span><b id="rdInbox">0</b></div><div><span>Contacts</span><b id="rdContacts">0</b></div></div>
     </section>
-
     <section class="panel radar-card">
       <div class="panel-head"><h3>NETWORK RADAR</h3><span class="live-dot">LIVE</span></div>
       <canvas id="radar" width="320" height="320" aria-label="Network radar"></canvas>
       <div class="telemetry"><span>LATENCY <b>--</b></span><span>SECURE <b>YES</b></span></div>
     </section>
-
     <section class="panel launch-card">
       <div class="panel-head"><h3>QUICK LAUNCH</h3><span>4</span></div>
-      <nav class="launch">
-        <a href="https://web.whatsapp.com/" target="_blank" rel="noopener"><b>WA</b><span>WhatsApp</span></a>
-        <a href="https://www.alibaba.com/" target="_blank" rel="noopener"><b>AL</b><span>Alibaba</span></a>
-        <a href="https://admin.shopify.com/" target="_blank" rel="noopener"><b>SH</b><span>Shopify</span></a>
-        <a href="https://mail.google.com/" target="_blank" rel="noopener"><b>GM</b><span>Gmail</span></a>
-      </nav>
+      <nav class="launch"><a href="https://web.whatsapp.com/" target="_blank" rel="noopener"><b>WA</b><span>WhatsApp</span></a><a href="https://www.alibaba.com/" target="_blank" rel="noopener"><b>AL</b><span>Alibaba</span></a><a href="https://admin.shopify.com/" target="_blank" rel="noopener"><b>SH</b><span>Shopify</span></a><a href="https://mail.google.com/" target="_blank" rel="noopener"><b>GM</b><span>Gmail</span></a></nav>
     </section>
-
     <section class="panel device-card">
       <div class="panel-head"><h3>MOBILE BRIDGE</h3><span class="badge">PHASE 1</span></div>
       <div class="device-state"><i></i><span>Web command queue ready</span></div>
@@ -98,149 +68,30 @@
     </section>
   </aside>
 
-  <!-- CENTER COMMAND MAP -->
   <section class="center-stage">
-
     <section class="panel flow-panel">
-      <div class="panel-head">
-        <div>
-          <div class="section-label">MULTI-AGENT ROUTER</div>
-          <h2>Rafi AI Operations Core</h2>
-        </div>
-        <span class="status-chip" id="voiceStatus">● READY</span>
-      </div>
-
+      <div class="panel-head"><div><div class="section-label">MULTI-AGENT ROUTER</div><h2>Rafi AI Operations Core</h2></div><span class="status-chip" id="voiceStatus">● READY</span></div>
       <div class="flow-map">
-        <div class="flow-column">
-          <div class="flow-agent core-agent"><i></i><span>Rafi Core</span><small>VOICE / CHAT</small></div>
-          <div class="flow-agent supplier-agent"><i></i><span>Supplier</span><small>ALIBABA</small></div>
-          <div class="flow-agent commerce-agent"><i></i><span>Commerce</span><small>SHOPIFY</small></div>
-          <div class="flow-agent comms-agent"><i></i><span>Comms</span><small>WHATSAPP</small></div>
-        </div>
-        <div class="flow-wires" aria-hidden="true">
-          <span></span><span></span><span></span><span></span>
-        </div>
-        <div class="core-node">
-          <div class="core-wrap">
-            <span class="orb-tag" id="orbTag" data-state="idle">IDLE</span>
-            <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
-            <button id="core" class="core" type="button" aria-label="Talk to Rafi">
-              <span id="coreState">RAFI AI</span>
-            </button>
-          </div>
-          <button id="startAi" class="start-ai" type="button">START AI</button>
-          <br><small>AI ORCHESTRATOR</small>
-        </div>
-        <div class="flow-wires right" aria-hidden="true">
-          <span></span><span></span><span></span><span></span>
-        </div>
-        <div class="output-column">
-          <div><b>DEVICE</b><span>COMMANDS</span></div>
-          <div><b>ORDERS</b><span>APPROVALS</span></div>
-          <div><b>MESSAGES</b><span>REPLIES</span></div>
-          <div><b>STORE</b><span>LISTINGS</span></div>
-        </div>
+        <div class="flow-column"><div class="flow-agent core-agent"><i></i><span>Rafi Core</span><small>VOICE / CHAT</small></div><div class="flow-agent supplier-agent"><i></i><span>Supplier</span><small>ALIBABA</small></div><div class="flow-agent commerce-agent"><i></i><span>Commerce</span><small>SHOPIFY</small></div><div class="flow-agent comms-agent"><i></i><span>Comms</span><small>WHATSAPP</small></div></div>
+        <div class="flow-wires" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <div class="core-node"><div class="core-wrap"><span class="orb-tag" id="orbTag" data-state="idle">IDLE</span><div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div><button id="core" class="core" type="button" aria-label="Talk to Rafi"><span id="coreState">RAFI AI</span></button></div><button id="startAi" class="start-ai" type="button">START AI</button><br><small>AI ORCHESTRATOR</small></div>
+        <div class="flow-wires right" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <div class="output-column"><div><b>DEVICE</b><span>COMMANDS</span></div><div><b>ORDERS</b><span>APPROVALS</span></div><div><b>MESSAGES</b><span>REPLIES</span></div><div><b>STORE</b><span>LISTINGS</span></div></div>
       </div>
     </section>
-
     <section class="panel ops-panel">
-      <div class="panel-head">
-        <div>
-          <div class="section-label">AGENT ROOMS / LIVE FLOOR</div>
-          <h3>LIVE AGENT WORKSPACE</h3>
-        </div>
-        <span class="tiny-status">4 AGENTS</span>
-      </div>
-      <div class="office-wrap">
-        <canvas id="office" width="820" height="360" aria-label="Agent workspace"></canvas>
-      </div>
+      <div class="panel-head"><div><div class="section-label">AGENT ROOMS / LIVE FLOOR</div><h3>LIVE AGENT WORKSPACE</h3></div><span class="tiny-status">4 AGENTS</span></div>
+      <div class="office-wrap"><canvas id="office" width="820" height="360" aria-label="Agent workspace"></canvas></div>
       <ul id="agentList" class="agents"></ul>
     </section>
-
-    <details class="panel calc">
-      <summary>ORDER PROFIT / RISK CALCULATOR</summary>
-      <form id="calcForm">
-        <input id="cProduct" placeholder="Product" required>
-        <div class="two">
-          <input id="cQty" type="number" min="1" step="1" placeholder="Quantity" required>
-          <input id="cCost" type="number" min="0" step="0.01" placeholder="Supplier unit cost" required>
-        </div>
-        <div class="two">
-          <input id="cShip" type="number" min="0" step="0.01" placeholder="Shipping / unit">
-          <input id="cSell" type="number" min="0" step="0.01" placeholder="Selling price" required>
-        </div>
-        <div class="two">
-          <input id="cAd" type="number" min="0" step="0.01" placeholder="Ads / unit">
-          <input id="cFee" type="number" min="0" step="0.1" placeholder="Fees % (4)">
-        </div>
-        <div class="two">
-          <button type="submit">CALCULATE</button>
-          <button type="button" id="calcSubmit">SEND FOR APPROVAL</button>
-        </div>
-      </form>
-      <pre id="calcResult" class="result"></pre>
-    </details>
+    <details class="panel calc"><summary>ORDER PROFIT / RISK CALCULATOR</summary><form id="calcForm"><input id="cProduct" placeholder="Product" required><div class="two"><input id="cQty" type="number" min="1" step="1" placeholder="Quantity" required><input id="cCost" type="number" min="0" step="0.01" placeholder="Supplier unit cost" required></div><div class="two"><input id="cShip" type="number" min="0" step="0.01" placeholder="Shipping / unit"><input id="cSell" type="number" min="0" step="0.01" placeholder="Selling price" required></div><div class="two"><input id="cAd" type="number" min="0" step="0.01" placeholder="Ads / unit"><input id="cFee" type="number" min="0" step="0.1" placeholder="Fees % (4)"></div><div class="two"><button type="submit">CALCULATE</button><button type="button" id="calcSubmit">SEND FOR APPROVAL</button></div></form><pre id="calcResult" class="result"></pre></details>
   </section>
 
-  <!-- RIGHT CHAT + OPERATIONS -->
   <aside class="right-rail">
-
-    <section class="panel chat-panel">
-      <div class="chat-head">
-        <div>
-          <div class="section-label">PRIVATE CHANNEL</div>
-          <h2>Rafi Chat</h2>
-        </div>
-        <span class="status-chip">● ACTIVE</span>
-      </div>
-
-      <div class="chat-tabs" role="tablist">
-        <button type="button" class="active" data-tab="voice">VOICE</button>
-        <button type="button" data-tab="agent">AGENT</button>
-        <button type="button" data-tab="notes">NOTES</button>
-      </div>
-
-      <div id="chatMessages" class="messages" dir="auto"></div>
-
-      <div class="composer">
-        <button id="mic" type="button" class="round" aria-label="Voice">🎤</button>
-        <textarea id="messageInput" rows="1" dir="auto" placeholder="Rafi کو حکم دیں…"></textarea>
-        <button id="send" type="button" class="round go" aria-label="Send">➤</button>
-      </div>
-
-      <div class="chat-tools">
-        <select id="lang" aria-label="Voice language">
-          <option value="ur-PK">اردو</option>
-          <option value="en-US">English</option>
-          <option value="hi-IN">Hindi input</option>
-        </select>
-        <span class="toggle">WAKE: “RAFI AI”</span>
-        <label class="toggle"><input id="speakOn" type="checkbox" checked> Speak</label>
-        <button id="clear" type="button">CLEAR</button>
-      </div>
-
-      <div id="agentPane" class="tab-pane"></div>
-      <div id="notesPane" class="tab-pane">
-        <textarea id="notesBox" dir="auto" placeholder="اپنے نوٹس یہاں لکھیں…"></textarea>
-        <p class="notes-hint">نوٹس صرف اسی فون/براؤزر میں محفوظ ہوتے ہیں۔</p>
-      </div>
-    </section>
-
-    <section class="panel approvals-panel">
-      <div class="panel-head"><h3>NEEDS YOUR APPROVAL</h3><span id="approvalCount">0</span></div>
-      <div id="approvals" class="approvals"><p class="empty">Nothing waiting.</p></div>
-    </section>
-
-    <section class="panel inbox-panel">
-      <div class="panel-head"><h3>WHATSAPP INBOX</h3><span>LIVE</span></div>
-      <div id="inbox" class="feed"><p class="empty">No messages yet.</p></div>
-    </section>
-
-    <section class="panel activity-panel">
-      <div class="panel-head"><h3>ACTIVITY STREAM</h3><span>LIVE</span></div>
-      <div id="activity" class="feed"><p class="empty">No activity yet.</p></div>
-    </section>
-
+    <section class="panel chat-panel"><div class="chat-head"><div><div class="section-label">PRIVATE CHANNEL</div><h2>Rafi Chat</h2></div><span class="status-chip">● ACTIVE</span></div><div class="chat-tabs" role="tablist"><button type="button" class="active" data-tab="voice">VOICE</button><button type="button" data-tab="agent">AGENT</button><button type="button" data-tab="notes">NOTES</button></div><div id="chatMessages" class="messages" dir="auto"></div><div class="composer"><button id="mic" type="button" class="round" aria-label="Voice">🎤</button><textarea id="messageInput" rows="1" dir="auto" placeholder="Rafi کو حکم دیں…"></textarea><button id="send" type="button" class="round go" aria-label="Send">➤</button></div><div class="chat-tools"><select id="lang" aria-label="Voice language"><option value="ur-PK">اردو</option><option value="en-US">English</option><option value="hi-IN">Hindi input</option></select><span class="toggle">WAKE: “RAFI AI”</span><label class="toggle"><input id="speakOn" type="checkbox" checked> Speak</label><button id="clear" type="button">CLEAR</button></div><div id="agentPane" class="tab-pane"></div><div id="notesPane" class="tab-pane"><textarea id="notesBox" dir="auto" placeholder="اپنے نوٹس یہاں لکھیں…"></textarea><p class="notes-hint">نوٹس صرف اسی فون/براؤزر میں محفوظ ہوتے ہیں۔</p></div></section>
+    <section class="panel approvals-panel"><div class="panel-head"><h3>NEEDS YOUR APPROVAL</h3><span id="approvalCount">0</span></div><div id="approvals" class="approvals"><p class="empty">Nothing waiting.</p></div></section>
+    <section class="panel inbox-panel"><div class="panel-head"><h3>WHATSAPP INBOX</h3><span>LIVE</span></div><div id="inbox" class="feed"><p class="empty">No messages yet.</p></div></section>
+    <section class="panel activity-panel"><div class="panel-head"><h3>ACTIVITY STREAM</h3><span>LIVE</span></div><div id="activity" class="feed"><p class="empty">No activity yet.</p></div></section>
   </aside>
 </main>
 
