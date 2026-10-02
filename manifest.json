@@ -1,13 +1,16 @@
 {
-  "name":"Rafi AI",
-  "short_name":"Rafi AI",
-  "description":"Rafi AI command center",
-  "start_url":"/",
-  "scope":"/",
-  "display":"standalone",
-  "background_color":"#000516",
-  "theme_color":"#000516",
-  "icons":[
-    {"src":"/icon.svg?v=reference-v4","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}
+  "id": "/",
+  "name": "Rafi AI",
+  "short_name": "Rafi AI",
+  "description": "Rafi AI - Your Virtual Assistant",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#010514",
+  "theme_color": "#010514",
+  "icons": [
+    { "src": "/rafi-icon-192.webp", "sizes": "192x192", "type": "image/webp", "purpose": "any" },
+    { "src": "/rafi-icon-512.webp", "sizes": "512x512", "type": "image/webp", "purpose": "any" },
+    { "src": "/rafi-icon-512.webp", "sizes": "512x512", "type": "image/webp", "purpose": "maskable" }
   ]
 }
