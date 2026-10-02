@@ -1,5 +1,10 @@
 {
   "functions": {
     "api/*.js": { "maxDuration": 60 }
-  }
+  },
+  "rewrites": [
+    { "source": "/icon-192.webp", "destination": "/api/icon?s=192" },
+    { "source": "/icon-512.webp", "destination": "/api/icon?s=512" },
+    { "source": "/logo-mark.webp", "destination": "/api/icon?s=mark" }
+  ]
 }
