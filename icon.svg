@@ -1,23 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <defs>
-<radialGradient id="bg" cx="50%" cy="35%" r="75%"><stop stop-color="#082a55"/><stop offset=".62" stop-color="#020817"/><stop offset="1" stop-color="#01030b"/></radialGradient>
-<linearGradient id="armor" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff"/><stop offset=".48" stop-color="#b9d3e9"/><stop offset="1" stop-color="#53677d"/></linearGradient>
-<linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00eaff"/><stop offset=".55" stop-color="#3b72ff"/><stop offset="1" stop-color="#9b5cff"/></linearGradient>
+<radialGradient id="bg" cx=".5" cy=".35" r=".8"><stop stop-color="#0b2850"/><stop offset=".55" stop-color="#030b1d"/><stop offset="1" stop-color="#01030a"/></radialGradient>
+<linearGradient id="arm" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".5" stop-color="#b8cde0"/><stop offset="1" stop-color="#53677b"/></linearGradient>
+<linearGradient id="neon"><stop stop-color="#00eaff"/><stop offset=".55" stop-color="#3677ff"/><stop offset="1" stop-color="#b24dff"/></linearGradient>
+<linearGradient id="ai"><stop stop-color="#ff9a20"/><stop offset=".45" stop-color="#ff2c91"/><stop offset="1" stop-color="#974dff"/></linearGradient>
 <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 </defs>
-<rect width="512" height="512" rx="108" fill="url(#bg)"/>
-<g transform="translate(26 22) scale(.64)" filter="url(#glow)">
-<circle cx="360" cy="150" r="128" fill="#07152b" stroke="url(#blue)" stroke-width="10"/>
-<path d="M290 96Q360 40 430 96L464 150Q462 240 360 262Q258 240 256 150Z" fill="url(#armor)" stroke="#7fe9ff" stroke-width="7"/>
-<path d="M288 148Q360 115 432 148L419 204Q360 233 301 204Z" fill="#020817" stroke="#21eaff" stroke-width="7"/>
-<path d="M312 170L345 164M375 164L408 170" stroke="#00eaff" stroke-width="10" stroke-linecap="round"/>
-<circle cx="360" cy="134" r="13" fill="#ff2d91"/>
-<path d="M278 236L230 332L258 454Q360 514 462 454L490 332L442 236" fill="url(#armor)" stroke="#6bdfff" stroke-width="8"/>
-<path d="M295 267L360 302L425 267M302 375H418M320 452L360 412L400 452" fill="none" stroke="#2a6b9b" stroke-width="8"/>
-<path d="M238 317L146 392M482 317L574 392" fill="none" stroke="url(#blue)" stroke-width="34" stroke-linecap="round"/>
-<path d="M138 392L88 352M138 392L94 436" fill="none" stroke="#b9d3e9" stroke-width="20" stroke-linecap="round"/>
-<circle cx="574" cy="392" r="27" fill="#0b203c" stroke="#00eaff" stroke-width="8"/>
-<path d="M602 392H685V332M685 332H725M685 332V372" fill="none" stroke="url(#blue)" stroke-width="9" stroke-linecap="round"/>
-<g fill="#00eaff"><circle cx="725" cy="332" r="9"/><circle cx="685" cy="372" r="9"/></g>
+<rect width="512" height="512" rx="92" fill="url(#bg)"/>
+<!-- robot above -->
+<g transform="translate(66 22)" filter="url(#glow)">
+<path d="M135 22Q216-5 270 55L284 111Q278 171 214 184Q150 171 144 111Z" fill="url(#arm)" stroke="#76eaff" stroke-width="6"/>
+<path d="M154 91Q214 66 274 91L262 130Q214 151 166 130Z" fill="#020817" stroke="#19eaff" stroke-width="5"/>
+<path d="M179 106h25m20 0h25" stroke="#00eaff" stroke-width="7" stroke-linecap="round"/>
+<circle cx="214" cy="72" r="9" fill="#ff3c9b"/>
+<path d="M157 165L112 230L128 292Q214 326 300 292L316 230L271 165" fill="url(#arm)" stroke="#70eaff" stroke-width="6"/>
+<path d="M139 203L91 252" stroke="url(#neon)" stroke-width="25" stroke-linecap="round"/>
+<path d="M289 202L342 238" stroke="url(#neon)" stroke-width="25" stroke-linecap="round"/>
+<path d="M342 238L372 218" stroke="#dcecff" stroke-width="15" stroke-linecap="round"/>
+<circle cx="372" cy="218" r="10" fill="#00eaff"/>
+<!-- holographic screen below hand -->
+<path d="M318 238H440L420 310H300Z" fill="#062044" fill-opacity=".72" stroke="url(#neon)" stroke-width="5"/>
+<path d="M326 253h91M318 270h92M313 287h92" stroke="#00eaff" stroke-opacity=".65" stroke-width="3"/>
+<circle cx="368" cy="270" r="18" fill="none" stroke="#ff3b9c" stroke-width="3"/>
+<path d="M358 270l7 7 14-16" fill="none" stroke="#00eaff" stroke-width="4"/>
+</g>
+<!-- stylish wordmark -->
+<g font-family="Arial,Helvetica,sans-serif" text-anchor="middle">
+<text x="256" y="405" font-size="64" font-weight="800" fill="#f7fbff">Rafi</text>
+<text x="367" y="405" font-size="64" font-weight="800" fill="url(#ai)">AI</text>
+<path d="M92 423H420" stroke="url(#neon)" stroke-width="3"/>
+<text x="256" y="451" font-size="14" font-weight="600" letter-spacing="4" fill="#dce8ff">YOUR VIRTUAL ASSISTANT</text>
 </g>
 </svg>
