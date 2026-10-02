@@ -1,71 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="t d">
-<title id="t">Rafi AI futuristic robot logo</title>
-<desc id="d">A white and graphite futuristic humanoid robot touching a glowing blue holographic interface above the Rafi AI wordmark.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="t d">
+<title id="t">Rafi AI mobile logo</title><desc id="d">A luminous circuit human profile beside the Rafi AI wordmark, matching the supplied reference.</desc>
 <defs>
-  <radialGradient id="bg" cx="58%" cy="34%" r="82%"><stop stop-color="#09285a"/><stop offset=".48" stop-color="#03132d"/><stop offset="1" stop-color="#010611"/></radialGradient>
-  <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff"/><stop offset=".38" stop-color="#dce9f5"/><stop offset=".72" stop-color="#8fa8bd"/><stop offset="1" stop-color="#33485e"/></linearGradient>
-  <linearGradient id="metal2" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f8fbff"/><stop offset=".5" stop-color="#a9bfd3"/><stop offset="1" stop-color="#455a70"/></linearGradient>
-  <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00f0ff"/><stop offset=".5" stop-color="#218cff"/><stop offset="1" stop-color="#5b42ff"/></linearGradient>
-  <linearGradient id="ai" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#ffb11a"/><stop offset=".42" stop-color="#ff218d"/><stop offset="1" stop-color="#a64cff"/></linearGradient>
-  <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-  <filter id="soft" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="12"/></filter>
+<radialGradient id="bg" cx="50%" cy="42%" r="75%"><stop stop-color="#061a3d"/><stop offset=".62" stop-color="#02091d"/><stop offset="1" stop-color="#00040d"/></radialGradient>
+<linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00f6ff"/><stop offset=".55" stop-color="#287bff"/><stop offset="1" stop-color="#9a3dff"/></linearGradient>
+<linearGradient id="warm" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffad21"/><stop offset=".45" stop-color="#ff2698"/><stop offset="1" stop-color="#a33cff"/></linearGradient>
+<linearGradient id="silver" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset=".5" stop-color="#d7e7f7"/><stop offset="1" stop-color="#738ba4"/></linearGradient>
+<filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<filter id="soft"><feGaussianBlur stdDeviation="22"/></filter>
 </defs>
-<rect width="512" height="512" rx="58" fill="url(#bg)"/>
-<g opacity=".45" stroke="#1764ff" fill="none" stroke-width="1.5">
-  <path d="M0 80h72l22-22h70l28-28h55"/><path d="M0 112h104l22-22h70"/>
-  <path d="M512 95h-68l-24 24h-50l-25 25h-56"/><path d="M512 300h-92l-26 26h-76"/>
-  <path d="M0 320h84l24-24h74l20-20h52"/><path d="M34 420h66l25-25h75"/>
-  <circle cx="84" cy="80" r="3" fill="#00eaff"/><circle cx="455" cy="95" r="3" fill="#00eaff"/>
+<rect width="1024" height="1024" rx="150" fill="url(#bg)"/>
+<g opacity=".35" stroke="#1267ff" fill="none" stroke-width="3">
+<path d="M0 125h155l75-75h125M1024 180H850l-65-65H650M0 780h170l60-60h120M1024 740H850l-55 55H650"/>
 </g>
-<g transform="translate(54 12)" filter="url(#glow)">
-  <!-- neck / rear mechanics -->
-  <path d="M192 154l-5 34 31 27 31-27-6-34" fill="#24384e" stroke="#61eaff" stroke-width="2"/>
-  <path d="M204 160v42M216 164v44M228 160v42" stroke="#0af" stroke-width="3" opacity=".65"/>
-  <!-- head -->
-  <path d="M128 48Q137 9 185 2Q238-5 271 25Q294 46 292 91L281 133Q270 158 237 171L185 166Q150 157 133 130L124 91Z" fill="url(#metal)" stroke="#d9f4ff" stroke-width="3"/>
-  <path d="M143 52Q190 19 264 42L274 83Q244 68 207 69Q170 71 137 88Z" fill="#14283d"/>
-  <path d="M142 87Q205 68 274 91L265 125Q232 149 187 140L151 121Z" fill="#020a18" stroke="#2beaff" stroke-width="2.5"/>
-  <path d="M170 101l25-8 29 2 21 8" fill="none" stroke="#00eaff" stroke-width="5" stroke-linecap="round"/>
-  <path d="M178 112h42" stroke="#6fdfff" stroke-width="2" opacity=".7"/>
-  <!-- ear -->
-  <circle cx="129" cy="91" r="29" fill="#0a1a2d" stroke="#7deaff" stroke-width="3"/>
-  <circle cx="129" cy="91" r="19" fill="none" stroke="#00eaff" stroke-width="5"/>
-  <circle cx="129" cy="91" r="7" fill="#1c91ff"/>
-  <circle cx="129" cy="91" r="3" fill="#fff"/>
-  <!-- shoulder armor / torso -->
-  <path d="M151 158L110 184Q89 206 87 246L104 294Q155 315 213 318Q271 315 323 294L340 246Q338 206 317 184L276 158L245 181L213 193L181 181Z" fill="url(#metal2)" stroke="#70eaff" stroke-width="3"/>
-  <path d="M166 180Q213 202 260 180L279 223L267 288Q213 305 159 288L147 223Z" fill="#07182b" stroke="#3ccfff" stroke-width="2"/>
-  <path d="M176 204h75M166 222h94M163 241h100M164 260h97" stroke="#1b9dca" opacity=".55"/>
-  <path d="M190 204v82M213 196v96M236 204v82" stroke="#4b8fae" opacity=".4"/>
-  <circle cx="213" cy="231" r="16" fill="#06223d" stroke="#00eaff" stroke-width="3"/>
-  <circle cx="213" cy="231" r="7" fill="#4feaff"/>
-  <!-- left arm bent -->
-  <path d="M118 184Q82 183 59 216L45 257L68 269L100 234L137 225Z" fill="url(#metal)" stroke="#66ddff" stroke-width="3"/>
-  <path d="M48 251L27 286Q24 300 38 305L54 301L76 270Z" fill="#6f879c" stroke="#8feaff" stroke-width="3"/>
-  <!-- right arm pointing to hologram -->
-  <path d="M309 184Q334 177 355 193L382 224L360 244L331 220L300 214Z" fill="url(#metal)" stroke="#6feaff" stroke-width="3"/>
-  <path d="M358 229L397 199L414 211L382 254L365 258L351 246Z" fill="url(#metal2)" stroke="#6feaff" stroke-width="3"/>
-  <!-- hand / pointing finger -->
-  <path d="M396 203l34-26q10-7 17 1 5 7-3 14l-30 24" fill="none" stroke="#dcecff" stroke-width="12" stroke-linecap="round"/>
-  <circle cx="445" cy="178" r="6" fill="#00f5ff"/>
-  <!-- holographic screen -->
-  <g>
-    <path d="M353 126L476 96L463 220L337 249Z" fill="#08295a" fill-opacity=".48" stroke="url(#blue)" stroke-width="2.5"/>
-    <path d="M359 145L458 120M355 165L454 141M350 186L450 161M345 207L445 182" stroke="#00dfff" stroke-width="2" opacity=".72"/>
-    <circle cx="410" cy="166" r="25" fill="none" stroke="#00eaff" stroke-width="3"/>
-    <circle cx="410" cy="166" r="10" fill="#00eaff" opacity=".85"/>
-    <path d="M402 166l6 7 14-18" fill="none" stroke="#fff" stroke-width="3"/>
-    <path d="M373 223l62-15" stroke="#ff3a9d" stroke-width="3"/>
-  </g>
-  <!-- lower armor -->
-  <path d="M154 286l17 52 42 18 42-18 17-52-59 13Z" fill="url(#metal)" stroke="#64ddff" stroke-width="3"/>
-  <path d="M181 334l-13 45 25 10 20-36M245 334l13 45-25 10-20-36" fill="#273c52" stroke="#67eaff" stroke-width="2"/>
+<ellipse cx="350" cy="745" rx="330" ry="38" fill="#005cff" opacity=".22" filter="url(#soft)"/>
+<g transform="translate(62 150)" filter="url(#glow)">
+<!-- human/circuit profile -->
+<path d="M430 40C300 5 165 77 151 208C62 242 66 373 158 401C140 503 224 574 307 529L374 475C412 444 433 405 433 354C478 330 494 279 474 231C454 185 458 103 430 40Z" fill="none" stroke="url(#cyan)" stroke-width="24" stroke-linejoin="round"/>
+<path d="M430 40C457 87 463 157 474 231C494 279 478 330 433 354" fill="none" stroke="#23e8ff" stroke-width="9"/>
+<!-- face -->
+<path d="M403 211Q445 238 452 279Q455 316 422 331L390 345Q365 335 354 306L369 270L357 235Z" fill="url(#silver)" opacity=".9"/>
+<path d="M402 250l40 20-34 12 29 20-40 8" fill="none" stroke="#fff" stroke-width="6"/>
+<!-- circuit traces -->
+<path d="M55 160H270L330 119M20 255H251L325 183M48 350H238L327 247M83 445H236L325 306M126 535H244L322 366" fill="none" stroke="url(#cyan)" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M325 119V390M325 183L391 219M325 247L394 283M325 306L379 344M325 365L358 395" fill="none" stroke="url(#warm)" stroke-width="15" stroke-linecap="round"/>
+<g fill="#00eaff"><circle cx="55" cy="160" r="15"/><circle cx="20" cy="255" r="15"/><circle cx="48" cy="350" r="15"/><circle cx="83" cy="445" r="15"/></g>
+<g fill="#ff9e20"><circle cx="126" cy="535" r="15"/><circle cx="325" cy="119" r="10"/></g>
+<g fill="#ff35a9"><circle cx="325" cy="247" r="10"/><circle cx="325" cy="306" r="10"/></g>
 </g>
 <!-- wordmark -->
 <g font-family="Arial,Helvetica,sans-serif" font-weight="800">
-  <text x="158" y="438" font-size="55" text-anchor="middle" fill="#f7fbff">Rafi</text>
-  <text x="330" y="438" font-size="55" text-anchor="middle" fill="url(#ai)">AI</text>
-  <path d="M72 452H440" stroke="url(#ai)" stroke-width="3" filter="url(#glow)"/>
-  <text x="256" y="477" text-anchor="middle" font-size="11" letter-spacing="3.6" fill="#e8f2ff">YOUR VIRTUAL ASSISTANT</text>
+<text x="535" y="525" font-size="155" fill="#f8fbff">Rafi</text>
+<text x="825" y="525" font-size="155" fill="url(#warm)">AI</text>
+<path d="M548 580H940" stroke="url(#warm)" stroke-width="7"/>
+<text x="548" y="640" font-size="34" letter-spacing="8" fill="#eaf4ff">YOUR VIRTUAL ASSISTANT</text>
 </g>
 </svg>
