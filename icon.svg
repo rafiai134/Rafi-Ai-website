@@ -1,24 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="title desc">
-<title id="title">Rafi AI</title><desc id="desc">Futuristic virtual assistant logo with a circuit head and Rafi AI wordmark.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <defs>
- <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#02091a"/><stop offset=".55" stop-color="#061331"/><stop offset="1" stop-color="#01030b"/></linearGradient>
- <linearGradient id="cyanPink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00eaff"/><stop offset=".5" stop-color="#5b7cff"/><stop offset="1" stop-color="#ff22d8"/></linearGradient>
- <linearGradient id="warm" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff9a1f"/><stop offset=".45" stop-color="#ff2d91"/><stop offset="1" stop-color="#9c4dff"/></linearGradient>
- <filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<radialGradient id="bg" cx="50%" cy="35%" r="75%"><stop stop-color="#082a55"/><stop offset=".62" stop-color="#020817"/><stop offset="1" stop-color="#01030b"/></radialGradient>
+<linearGradient id="armor" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff"/><stop offset=".48" stop-color="#b9d3e9"/><stop offset="1" stop-color="#53677d"/></linearGradient>
+<linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00eaff"/><stop offset=".55" stop-color="#3b72ff"/><stop offset="1" stop-color="#9b5cff"/></linearGradient>
+<filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 </defs>
-<rect width="1200" height="560" rx="54" fill="url(#bg)"/>
-<g transform="translate(55 55)" filter="url(#glow)">
- <path d="M365 35C285 5 180 50 165 137C80 170 80 305 171 335C150 421 226 468 290 421L340 370C366 343 382 315 385 278C426 258 443 211 422 169C403 130 390 85 365 35Z" fill="none" stroke="url(#cyanPink)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
- <path d="M115 142H250L292 115M92 205H246L292 177M108 270H235L292 230M142 333H235L292 284" fill="none" stroke="url(#cyanPink)" stroke-width="13" stroke-linecap="round"/>
- <path d="M292 115V332M292 177L342 206M292 230L350 263M292 284L333 319" fill="none" stroke="url(#warm)" stroke-width="12" stroke-linecap="round"/>
- <g fill="#09eaff"><circle cx="115" cy="142" r="11"/><circle cx="92" cy="205" r="11"/><circle cx="108" cy="270" r="11"/></g>
- <g fill="#ff9a1f"><circle cx="142" cy="333" r="11"/></g>
- <path d="M365 35C390 75 404 126 422 169C443 211 426 258 385 278" fill="none" stroke="#20dfff" stroke-width="9" opacity=".8"/>
-</g>
-<g font-family="Arial,Helvetica,sans-serif">
- <text x="510" y="285" font-size="154" font-weight="800" fill="#f7fbff">Rafi</text>
- <text x="830" y="285" font-size="154" font-weight="800" fill="url(#warm)">AI</text>
- <rect x="516" y="330" width="525" height="4" rx="2" fill="url(#cyanPink)" opacity=".9"/>
- <text x="520" y="382" font-size="30" letter-spacing="8" fill="#dbe7ff">YOUR VIRTUAL ASSISTANT</text>
+<rect width="512" height="512" rx="108" fill="url(#bg)"/>
+<g transform="translate(26 22) scale(.64)" filter="url(#glow)">
+<circle cx="360" cy="150" r="128" fill="#07152b" stroke="url(#blue)" stroke-width="10"/>
+<path d="M290 96Q360 40 430 96L464 150Q462 240 360 262Q258 240 256 150Z" fill="url(#armor)" stroke="#7fe9ff" stroke-width="7"/>
+<path d="M288 148Q360 115 432 148L419 204Q360 233 301 204Z" fill="#020817" stroke="#21eaff" stroke-width="7"/>
+<path d="M312 170L345 164M375 164L408 170" stroke="#00eaff" stroke-width="10" stroke-linecap="round"/>
+<circle cx="360" cy="134" r="13" fill="#ff2d91"/>
+<path d="M278 236L230 332L258 454Q360 514 462 454L490 332L442 236" fill="url(#armor)" stroke="#6bdfff" stroke-width="8"/>
+<path d="M295 267L360 302L425 267M302 375H418M320 452L360 412L400 452" fill="none" stroke="#2a6b9b" stroke-width="8"/>
+<path d="M238 317L146 392M482 317L574 392" fill="none" stroke="url(#blue)" stroke-width="34" stroke-linecap="round"/>
+<path d="M138 392L88 352M138 392L94 436" fill="none" stroke="#b9d3e9" stroke-width="20" stroke-linecap="round"/>
+<circle cx="574" cy="392" r="27" fill="#0b203c" stroke="#00eaff" stroke-width="8"/>
+<path d="M602 392H685V332M685 332H725M685 332V372" fill="none" stroke="url(#blue)" stroke-width="9" stroke-linecap="round"/>
+<g fill="#00eaff"><circle cx="725" cy="332" r="9"/><circle cx="685" cy="372" r="9"/></g>
 </g>
 </svg>
