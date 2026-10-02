@@ -293,9 +293,17 @@ export default async function handler(req, res) {
     return res.status(200).json({ reply: reply || "ٹھیک ہے۔", ui });
   } catch (e) {
     console.error("chat error", e);
-    const msg = e.status === 429
-      ? "OpenAI کی حد یا کریڈٹ ختم ہو گیا ہے۔ بلنگ چیک کریں۔"
-      : e.message || "Server error";
-    return res.status(e.status || 500).json({ error: msg });
+    // Keep Rafi operational when OpenAI credits/rate limits are exhausted.
+    // Fall back to local commands and agent delegation instead of leaving the UI stuck on THINKING.
+    const fallback = await localFallback(message, ui);
+    const reason = e.status === 429 || e.status === 402
+      ? "AI credit/limit unavailable. Local Rafi controls remain online."
+      : "AI service unavailable. Local Rafi controls remain online.";
+    return res.status(200).json({
+      reply: fallback.reply || reason,
+      ui: fallback.ui || ui,
+      localFallback: true,
+      notice: reason
+    });
   }
 }
