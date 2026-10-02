@@ -1,34 +1,71 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="t d">
+<title id="t">Rafi AI futuristic robot logo</title>
+<desc id="d">A white and graphite futuristic humanoid robot touching a glowing blue holographic interface above the Rafi AI wordmark.</desc>
 <defs>
-<radialGradient id="bg" cx=".5" cy=".35" r=".8"><stop stop-color="#0b2850"/><stop offset=".55" stop-color="#030b1d"/><stop offset="1" stop-color="#01030a"/></radialGradient>
-<linearGradient id="arm" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".5" stop-color="#b8cde0"/><stop offset="1" stop-color="#53677b"/></linearGradient>
-<linearGradient id="neon"><stop stop-color="#00eaff"/><stop offset=".55" stop-color="#3677ff"/><stop offset="1" stop-color="#b24dff"/></linearGradient>
-<linearGradient id="ai"><stop stop-color="#ff9a20"/><stop offset=".45" stop-color="#ff2c91"/><stop offset="1" stop-color="#974dff"/></linearGradient>
-<filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <radialGradient id="bg" cx="58%" cy="34%" r="82%"><stop stop-color="#09285a"/><stop offset=".48" stop-color="#03132d"/><stop offset="1" stop-color="#010611"/></radialGradient>
+  <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff"/><stop offset=".38" stop-color="#dce9f5"/><stop offset=".72" stop-color="#8fa8bd"/><stop offset="1" stop-color="#33485e"/></linearGradient>
+  <linearGradient id="metal2" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f8fbff"/><stop offset=".5" stop-color="#a9bfd3"/><stop offset="1" stop-color="#455a70"/></linearGradient>
+  <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00f0ff"/><stop offset=".5" stop-color="#218cff"/><stop offset="1" stop-color="#5b42ff"/></linearGradient>
+  <linearGradient id="ai" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#ffb11a"/><stop offset=".42" stop-color="#ff218d"/><stop offset="1" stop-color="#a64cff"/></linearGradient>
+  <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="soft" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="12"/></filter>
 </defs>
-<rect width="512" height="512" rx="92" fill="url(#bg)"/>
-<!-- robot above -->
-<g transform="translate(66 22)" filter="url(#glow)">
-<path d="M135 22Q216-5 270 55L284 111Q278 171 214 184Q150 171 144 111Z" fill="url(#arm)" stroke="#76eaff" stroke-width="6"/>
-<path d="M154 91Q214 66 274 91L262 130Q214 151 166 130Z" fill="#020817" stroke="#19eaff" stroke-width="5"/>
-<path d="M179 106h25m20 0h25" stroke="#00eaff" stroke-width="7" stroke-linecap="round"/>
-<circle cx="214" cy="72" r="9" fill="#ff3c9b"/>
-<path d="M157 165L112 230L128 292Q214 326 300 292L316 230L271 165" fill="url(#arm)" stroke="#70eaff" stroke-width="6"/>
-<path d="M139 203L91 252" stroke="url(#neon)" stroke-width="25" stroke-linecap="round"/>
-<path d="M289 202L342 238" stroke="url(#neon)" stroke-width="25" stroke-linecap="round"/>
-<path d="M342 238L372 218" stroke="#dcecff" stroke-width="15" stroke-linecap="round"/>
-<circle cx="372" cy="218" r="10" fill="#00eaff"/>
-<!-- holographic screen below hand -->
-<path d="M318 238H440L420 310H300Z" fill="#062044" fill-opacity=".72" stroke="url(#neon)" stroke-width="5"/>
-<path d="M326 253h91M318 270h92M313 287h92" stroke="#00eaff" stroke-opacity=".65" stroke-width="3"/>
-<circle cx="368" cy="270" r="18" fill="none" stroke="#ff3b9c" stroke-width="3"/>
-<path d="M358 270l7 7 14-16" fill="none" stroke="#00eaff" stroke-width="4"/>
+<rect width="512" height="512" rx="58" fill="url(#bg)"/>
+<g opacity=".45" stroke="#1764ff" fill="none" stroke-width="1.5">
+  <path d="M0 80h72l22-22h70l28-28h55"/><path d="M0 112h104l22-22h70"/>
+  <path d="M512 95h-68l-24 24h-50l-25 25h-56"/><path d="M512 300h-92l-26 26h-76"/>
+  <path d="M0 320h84l24-24h74l20-20h52"/><path d="M34 420h66l25-25h75"/>
+  <circle cx="84" cy="80" r="3" fill="#00eaff"/><circle cx="455" cy="95" r="3" fill="#00eaff"/>
 </g>
-<!-- stylish wordmark -->
-<g font-family="Arial,Helvetica,sans-serif" text-anchor="middle">
-<text x="256" y="405" font-size="64" font-weight="800" fill="#f7fbff">Rafi</text>
-<text x="367" y="405" font-size="64" font-weight="800" fill="url(#ai)">AI</text>
-<path d="M92 423H420" stroke="url(#neon)" stroke-width="3"/>
-<text x="256" y="451" font-size="14" font-weight="600" letter-spacing="4" fill="#dce8ff">YOUR VIRTUAL ASSISTANT</text>
+<g transform="translate(54 12)" filter="url(#glow)">
+  <!-- neck / rear mechanics -->
+  <path d="M192 154l-5 34 31 27 31-27-6-34" fill="#24384e" stroke="#61eaff" stroke-width="2"/>
+  <path d="M204 160v42M216 164v44M228 160v42" stroke="#0af" stroke-width="3" opacity=".65"/>
+  <!-- head -->
+  <path d="M128 48Q137 9 185 2Q238-5 271 25Q294 46 292 91L281 133Q270 158 237 171L185 166Q150 157 133 130L124 91Z" fill="url(#metal)" stroke="#d9f4ff" stroke-width="3"/>
+  <path d="M143 52Q190 19 264 42L274 83Q244 68 207 69Q170 71 137 88Z" fill="#14283d"/>
+  <path d="M142 87Q205 68 274 91L265 125Q232 149 187 140L151 121Z" fill="#020a18" stroke="#2beaff" stroke-width="2.5"/>
+  <path d="M170 101l25-8 29 2 21 8" fill="none" stroke="#00eaff" stroke-width="5" stroke-linecap="round"/>
+  <path d="M178 112h42" stroke="#6fdfff" stroke-width="2" opacity=".7"/>
+  <!-- ear -->
+  <circle cx="129" cy="91" r="29" fill="#0a1a2d" stroke="#7deaff" stroke-width="3"/>
+  <circle cx="129" cy="91" r="19" fill="none" stroke="#00eaff" stroke-width="5"/>
+  <circle cx="129" cy="91" r="7" fill="#1c91ff"/>
+  <circle cx="129" cy="91" r="3" fill="#fff"/>
+  <!-- shoulder armor / torso -->
+  <path d="M151 158L110 184Q89 206 87 246L104 294Q155 315 213 318Q271 315 323 294L340 246Q338 206 317 184L276 158L245 181L213 193L181 181Z" fill="url(#metal2)" stroke="#70eaff" stroke-width="3"/>
+  <path d="M166 180Q213 202 260 180L279 223L267 288Q213 305 159 288L147 223Z" fill="#07182b" stroke="#3ccfff" stroke-width="2"/>
+  <path d="M176 204h75M166 222h94M163 241h100M164 260h97" stroke="#1b9dca" opacity=".55"/>
+  <path d="M190 204v82M213 196v96M236 204v82" stroke="#4b8fae" opacity=".4"/>
+  <circle cx="213" cy="231" r="16" fill="#06223d" stroke="#00eaff" stroke-width="3"/>
+  <circle cx="213" cy="231" r="7" fill="#4feaff"/>
+  <!-- left arm bent -->
+  <path d="M118 184Q82 183 59 216L45 257L68 269L100 234L137 225Z" fill="url(#metal)" stroke="#66ddff" stroke-width="3"/>
+  <path d="M48 251L27 286Q24 300 38 305L54 301L76 270Z" fill="#6f879c" stroke="#8feaff" stroke-width="3"/>
+  <!-- right arm pointing to hologram -->
+  <path d="M309 184Q334 177 355 193L382 224L360 244L331 220L300 214Z" fill="url(#metal)" stroke="#6feaff" stroke-width="3"/>
+  <path d="M358 229L397 199L414 211L382 254L365 258L351 246Z" fill="url(#metal2)" stroke="#6feaff" stroke-width="3"/>
+  <!-- hand / pointing finger -->
+  <path d="M396 203l34-26q10-7 17 1 5 7-3 14l-30 24" fill="none" stroke="#dcecff" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="445" cy="178" r="6" fill="#00f5ff"/>
+  <!-- holographic screen -->
+  <g>
+    <path d="M353 126L476 96L463 220L337 249Z" fill="#08295a" fill-opacity=".48" stroke="url(#blue)" stroke-width="2.5"/>
+    <path d="M359 145L458 120M355 165L454 141M350 186L450 161M345 207L445 182" stroke="#00dfff" stroke-width="2" opacity=".72"/>
+    <circle cx="410" cy="166" r="25" fill="none" stroke="#00eaff" stroke-width="3"/>
+    <circle cx="410" cy="166" r="10" fill="#00eaff" opacity=".85"/>
+    <path d="M402 166l6 7 14-18" fill="none" stroke="#fff" stroke-width="3"/>
+    <path d="M373 223l62-15" stroke="#ff3a9d" stroke-width="3"/>
+  </g>
+  <!-- lower armor -->
+  <path d="M154 286l17 52 42 18 42-18 17-52-59 13Z" fill="url(#metal)" stroke="#64ddff" stroke-width="3"/>
+  <path d="M181 334l-13 45 25 10 20-36M245 334l13 45-25 10-20-36" fill="#273c52" stroke="#67eaff" stroke-width="2"/>
+</g>
+<!-- wordmark -->
+<g font-family="Arial,Helvetica,sans-serif" font-weight="800">
+  <text x="158" y="438" font-size="55" text-anchor="middle" fill="#f7fbff">Rafi</text>
+  <text x="330" y="438" font-size="55" text-anchor="middle" fill="url(#ai)">AI</text>
+  <path d="M72 452H440" stroke="url(#ai)" stroke-width="3" filter="url(#glow)"/>
+  <text x="256" y="477" text-anchor="middle" font-size="11" letter-spacing="3.6" fill="#e8f2ff">YOUR VIRTUAL ASSISTANT</text>
 </g>
 </svg>
