@@ -132,7 +132,7 @@
         inp.value = '';
         if (text) { sendMessage(text); return; }
         setCore(null, 'RAFI AI');
-        g('voiceStatus').textContent = '\u25cf READY';
+        g('voiceStatus').textContent = '\u25cf SAY “RAFI AI”';
         if (voiceArmed && !busy) setTimeout(startWakeWord, 300);
       };
       try { r.start(); } catch (e) { starting = false; }
