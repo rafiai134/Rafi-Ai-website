@@ -1,24 +1,13 @@
 {
-  "name": "Rafi AI",
-  "short_name": "Rafi AI",
-  "description": "Rafi AI command center",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "background_color": "#000516",
-  "theme_color": "#000516",
-  "icons": [
-    {
-      "src": "/icon-192.webp?v=2",
-      "sizes": "192x192",
-      "type": "image/webp",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512.webp?v=2",
-      "sizes": "512x512",
-      "type": "image/webp",
-      "purpose": "any maskable"
-    }
+  "name":"Rafi AI",
+  "short_name":"Rafi AI",
+  "description":"Rafi AI command center",
+  "start_url":"/",
+  "scope":"/",
+  "display":"standalone",
+  "background_color":"#000516",
+  "theme_color":"#000516",
+  "icons":[
+    {"src":"/icon.svg?v=robot-app","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}
   ]
 }
