@@ -4,7 +4,7 @@
 
   function sync(){
     if(!core||!tag) return;
-    var c=core.classList, s='IDLE';
+    var c=core.classList, s='SYSTEM STANDBY';
     if(c.contains('listening')) s='LISTENING';
     else if(c.contains('thinking')) s='THINKING';
     else if(c.contains('speaking')) s='SPEAKING';
@@ -25,6 +25,15 @@
     if(name==='agent') renderAgents();
   }
   tabs.forEach(function(b){b.addEventListener('click',function(){show(b.getAttribute('data-tab'))})});
+  var modes=document.querySelectorAll('.agent-modes button');
+  modes.forEach(function(b){
+    b.addEventListener('click',function(){
+      modes.forEach(function(x){x.classList.remove('active')});
+      b.classList.add('active');
+      var mode=b.textContent.trim();
+      document.documentElement.setAttribute('data-agent-mode',mode);
+    });
+  });
 
   function renderAgents(){
     var box=$('#agentPane'); if(!box) return;
