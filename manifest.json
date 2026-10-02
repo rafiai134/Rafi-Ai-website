@@ -8,6 +8,6 @@
   "background_color":"#000516",
   "theme_color":"#000516",
   "icons":[
-    {"src":"/icon.svg?v=robot-app","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}
+    {"src":"/icon.svg?v=reference-v3","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}
   ]
 }
