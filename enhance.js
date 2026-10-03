@@ -45,7 +45,7 @@
       var busy=r.classList.contains('has-task');
       var d=document.createElement('div'); d.className='arow'+(busy?' busy':'');
       d.innerHTML='<i></i><b></b><span></span>';
-      d.querySelector('b').textContent=name+' \u00b7 '+sub;
+      d.querySelector('b').textContent=name+' · '+sub;
       d.querySelector('span').textContent=busy?'WORKING':'IDLE';
       box.appendChild(d);
     });
@@ -60,5 +60,16 @@
   }
 })();
 
-/* load the voice upgrade after script.js and enhance.js */
-(function(){var s=document.createElement('script');s.src='/voice.js?v=1';document.body.appendChild(s);})();
+/* load the voice upgrade, then the pixel office, then the greeting (each after the previous one) */
+(function(){
+  function load(src,next){
+    var s=document.createElement('script'); s.src=src;
+    s.onload=s.onerror=function(){ if(next) next(); };
+    document.body.appendChild(s);
+  }
+  load('/voice.js?v=1',function(){
+    load('/office.js?v=2',function(){
+      load('/greeting.js?v=2');
+    });
+  });
+})();
