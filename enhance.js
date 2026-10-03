@@ -60,7 +60,7 @@
   }
 })();
 
-/* load the voice upgrade, then the pixel office, then the greeting (each after the previous one) */
+/* load order: voice.js -> office.js -> greeting.js -> voicefix.js (each after the previous one) */
 (function(){
   function load(src,next){
     var s=document.createElement('script'); s.src=src;
@@ -68,8 +68,10 @@
     document.body.appendChild(s);
   }
   load('/voice.js?v=1',function(){
-    load('/office.js?v=2',function(){
-      load('/greeting.js?v=2');
+    load('/office.js?v=3',function(){
+      load('/greeting.js?v=3',function(){
+        load('/voicefix.js?v=1');
+      });
     });
   });
 })();

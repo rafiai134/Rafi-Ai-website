@@ -169,12 +169,7 @@
     };
   }
 
-  /* if the mic was already allowed before, re-arm the wake word on load so "Hello Rafi" works hands-free */
-  function rearm() {
-    try {
-      if (localStorage.getItem('rafi_mic_granted') === '1' && typeof armVoiceSilent === 'function') armVoiceSilent();
-    } catch (e) {}
-  }
-  if (document.readyState === 'complete') setTimeout(rearm, 300);
-  else window.addEventListener('load', function () { setTimeout(rearm, 300); });
+  /* NOTE: the microphone is never armed automatically any more (that caused the
+     "tung tung" beeps on phones as soon as the page opened). voicefix.js decides. */
+  window.RafiGreeting = { due: shouldGreet, run: greet };
 })();
