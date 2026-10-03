@@ -242,22 +242,36 @@ async function localFallback(message, ui) {
   if (/agent|ایجنٹ|delegate|کام کرو|task/.test(m)) { const t=await pushAgent("core",message); return {reply:"Rafi Core نے task queue میں ڈال دیا ہے۔",taskId:t.id,ui}; }
   const hit=Object.keys(PLATFORMS).find(k=>m.includes(k));
   if (hit && /open|کھولو|کھول/.test(m)) { ui.push({type:"open",label:hit,url:PLATFORMS[hit]}); await log("Local fallback opening "+hit,"core"); return {reply:hit+" کھولنے کا لنک تیار ہے۔",ui}; }
-  return {reply:"Rafi AI core online ہے۔ AI credit کے بغیر بھی agent delegation، Android commands اور dashboard controls دستیاب ہیں۔",ui};
+  return {reply:"Rafi AI core online ہے۔ AI credit کے بغیر بھی agent delegation، Android commands اور dashboard controls دستیاب ہیں۔",ui, generic:true};
+}
+
+/* Call OpenAI; if the configured model is not available to this key, retry once with gpt-4.1 */
+async function callAI(body) {
+  try {
+    return await openai(body);
+  } catch (e) {
+    if ((e.status === 400 || e.status === 404) && /model/i.test(String(e.message))) {
+      return await openai({ ...body, model: "gpt-4.1" });
+    }
+    throw e;
+  }
 }
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   if (!auth(req, res)) return;
 
+  // Declared OUTSIDE try so the catch block can use them (before, this crashed with a 500).
+  const ui = [];
+  const body = req.body && typeof req.body === "object" ? req.body : {};
+  const message = body.message;
+  const history = body.history;
+
   try {
-
-
-    const { message, history } = req.body || {};
     if (!message || typeof message !== "string") {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    const ui = [];
     if (!config().openai) {
       return res.status(200).json(await localFallback(message, ui));
     }
@@ -273,7 +287,7 @@ export default async function handler(req, res) {
     let reply = "";
 
     for (let i = 0; i < 5; i++) {
-      const data = await openai({ instructions: INSTRUCTIONS, input, tools });
+      const data = await callAI({ instructions: INSTRUCTIONS, input, tools });
       const calls = (data.output || []).filter((o) => o.type === "function_call");
 
       if (!calls.length) {
@@ -293,17 +307,22 @@ export default async function handler(req, res) {
     return res.status(200).json({ reply: reply || "ٹھیک ہے۔", ui });
   } catch (e) {
     console.error("chat error", e);
-    // Keep Rafi operational when OpenAI credits/rate limits are exhausted.
-    // Fall back to local commands and agent delegation instead of leaving the UI stuck on THINKING.
-    const fallback = await localFallback(message, ui);
-    const reason = e.status === 429 || e.status === 402
+    // Never return a 500 to the UI: fall back to local controls and say WHY the AI failed.
+    const detail = String((e && e.message) || e || "unknown").slice(0, 160);
+    const reason = e && (e.status === 429 || e.status === 402)
       ? "AI credit/limit unavailable. Local Rafi controls remain online."
       : "AI service unavailable. Local Rafi controls remain online.";
+    let fallback = { reply: "", ui };
+    try { fallback = await localFallback(message, ui); } catch (e2) { console.error("fallback error", e2); }
+    const reply = fallback.generic || !fallback.reply
+      ? "AI سروس جواب نہیں دے رہی۔ وجہ: " + detail + " — OpenAI key، credit اور OPENAI_MODEL چیک کریں۔"
+      : fallback.reply;
     return res.status(200).json({
-      reply: fallback.reply || reason,
+      reply,
       ui: fallback.ui || ui,
       localFallback: true,
-      notice: reason
+      notice: reason,
+      detail
     });
   }
 }
