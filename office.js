@@ -1,5 +1,5 @@
 /* Rafi AI — Pixel Agent Office v2
-   - Human pixel-art staff (no robots), rooms with doors, desks and live monitors
+   - Real pixel-art robots (head, visor eyes, antenna, arms), rooms with doors, desks and live monitors
    - Senior Manager sits in his glass cabin; when an order / task arrives he walks
      through the corridor to the right agent's room, briefs them, and walks back.
    Loaded after script.js + voice.js; overrides drawOffice / triggerAgentMove. */
@@ -43,11 +43,11 @@
 
   /* ---------- people ---------- */
   var LOOK = {
-    mgr:      { hair: '#9aa6b2', skin: '#e0ac86', skin2: '#c48e68', shirt: '#22324f', pants: '#151e33', tie: '#d9434f', glasses: true, style: 'short' },
-    core:     { hair: '#1c1c26', skin: '#c68f6a', skin2: '#a9754f', shirt: '#2db7e8', pants: '#243247', style: 'short' },
-    supplier: { hair: '#5b3319', skin: '#e5b28c', skin2: '#c99673', shirt: '#f08b3e', pants: '#3a3340', style: 'short' },
-    shopify:  { hair: '#2a1a12', skin: '#a96f4b', skin2: '#8c593a', shirt: '#3fd18f', pants: '#263a3a', style: 'short' },
-    whatsapp: { hair: '#2b1b3b', skin: '#e7b999', skin2: '#c99b7e', shirt: '#a77be8', pants: '#2b2a4a', style: 'long' }
+    mgr:      { boss: true, acc: '#ffd27a' },
+    core:     { acc: '#5de4ff' },
+    supplier: { acc: '#ff9b55' },
+    shopify:  { acc: '#61e8a2' },
+    whatsapp: { acc: '#d69cff' }
   };
   var AG = {
     core:     { name: 'RAFI CORE', color: '#5de4ff', seed: 0.3 },
@@ -64,71 +64,90 @@
   };
   var MGR_DESK = { cx: 24, dy: 36 };
 
-  /* standing / walking person, feet anchored at (fx, fy). dir: d u l r. step: 0 idle, 1/2 walk */
-  function person(fx, fy, dir, step, L) {
-    var x = Math.round(fx) - 4, y = Math.round(fy) - 16, sh = '#10161d', eye = '#101820';
-    R(x, y + 15, 8, 1, 'rgba(0,0,0,.35)');
+  /* ---------- robots (real humanoid robots, no humans) ---------- */
+  var MET = '#c3ced8', MET_HI = '#e6eef4', MET2 = '#8d9ba8', MET3 = '#4f5b67', VIS = '#06121c', GOLD = '#e8c25a';
+  var SUIT = '#26385a', SUIT2 = '#1b2a45', TROU = '#151e33';
+  function blinkOn(t, seed) { return ((t + (seed || 0)) % 4.3) < 0.14; }
+
+  /* standing / walking robot, feet anchored at (fx, fy). dir: d u l r. step: 0 idle, 1/2 walk */
+  function robot(fx, fy, dir, step, L, t) {
+    var x = Math.round(fx) - 4, y = Math.round(fy) - 16, acc = L.acc, boss = !!L.boss;
+    var front = dir === 'd', back = dir === 'u';
+    var shell = boss ? '#d9dee3' : MET, leg = boss ? TROU : MET2, trim = boss ? GOLD : acc;
+    R(x - 1, y + 16, 10, 1, 'rgba(0,0,0,.35)');
     // legs
-    if (dir === 'd' || dir === 'u') {
+    if (front || back) {
       var a = step === 1 ? 1 : 0, b = step === 2 ? 1 : 0;
-      R(x + 1, y + 11, 3, 3 - a, L.pants); R(x + 1, y + 14 - a, 3, 1, sh);
-      R(x + 4, y + 11, 3, 3 - b, L.pants); R(x + 4, y + 14 - b, 3, 1, sh);
+      R(x + 1, y + 13, 2, 2 - a, leg); R(x, y + 15 - a, 3, 1, MET3);
+      R(x + 5, y + 13, 2, 2 - b, leg); R(x + 5, y + 15 - b, 3, 1, MET3);
     } else if (step) {
-      var d = 2;
-      var l1 = x + 3 - (step === 1 ? d : -d) + 0, l2 = x + 3 + (step === 1 ? d : -d) + 0;
-      R(l1, y + 11, 2, 3, L.pants); R(l1, y + 14, 2, 1, sh);
-      R(l2, y + 11, 2, 3, L.pants); R(l2, y + 14, 2, 1, sh);
+      var d = step === 1 ? 2 : -2, f = dir === 'r' ? 0 : -1, l1 = x + 3 - d, l2 = x + 3 + d;
+      R(l1, y + 13, 2, 2, leg); R(l1 + f, y + 15, 3, 1, MET3);
+      R(l2, y + 13, 2, 2, leg); R(l2 + f, y + 15, 3, 1, MET3);
     } else {
-      R(x + 2, y + 11, 4, 3, L.pants); R(x + 2, y + 14, 4, 1, sh);
+      R(x + 2, y + 13, 4, 2, leg); R(x + 1, y + 15, 6, 1, MET3);
     }
+    R(x + 3, y + 6, 2, 1, MET3); // neck
     // torso + arms
-    R(x + 1, y + 6, 6, 5, L.shirt);
-    if (dir === 'd' || dir === 'u') {
+    if (front || back) {
       var sw = step === 1 ? 1 : 0, sw2 = step === 2 ? 1 : 0;
-      R(x, y + 6 + sw, 1, 4, L.shirt); R(x, y + 10 + sw, 1, 1, L.skin);
-      R(x + 7, y + 6 + sw2, 1, 4, L.shirt); R(x + 7, y + 10 + sw2, 1, 1, L.skin);
+      R(x + 1, y + 7, 6, 6, back ? MET2 : (boss ? SUIT : MET));
+      if (front) {
+        if (boss) { R(x + 3, y + 7, 2, 2, '#f2f2f2'); R(x + 3, y + 9, 2, 3, '#d9434f'); R(x + 1, y + 7, 1, 5, SUIT2); R(x + 6, y + 7, 1, 5, SUIT2); }
+        else { R(x + 1, y + 7, 6, 1, MET_HI); R(x + 3, y + 9, 2, 2, acc); R(x + 2, y + 12, 4, 1, MET3); }
+      } else R(x + 3, y + 8, 2, 3, MET3);
+      R(x, y + 7, 1, 2, trim); R(x + 7, y + 7, 1, 2, trim);
+      R(x, y + 9 + sw, 1, 3, boss ? SUIT : MET2); R(x, y + 12 + sw, 1, 1, MET3);
+      R(x + 7, y + 9 + sw2, 1, 3, boss ? SUIT : MET2); R(x + 7, y + 12 + sw2, 1, 1, MET3);
+      if (boss && front) { R(x + 8, y + 9 + sw2, 3, 4, '#b9894e'); R(x + 8, y + 10 + sw2, 3, 2, '#f4f1e6'); }
     } else {
-      var ax = x + 3 + (step === 1 ? -1 : step === 2 ? 1 : 0);
-      R(ax, y + 7, 2, 3, L.shirt); R(ax, y + 10, 2, 1, L.skin);
+      var ax = x + 3 + (step === 1 ? -1 : step === 2 ? 1 : 0), rr = dir === 'r';
+      R(x + 2, y + 7, 4, 6, boss ? SUIT : MET); R(x + 2, y + 7, 4, 1, boss ? GOLD : MET_HI);
+      if (boss) R(rr ? x + 5 : x + 2, y + 8, 1, 4, '#d9434f'); else R(rr ? x + 5 : x + 2, y + 9, 1, 2, acc);
+      R(ax, y + 8, 2, 4, boss ? SUIT : MET2); R(ax, y + 7, 2, 1, trim); R(ax, y + 12, 2, 1, MET3);
+      if (boss) { var cx2 = rr ? ax + 1 : ax - 2; R(cx2, y + 9, 3, 4, '#b9894e'); R(cx2, y + 10, 3, 2, '#f4f1e6'); }
     }
-    // head
-    R(x + 1, y, 6, 6, L.skin);
-    if (dir === 'd') {
-      R(x + 1, y, 6, 2, L.hair); R(x + 1, y + 2, 1, 1, L.hair); R(x + 6, y + 2, 1, 1, L.hair);
-      if (L.style === 'long') { R(x, y + 1, 1, 7, L.hair); R(x + 7, y + 1, 1, 7, L.hair); }
-      R(x + 2, y + 3, 1, 1, eye); R(x + 5, y + 3, 1, 1, eye);
-      if (L.glasses) { R(x + 1, y + 3, 6, 1, '#0e1720'); R(x + 2, y + 3, 1, 1, '#cfe9f5'); R(x + 5, y + 3, 1, 1, '#cfe9f5'); }
-      if (L.tie) { R(x + 3, y + 6, 2, 1, '#f2f2f2'); R(x + 3, y + 7, 2, 4, L.tie); }
-    } else if (dir === 'u') {
-      R(x + 1, y, 6, 6, L.hair);
-      if (L.style === 'long') R(x + 1, y + 6, 6, 3, L.hair);
-    } else if (dir === 'r') {
-      R(x + 1, y, 6, 2, L.hair); R(x + 1, y + 2, 3, 4, L.hair);
-      if (L.style === 'long') R(x + 1, y + 2, 3, 7, L.hair);
-      R(x + 5, y + 3, 1, 1, eye);
-      if (L.glasses) { R(x + 4, y + 3, 3, 1, '#0e1720'); }
+    // head + antenna
+    var on = ((t * 2) | 0) % 2 === 0;
+    if (boss) { R(x + 3, y - 4, 2, 4, GOLD); R(x + 3, y - 5, 2, 1, on ? '#fff2b8' : GOLD); }
+    else { R(x + 3, y - 2, 2, 2, MET2); R(x + 3, y - 3, 2, 1, on ? acc : MET2); }
+    if (front) {
+      R(x, y, 8, 6, shell); R(x, y, 8, 1, trim); R(x, y + 5, 8, 1, MET2);
+      R(x + 1, y + 1, 6, 3, VIS); R(x + 2, y + 2, 1, 2, acc); R(x + 5, y + 2, 1, 2, acc);
+      R(x + 2, y + 4, 4, 1, MET3);
+      R(x - 1, y + 2, 1, 2, trim); R(x + 8, y + 2, 1, 2, trim);
+      if (boss) { R(x - 1, y + 4, 1, 1, '#2a2f38'); R(x, y + 5, 2, 1, '#2a2f38'); }
+    } else if (back) {
+      R(x, y, 8, 6, MET2); R(x, y, 8, 1, trim); R(x + 2, y + 2, 4, 1, MET3); R(x + 2, y + 4, 4, 1, MET3);
+      R(x - 1, y + 2, 1, 2, trim); R(x + 8, y + 2, 1, 2, trim);
     } else {
-      R(x + 1, y, 6, 2, L.hair); R(x + 4, y + 2, 3, 4, L.hair);
-      if (L.style === 'long') R(x + 4, y + 2, 3, 7, L.hair);
-      R(x + 2, y + 3, 1, 1, eye);
-      if (L.glasses) { R(x + 1, y + 3, 3, 1, '#0e1720'); }
+      var r = dir === 'r';
+      R(x + 1, y, 6, 6, shell); R(x + 1, y, 6, 1, trim); R(x + 1, y + 5, 6, 1, MET2);
+      R(r ? x + 3 : x + 1, y + 1, 4, 3, VIS); R(r ? x + 5 : x + 2, y + 2, 1, 2, acc);
+      R(r ? x + 2 : x + 5, y + 2, 1, 2, trim);
     }
   }
 
-  /* seated person (front view, behind desk). head top = dy-19 */
-  function seated(cx, dy, L, t, working, seed) {
-    var y0 = dy - 19;
+  /* seated robot (front view, behind its desk). head top = dy-19 */
+  function seatedRobot(cx, dy, L, t, working, seed) {
+    var y0 = dy - 19, acc = L.acc, boss = !!L.boss, trim = boss ? GOLD : acc;
     R(cx - 5, y0 + 5, 10, 9, CH); R(cx - 5, y0 + 5, 10, 1, '#34506a');
     var by = y0 + (working ? ((t * 7) | 0) % 2 : 0);
-    var blink = ((t + seed) % 4.3) < 0.14;
-    R(cx - 3, by + 6, 6, 6, L.shirt); R(cx - 4, by + 7, 1, 5, L.shirt); R(cx + 3, by + 7, 1, 5, L.shirt);
-    if (L.tie) { R(cx - 1, by + 6, 2, 1, '#f2f2f2'); R(cx - 1, by + 7, 2, 4, L.tie); }
-    R(cx - 3, by, 6, 6, L.skin);
-    R(cx - 3, by, 6, 2, L.hair); R(cx - 3, by + 2, 1, 1, L.hair); R(cx + 2, by + 2, 1, 1, L.hair);
-    if (L.style === 'long') { R(cx - 4, by + 1, 1, 8, L.hair); R(cx + 3, by + 1, 1, 8, L.hair); }
-    var e = blink ? L.skin2 : '#101820';
-    R(cx - 2, by + 3, 1, 1, e); R(cx + 1, by + 3, 1, 1, e);
-    if (L.glasses) { R(cx - 3, by + 3, 6, 1, '#0e1720'); if (!blink) { R(cx - 2, by + 3, 1, 1, '#cfe9f5'); R(cx + 1, by + 3, 1, 1, '#cfe9f5'); } }
+    var ecol = blinkOn(t, seed) ? '#1d3a48' : acc, on = ((t * 2 + seed) | 0) % 2 === 0;
+    if (boss) { R(cx - 1, by - 4, 2, 4, GOLD); R(cx - 1, by - 5, 2, 1, on ? '#fff2b8' : GOLD); }
+    else { R(cx - 1, by - 2, 2, 2, MET2); R(cx - 1, by - 3, 2, 1, on ? acc : MET2); }
+    R(cx - 1, by + 6, 2, 1, MET3);
+    R(cx - 3, by + 7, 6, 5, boss ? SUIT : MET);
+    if (boss) { R(cx - 1, by + 7, 2, 2, '#f2f2f2'); R(cx - 1, by + 9, 2, 3, '#d9434f'); }
+    else { R(cx - 3, by + 7, 6, 1, MET_HI); R(cx - 1, by + 9, 2, 2, acc); }
+    var tw = working ? ((t * 9) | 0) % 2 : 0;
+    R(cx - 4, by + 7, 1, 2, trim); R(cx + 3, by + 7, 1, 2, trim);
+    R(cx - 4, by + 9 + tw, 1, 3, boss ? SUIT : MET2); R(cx + 3, by + 9 + (working ? 1 - tw : 0), 1, 3, boss ? SUIT : MET2);
+    R(cx - 4, by, 8, 6, boss ? '#d9dee3' : MET); R(cx - 4, by, 8, 1, trim); R(cx - 4, by + 5, 8, 1, MET2);
+    R(cx - 3, by + 1, 6, 3, VIS); R(cx - 2, by + 2, 1, 2, ecol); R(cx + 1, by + 2, 1, 2, ecol);
+    R(cx - 2, by + 4, 4, 1, MET3);
+    R(cx - 5, by + 2, 1, 2, trim); R(cx + 4, by + 2, 1, 2, trim);
+    if (boss) { R(cx - 5, by + 4, 1, 1, '#2a2f38'); R(cx - 4, by + 5, 2, 1, '#2a2f38'); }
   }
 
   function emptyChair(cx, dy) {
@@ -318,26 +337,40 @@
     }
   }
 
-  /* ---------- manager logistics ---------- */
+  /* ---------- movement: manager + robots visiting each other ---------- */
   var LOC = {
     seat:     { pts: [[24, 33], [44, 33], [44, 72]], face: 'd' },
     core:     { pts: [[127, 46], [127, 72]], face: 'l' },
     supplier: { pts: [[48, 120], [48, 72]], face: 'l' },
     shopify:  { pts: [[128, 120], [128, 72]], face: 'l' },
     whatsapp: { pts: [[211, 120], [211, 72]], face: 'l' },
-    lounge:   { pts: [[209, 52], [209, 72]], face: 'r' }
+    lounge:   { pts: [[209, 52], [209, 72]], face: 'r' },
+    /* each robot's own chair, and a visitor spot in every agent room */
+    aseat_core:     { pts: [[110, 33], [127, 33], [127, 72]] },
+    aseat_supplier: { pts: [[31, 107], [48, 107], [48, 72]] },
+    aseat_shopify:  { pts: [[111, 107], [128, 107], [128, 72]] },
+    aseat_whatsapp: { pts: [[194, 107], [211, 107], [211, 72]] },
+    v_core:     { pts: [[138, 54], [127, 54], [127, 72]], face: 'l' },
+    v_supplier: { pts: [[56, 120], [48, 120], [48, 72]], face: 'l' },
+    v_shopify:  { pts: [[136, 120], [128, 120], [128, 72]], face: 'l' },
+    v_whatsapp: { pts: [[219, 120], [211, 120], [211, 72]], face: 'l' }
   };
   function routeBetween(a, b) {
     if (a === b) return [];
     var pa = LOC[a].pts.slice(1), pb = LOC[b].pts.slice().reverse(), out = pa.concat(pb), res = [];
     for (var i = 0; i < out.length; i++) {
       var p = out[i], q = res[res.length - 1];
-      if (!q || q[0] !== p[0] || q[1] !== p[1]) res.push(p);
+      if (!q || q[0] !== p[0] || q[1] !== p[1]) res.push([p[0], p[1]]);
     }
     return res;
   }
 
   var M = { x: 24, y: 33, dir: 'd', step: 0, stepT: 0, loc: 'seat', dest: 'seat', purpose: 'return', state: 'seated', path: [], timer: 0, idleT: 0, job: null };
+  var A = {};
+  ORDER.forEach(function (id) {
+    var p = LOC['aseat_' + id].pts[0];
+    A[id] = { id: id, x: p[0], y: p[1], dir: 'd', step: 0, stepT: 0, loc: 'aseat_' + id, dest: null, state: 'seated', path: [], timer: 0, idle: 9 + Math.random() * 14, purpose: null, target: null, msg: '', handoff: null, isHand: false };
+  });
   var jobs = [];
   var bubbles = [];
   var workUntil = { core: 0, supplier: 0, shopify: 0, whatsapp: 0 };
@@ -350,22 +383,32 @@
     bubbles = bubbles.filter(function (b) { return b.who !== who; });
     bubbles.push({ who: who, text: text, sub: sub || '', from: t + (delay || 0), until: t + (delay || 0) + (dur || 2.4), color: color || '#5de4ff' });
   }
-
   function enqueue(agent, task, kind) {
     if (!AG[agent]) agent = 'core';
     if (jobs.length >= 6) jobs.shift();
     jobs.push({ agent: agent, task: String(task || '').slice(0, 80), kind: kind || 'task' });
   }
+  function away() { return ORDER.filter(function (id) { return A[id].state !== 'seated'; }).length; }
 
+  function stepEntity(e, dt, onArrive) {
+    var tg = e.path[0];
+    if (!tg) { onArrive(); return; }
+    var dx = tg[0] - e.x, dy = tg[1] - e.y, dist = Math.sqrt(dx * dx + dy * dy), mv = SPEED * dt;
+    if (Math.abs(dx) > Math.abs(dy)) e.dir = dx > 0 ? 'r' : 'l'; else if (dist > 0.01) e.dir = dy > 0 ? 'd' : 'u';
+    e.stepT += dt; e.step = 1 + (((e.stepT * 7) | 0) % 2);
+    if (mv >= dist) { e.x = tg[0]; e.y = tg[1]; e.path.shift(); if (!e.path.length) onArrive(); }
+    else { e.x += dx / dist * mv; e.y += dy / dist * mv; }
+  }
+
+  /* ----- senior manager ----- */
   function goTo(dest, purpose) {
     M.dest = dest; M.purpose = purpose;
-    M.path = routeBetween(M.loc, dest).map(function (p) { return [p[0], p[1]]; });
+    M.path = routeBetween(M.loc, dest);
     if (!M.path.length) { arrive(); return; }
     M.state = 'walk';
   }
   function startJob(job) {
     M.job = job;
-    var a = AG[job.agent];
     say('mgr', job.kind === 'order' ? 'NEW ORDER!' : 'NEW TASK!', '', 1.6, 0, '#ffd27a');
     goTo(job.agent, 'job');
   }
@@ -377,6 +420,8 @@
       say('mgr', (job.kind === 'order' ? 'ORDER ▸ ' : 'TASK ▸ ') + a.name, job.task, 2.6, 0, '#ffd27a');
       say(job.agent, 'ON IT!', '', 2.0, 1.4, a.color);
       workUntil[job.agent] = t + 10; jobWork[job.agent] = true;
+      // Rafi Core robot walks over with the data for the agent that got the job
+      if (job.agent !== 'core' && A.core.state === 'seated' && away() === 0) { A.core.handoff = job.agent; A.core.idle = 2.2; }
     } else if (M.purpose === 'patrol') {
       M.state = 'break'; M.timer = 3.2; M.dir = LOC[M.dest].face;
       say('mgr', 'COFFEE BREAK', '', 2.2, 0.3, '#9aa8ff');
@@ -389,6 +434,57 @@
     else goTo('seat', 'return');
   }
 
+  /* ----- agent robots ----- */
+  function agentGo(id, destLoc, purpose, target) {
+    var a = A[id];
+    a.dest = destLoc; a.purpose = purpose; a.target = target || null;
+    a.path = routeBetween(a.loc, destLoc);
+    a.state = 'walk';
+    if (!a.path.length) agentArrive(a);
+  }
+  function agentArrive(a) {
+    a.loc = a.dest; a.step = 0;
+    var t = clock();
+    if (a.purpose === 'visit') {
+      a.state = 'visit'; a.timer = 3.4; a.dir = LOC[a.dest].face || 'l';
+      say(a.id, a.msg || 'SYNC', '', 2.4, 0.1, AG[a.id].color);
+      say(a.target, a.isHand ? 'ON IT!' : 'HELLO!', '', 1.8, 1.3, AG[a.target].color);
+      if (a.isHand) { workUntil[a.target] = Math.max(workUntil[a.target], t + 6); a.isHand = false; }
+    } else {
+      var p = LOC[a.dest].pts[0];
+      a.state = 'seated'; a.x = p[0]; a.y = p[1]; a.dir = 'd'; a.idle = 14 + Math.random() * 22;
+    }
+  }
+  function updateAgents(dt, t) {
+    ORDER.forEach(function (id) {
+      var a = A[id];
+      if (a.state === 'seated') {
+        a.idle -= dt;
+        if (a.idle > 0) return;
+        if (a.handoff) {
+          var h = a.handoff; a.handoff = null;
+          if (away() === 0) { a.msg = 'DATA ▸ ' + AG[h].name; a.isHand = true; agentGo(id, 'v_' + h, 'visit', h); }
+          else a.idle = 5;
+          return;
+        }
+        a.idle = 14 + Math.random() * 22;
+        if (isWorking(id, t) || away() !== 0) return;
+        var cand = ORDER.filter(function (o) { return o !== id && !(M.state !== 'seated' && M.dest === o); });
+        if (!cand.length) return;
+        a.msg = ['SYNC', 'QUICK CHAT', 'REPORT ▸', 'CHECKING IN'][(Math.random() * 4) | 0];
+        a.isHand = false;
+        agentGo(id, 'v_' + cand[(Math.random() * cand.length) | 0], 'visit', null);
+        // visit target is the room we are heading to
+        a.target = a.dest.slice(2);
+      } else if (a.state === 'walk') {
+        stepEntity(a, dt, function () { agentArrive(a); });
+      } else if (a.state === 'visit') {
+        a.timer -= dt;
+        if (a.timer <= 0) agentGo(id, 'aseat_' + id, 'home', null);
+      }
+    });
+  }
+
   function update(dt) {
     var t = clock();
     if (M.state === 'seated') {
@@ -396,21 +492,11 @@
       if (jobs.length) startJob(jobs.shift());
       else if (M.idleT > 26) { M.idleT = 0; goTo('lounge', 'patrol'); }
     } else if (M.state === 'walk') {
-      var tg = M.path[0];
-      if (!tg) { arrive(); }
-      else {
-        var dx = tg[0] - M.x, dy = tg[1] - M.y, dist = Math.sqrt(dx * dx + dy * dy), mv = SPEED * dt;
-        if (Math.abs(dx) > Math.abs(dy)) M.dir = dx > 0 ? 'r' : 'l'; else if (dist > 0.01) M.dir = dy > 0 ? 'd' : 'u';
-        M.stepT += dt; M.step = 1 + (((M.stepT * 7) | 0) % 2);
-        if (mv >= dist) { M.x = tg[0]; M.y = tg[1]; M.path.shift(); if (!M.path.length) arrive(); }
-        else { M.x += dx / dist * mv; M.y += dy / dist * mv; }
-      }
-    } else if (M.state === 'brief') {
-      M.timer -= dt; if (M.timer <= 0) nextAfterStop();
-    } else if (M.state === 'break') {
+      stepEntity(M, dt, function () { arrive(); });
+    } else if (M.state === 'brief' || M.state === 'break') {
       M.timer -= dt; if (M.timer <= 0) nextAfterStop();
     }
-    // agent "done" bubbles
+    updateAgents(dt, t);
     ORDER.forEach(function (id) {
       var w = isWorking(id, t);
       if (wasWorking[id] && !w && jobWork[id]) { say(id, 'DONE ✓', '', 1.8, 0, '#4dffb3'); jobWork[id] = false; }
@@ -440,20 +526,24 @@
 
     // manager cabin: desk, chair, manager
     var md = MGR_DESK;
-    if (M.state === 'seated') seated(md.cx, md.dy, LOOK.mgr, t, M.job != null || jobs.length > 0, 0.9);
+    if (M.state === 'seated') seatedRobot(md.cx, md.dy, LOOK.mgr, t, M.job != null || jobs.length > 0, 0.9);
     else emptyChair(md.cx, md.dy);
     desk(md.cx, md.dy, '#ffd27a', M.state === 'seated', t, true);
     trophy(md.cx + 9, md.dy + 1);
 
     // agents
     ORDER.forEach(function (id) {
-      var s = SEAT[id], w = isWorking(id, t);
-      seated(s.cx, s.dy, LOOK[id], t, w, AG[id].seed);
-      desk(s.cx, s.dy, AG[id].color, w, t, false);
+      var s = SEAT[id], w = isWorking(id, t), at = A[id].state === 'seated';
+      if (at) seatedRobot(s.cx, s.dy, LOOK[id], t, w, AG[id].seed); else emptyChair(s.cx, s.dy);
+      desk(s.cx, s.dy, AG[id].color, w && at, t, false);
     });
 
-    // standing / walking manager on top
-    if (M.state !== 'seated') person(M.x, M.y, M.dir, M.state === 'walk' ? M.step : 0, LOOK.mgr);
+    // walking / visiting robots on top
+    ORDER.forEach(function (id) {
+      var a = A[id];
+      if (a.state !== 'seated') robot(a.x, a.y, a.dir, a.state === 'walk' ? a.step : 0, LOOK[id], t);
+    });
+    if (M.state !== 'seated') robot(M.x, M.y, M.dir, M.state === 'walk' ? M.step : 0, LOOK.mgr, t);
   }
 
   /* ---------- overlay (crisp text at full resolution) ---------- */
@@ -489,9 +579,10 @@
   }
   function headAnchor(who) {
     if (who === 'mgr') {
-      return M.state === 'seated' ? [MGR_DESK.cx, MGR_DESK.dy - 19] : [M.x, M.y - 16];
+      return M.state === 'seated' ? [MGR_DESK.cx, MGR_DESK.dy - 23] : [M.x, M.y - 20];
     }
-    var s = SEAT[who]; return [s.cx, s.dy - 19];
+    if (A[who] && A[who].state !== 'seated') return [A[who].x, A[who].y - 19];
+    var s = SEAT[who]; return [s.cx, s.dy - 22];
   }
   function mgrStatus() {
     if (M.state === 'seated') return jobs.length ? 'SR. MANAGER · READING ORDERS' : 'SR. MANAGER · AT DESK';
@@ -561,6 +652,7 @@
     order: function (text) { enqueue('core', text, 'order'); },
     task: function (agent, text) { enqueue(agent, text, 'task'); },
     say: function (who, text, sub, dur) { if (AG[who] || who === 'mgr') say(who, text, sub, dur || 3, 0, who === 'mgr' ? '#ffd27a' : AG[who].color); },
+    visit: function (from, to, msg) { if (A[from] && A[to] && from !== to && A[from].state === 'seated') { A[from].msg = msg || 'SYNC'; A[from].isHand = false; agentGo(from, 'v_' + to, 'visit', to); } },
     state: M
   };
 
