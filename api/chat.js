@@ -14,7 +14,19 @@ const PLATFORMS = {
   amazon: "https://www.amazon.com/"
 };
 
-const DEVICE_COMMANDS = { home:"Go to Android home screen.", back:"Press Android back.", recents:"Open Android recent apps.", notifications:"Open Android notifications.", open_app:"Open an installed Android app by package name.", open_url:"Open a URL in the Android browser.", tap:"Tap the Android screen at x,y.", tap_text:"Find visible text and tap it.", type_text:"Type text into the focused field.", scroll:"Scroll the current Android screen." };
+const DEVICE_COMMANDS = {
+  home: "Go to Android home screen.",
+  back: "Press Android back.",
+  recents: "Open Android recent apps.",
+  notifications: "Open Android notifications.",
+  open_app: "Open an installed Android app by name (appName) or package name.",
+  open_url: "Open a URL in the Android browser.",
+  tap: "Tap the Android screen at x,y.",
+  tap_text: "Find visible text/button label and tap it.",
+  type_text: "Type text into the focused (or first) text field.",
+  scroll: "Scroll the current Android screen.",
+  whatsapp_send: "Send a WhatsApp message from the phone to a phone number."
+};
 
 const tools = [
   {
@@ -50,7 +62,7 @@ const tools = [
   {
     type: "function",
     name: "send_whatsapp",
-    description: "Queue a WhatsApp message for the user's approval. 'to' is a saved contact name or phone number.",
+    description: "Queue a WhatsApp message for the user's approval (website/dashboard flow). 'to' is a saved contact name or phone number. For sending directly from the user's phone use device_command whatsapp_send instead.",
     parameters: {
       type: "object",
       properties: { to: { type: "string" }, text: { type: "string" } },
@@ -113,13 +125,15 @@ const tools = [
   {
     type: "function",
     name: "device_command",
-    description: "Queue a safe Android device command for the installed Rafi AI Companion. Supported commands: home, back, recents, notifications, open_app, open_url. Never claim it succeeded until the device reports completion.",
+    description: "Queue ONE command for the user's Android phone (Rafi AI Companion app). Commands: home, back, recents, notifications, open_app (appName like 'WhatsApp' or packageName), open_url (url), tap (x,y), tap_text (text = visible button/label), type_text (text), scroll, whatsapp_send (to = saved contact name or phone number, text = message). For multi-step jobs inside an app, call this several times in order: open_app, then tap_text / type_text / scroll. Never claim success until the device reports it.",
     parameters: {
       type: "object",
       properties: {
-        command: { type: "string", enum: ["home", "back", "recents", "notifications", "open_app", "open_url", "tap", "tap_text", "type_text", "scroll"] },
+        command: { type: "string", enum: Object.keys(DEVICE_COMMANDS) },
+        appName: { type: "string" },
         packageName: { type: "string" },
         url: { type: "string" },
+        to: { type: "string" },
         x: { type: "number" }, y: { type: "number" }, text: { type: "string" }
       },
       required: ["command"]
@@ -127,18 +141,44 @@ const tools = [
   }
 ];
 
-async function queueDevice(command,args) {
-  if (!process.env.DEVICE_TOKEN) return {ok:false,note:"Android bridge is not configured yet."};
-  if (!Object.keys(DEVICE_COMMANDS).includes(command)) return {ok:false,note:"Command not allowed."};
-  if (command==="open_app" && !args.packageName) return {ok:false,note:"packageName is required."};
-  if (command==="open_url" && !args.url) return {ok:false,note:"url is required."};
-  if (command==="tap" && (!Number.isFinite(Number(args.x)) || !Number.isFinite(Number(args.y)))) return {ok:false,note:"x and y are required."};
-  if (command==="tap_text" && !args.text) return {ok:false,note:"text is required."};
-  if (command==="type_text" && !args.text) return {ok:false,note:"text is required."};
-  const q=await kvGet("device_queue",[]);
-  const item={id:"d"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),command,args:{packageName:args.packageName||null,url:args.url||null,x:Number.isFinite(Number(args.x))?Number(args.x):null,y:Number.isFinite(Number(args.y))?Number(args.y):null,text:args.text||null},status:"pending",createdAt:Date.now()};
-  q.unshift(item); await kvSet("device_queue",q.slice(0,80)); await log("Android command queued: "+command,"device");
-  return {ok:true,note:"Android command queued."};
+async function queueDevice(command, args) {
+  args = args || {};
+  if (!process.env.DEVICE_TOKEN) return { ok: false, note: "Android bridge is not configured yet (DEVICE_TOKEN missing on the server)." };
+  if (!Object.keys(DEVICE_COMMANDS).includes(command)) return { ok: false, note: "Command not allowed." };
+  if (command === "open_app" && !args.packageName && !args.appName) return { ok: false, note: "appName or packageName is required." };
+  if (command === "open_url" && !args.url) return { ok: false, note: "url is required." };
+  if (command === "tap" && (!Number.isFinite(Number(args.x)) || !Number.isFinite(Number(args.y)))) return { ok: false, note: "x and y are required." };
+  if ((command === "tap_text" || command === "type_text") && !args.text) return { ok: false, note: "text is required." };
+
+  let phone = null;
+  if (command === "whatsapp_send") {
+    if (!args.text) return { ok: false, note: "text is required." };
+    const c = await resolveContact(args.to || args.phone || "");
+    if (!c || !c.phone) return { ok: false, note: `No saved contact or number for "${args.to || ""}". Ask the user for the phone number with country code.` };
+    phone = digits(c.phone);
+  }
+
+  const num = (v) => (Number.isFinite(Number(v)) && v !== null && v !== undefined ? Number(v) : null);
+  const q = await kvGet("device_queue", []);
+  const item = {
+    id: "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    command,
+    args: {
+      packageName: args.packageName || null,
+      appName: args.appName || null,
+      url: args.url || null,
+      phone,
+      x: num(args.x),
+      y: num(args.y),
+      text: args.text ? String(args.text).slice(0, 2000) : null
+    },
+    status: "pending",
+    createdAt: Date.now()
+  };
+  q.unshift(item);
+  await kvSet("device_queue", q.slice(0, 80));
+  await log("Android command queued: " + command, "device");
+  return { ok: true, note: "Android command queued. It runs on the phone within a few seconds; the phone reports back when finished." };
 }
 
 async function runTool(name, args, ui) {
@@ -198,7 +238,14 @@ async function runTool(name, args, ui) {
       await log("Agent " + args.agent + " received task: " + task, args.agent);
       return { ok: true, taskId: item.id, note: "Task assigned and stored in the agent queue. External work is not claimed complete." };
     }
-    case "device_command": return queueDevice(args.command,args);
+    case "device_command": {
+      const r = await queueDevice(args.command, args);
+      if (r && r.ok) {
+        const agent = args.command === "whatsapp_send" ? "whatsapp" : "core";
+        ui.push({ type: "agent_move", agent, task: "Phone: " + args.command + (args.appName ? " " + args.appName : "") });
+      }
+      return r;
+    }
     case "calc_order": {
       const r = calcOrder(args);
       return r || { error: "Invalid numbers" };
@@ -214,11 +261,14 @@ Reply in the language the user speaks. Default to Urdu script for Urdu/Roman-Urd
 Replies are read aloud, so keep them short (1-3 sentences) unless asked for detail.
 
 Rules:
-- Use tools for actions. Messages, supplier messages and Shopify listings only go into the approval queue. Tell the user they must tap APPROVE. Never say something was sent/created before approval.
+- Use tools for actions. Website/dashboard messages, supplier messages and Shopify listings only go into the approval queue. Tell the user they must tap APPROVE. Never say something was sent/created before approval.
 - You cannot read live Alibaba results, prices, stock or shipping. Never invent them. Give the search link and ask the user for supplier details.
-- Phone control is available through the installed Rafi AI Android Companion. Use device_command for navigation, opening apps/URLs, tapping coordinates/text, typing into focused fields, and scrolling. Never claim success until the device reports it.
-- Messages and business transactions require explicit approval.
-- Never place orders or make payments. Never ask for passwords or API keys.
+- PHONE CONTROL: the owner's Android phone is controlled through the installed Rafi AI Companion. Use device_command:
+  * "open WhatsApp / YouTube / any app" -> open_app with appName.
+  * "send WhatsApp message X to person Y" -> device_command whatsapp_send (to = contact name or number, text = the message exactly as the owner said). The owner's own spoken command is the approval for phone actions. If the contact is unknown, ask for the number with country code, then save_contact.
+  * actions inside an app -> several device_command calls in order: open_app, then tap_text (visible button text), type_text, scroll, back.
+  * Say briefly what you queued. The phone reports back afterwards; never claim success before that. If the tool says the bridge is not configured, tell the owner the phone companion setup is not finished.
+- Never place orders or make payments, and never type passwords, card numbers or OTP codes on the phone. Never ask for passwords or API keys.
 - For profit questions call calc_order and mention fees and any warning.
 `;
 
@@ -226,23 +276,28 @@ async function localFallback(message, ui) {
   const m = String(message || "").toLowerCase();
   const pushAgent = async (agent, task) => {
     const tasks = await kvGet("agent_tasks", []);
-    const item = { id:"t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6), agent, task:String(task).slice(0,500), status:"queued", createdAt:Date.now() };
-    tasks.unshift(item); await kvSet("agent_tasks", tasks.slice(0,100));
-    ui.push({type:"agent_move", agent, task:item.task, taskId:item.id});
-    await log("Local fallback assigned "+agent+": "+item.task, agent);
+    const item = { id: "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), agent, task: String(task).slice(0, 500), status: "queued", createdAt: Date.now() };
+    tasks.unshift(item); await kvSet("agent_tasks", tasks.slice(0, 100));
+    ui.push({ type: "agent_move", agent, task: item.task, taskId: item.id });
+    await log("Local fallback assigned " + agent + ": " + item.task, agent);
     return item;
   };
-  if (/home|گھر|ہوم/.test(m)) return {reply:"فون کو Home پر بھیج رہا ہوں۔", tool:await queueDevice("home",{}), ui};
-  if (/back|واپس|بیک/.test(m)) return {reply:"فون پر Back کمانڈ بھیج رہا ہوں۔", tool:await queueDevice("back",{}), ui};
-  if (/recents|recent apps|حالیہ ایپس|ریسنٹ/.test(m)) return {reply:"Recent Apps کمانڈ بھیج رہا ہوں۔", tool:await queueDevice("recents",{}), ui};
-  if (/notification|notifications|نوٹیفکیشن/.test(m)) return {reply:"Notifications کھولنے کی کمانڈ بھیج رہا ہوں۔", tool:await queueDevice("notifications",{}), ui};
-  if (/supplier|سپلائر|alibaba|علی بابا/.test(m)) { const t=await pushAgent("supplier",message); return {reply:"Supplier Agent کو task دے دیا ہے۔",taskId:t.id,ui}; }
-  if (/shopify|store|اسٹور|شاپفائی/.test(m)) { const t=await pushAgent("shopify",message); return {reply:"Shopify Agent کو task دے دیا ہے۔",taskId:t.id,ui}; }
-  if (/whatsapp|واٹس.?ایپ|message|میسج/.test(m)) { const t=await pushAgent("whatsapp",message); return {reply:"WhatsApp Agent کو task دے دیا ہے۔",taskId:t.id,ui}; }
-  if (/agent|ایجنٹ|delegate|کام کرو|task/.test(m)) { const t=await pushAgent("core",message); return {reply:"Rafi Core نے task queue میں ڈال دیا ہے۔",taskId:t.id,ui}; }
-  const hit=Object.keys(PLATFORMS).find(k=>m.includes(k));
-  if (hit && /open|کھولو|کھول/.test(m)) { ui.push({type:"open",label:hit,url:PLATFORMS[hit]}); await log("Local fallback opening "+hit,"core"); return {reply:hit+" کھولنے کا لنک تیار ہے۔",ui}; }
-  return {reply:"Rafi AI core online ہے۔ AI credit کے بغیر بھی agent delegation، Android commands اور dashboard controls دستیاب ہیں۔",ui, generic:true};
+  if (/home|گھر|ہوم/.test(m)) return { reply: "فون کو Home پر بھیج رہا ہوں۔", tool: await queueDevice("home", {}), ui };
+  if (/back|واپس|بیک/.test(m)) return { reply: "فون پر Back کمانڈ بھیج رہا ہوں۔", tool: await queueDevice("back", {}), ui };
+  if (/recents|recent apps|حالیہ ایپس|ریسنٹ/.test(m)) return { reply: "Recent Apps کمانڈ بھیج رہا ہوں۔", tool: await queueDevice("recents", {}), ui };
+  if (/notification|notifications|نوٹیفکیشن/.test(m)) return { reply: "Notifications کھولنے کی کمانڈ بھیج رہا ہوں۔", tool: await queueDevice("notifications", {}), ui };
+  const appOpen = m.match(/(?:open|کھول|کھولو)\s+(whatsapp|youtube|chrome|gmail|camera|settings|instagram|facebook|tiktok|واٹس\s*ایپ|یوٹیوب|کروم|کیمرہ)/) ||
+    m.match(/(whatsapp|youtube|chrome|gmail|camera|settings|instagram|facebook|tiktok|واٹس\s*ایپ|یوٹیوب|کروم|کیمرہ)\s*(?:open|کھول|کھولو|چلاؤ)/);
+  if (appOpen && process.env.DEVICE_TOKEN) {
+    return { reply: appOpen[1] + " فون پر کھول رہا ہوں۔", tool: await queueDevice("open_app", { appName: appOpen[1] }), ui };
+  }
+  if (/supplier|سپلائر|alibaba|علی بابا/.test(m)) { const t = await pushAgent("supplier", message); return { reply: "Supplier Agent کو task دے دیا ہے۔", taskId: t.id, ui }; }
+  if (/shopify|store|اسٹور|شاپفائی/.test(m)) { const t = await pushAgent("shopify", message); return { reply: "Shopify Agent کو task دے دیا ہے۔", taskId: t.id, ui }; }
+  if (/whatsapp|واٹس.?ایپ|message|میسج/.test(m)) { const t = await pushAgent("whatsapp", message); return { reply: "WhatsApp Agent کو task دے دیا ہے۔", taskId: t.id, ui }; }
+  if (/agent|ایجنٹ|delegate|کام کرو|task/.test(m)) { const t = await pushAgent("core", message); return { reply: "Rafi Core نے task queue میں ڈال دیا ہے۔", taskId: t.id, ui }; }
+  const hit = Object.keys(PLATFORMS).find(k => m.includes(k));
+  if (hit && /open|کھولو|کھول/.test(m)) { ui.push({ type: "open", label: hit, url: PLATFORMS[hit] }); await log("Local fallback opening " + hit, "core"); return { reply: hit + " کھولنے کا لنک تیار ہے۔", ui }; }
+  return { reply: "Rafi AI core online ہے۔ AI credit کے بغیر بھی agent delegation، Android commands اور dashboard controls دستیاب ہیں۔", ui, generic: true };
 }
 
 /* Call OpenAI; if the configured model is not available to this key, retry once with gpt-4.1 */
@@ -286,7 +341,7 @@ export default async function handler(req, res) {
     let input = [...past, { role: "user", content: message.slice(0, 4000) }];
     let reply = "";
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 8; i++) {
       const data = await callAI({ instructions: INSTRUCTIONS, input, tools });
       const calls = (data.output || []).filter((o) => o.type === "function_call");
 
@@ -315,7 +370,7 @@ export default async function handler(req, res) {
     let fallback = { reply: "", ui };
     try { fallback = await localFallback(message, ui); } catch (e2) { console.error("fallback error", e2); }
     const reply = fallback.generic || !fallback.reply
-      ? "AI سروس جواب نہیں دے رہی۔ وجہ: " + detail + " — OpenAI key، credit اور OPENAI_MODEL چیک کریں۔"
+      ? "AI سروس جواب نہیں دڒ رہی۔ وجہ: " + detail + " — OpenAI key، credit اور OPENAI_MODEL چیک کریں۔"
       : fallback.reply;
     return res.status(200).json({
       reply,
