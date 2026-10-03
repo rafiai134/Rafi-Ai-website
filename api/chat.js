@@ -370,7 +370,7 @@ export default async function handler(req, res) {
     let fallback = { reply: "", ui };
     try { fallback = await localFallback(message, ui); } catch (e2) { console.error("fallback error", e2); }
     const reply = fallback.generic || !fallback.reply
-      ? "AI سروس جواب نہیں دڒ رہی۔ وجہ: " + detail + " — OpenAI key، credit اور OPENAI_MODEL چیک کریں۔"
+      ? "AI سروس جواب نہیں دے رہی۔ وجہ: " + detail + " — OpenAI key، credit اور OPENAI_MODEL چیک کریں۔"
       : fallback.reply;
     return res.status(200).json({
       reply,
