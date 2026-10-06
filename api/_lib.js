@@ -1,8 +1,9 @@
 // Shared helpers. Files starting with "_" are NOT public routes on Vercel.
 
 const mem = (globalThis.__rafi = globalThis.__rafi || {});
-const KV_URL = process.env.UPSTASH_REDIS_REST_URL;
-const KV_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+// Vercel's Upstash integration may name these UPSTASH_REDIS_REST_* or KV_REST_API_*; accept both.
+const KV_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const KV_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 
 export const hasKV = Boolean(KV_URL && KV_TOKEN);
 
