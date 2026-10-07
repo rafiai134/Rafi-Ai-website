@@ -59,6 +59,8 @@ function addMsg(text, kind = "bot", links = []) {
   const div = document.createElement("div");
   div.className = "msg " + kind;
   div.textContent = text;
+  // only real links become buttons (agent_move etc. have no url)
+  links = (links || []).filter((l) => l && l.url);
   if (links.length) {
     const row = document.createElement("div");
     row.className = "links";
@@ -67,7 +69,7 @@ function addMsg(text, kind = "bot", links = []) {
       a.href = l.url;
       a.target = "_blank";
       a.rel = "noopener";
-      a.textContent = "Open " + l.label;
+      a.textContent = "Open " + (l.label || "link");
       row.appendChild(a);
     });
     div.appendChild(row);
@@ -229,12 +231,12 @@ function startWakeWord() {
       if (!e.results[i].isFinal) continue;
       const heard=e.results[i][0].transcript.trim();
       const match=/\b(hello|hey|hi)?\s*rafi(?:\s+ai)?\b/i.test(heard) ||
-        /ہیلو?\s*رافی(?:\s*(?:آئی|آئی|ai))?/i.test(heard);
+        /ہیلو?\s*رافی(?:\s*(?:آئی|آئی|ai))?/i.test(heard);
       if (!match) continue;
       try { wakeRec.stop(); } catch {}
       const command=heard
         .replace(/^.*?\b(hello|hey|hi)?\s*rafi(?:\s+ai)?\b/i,"")
-        .replace(/^.*?ہیلو?\s*رافی(?:\s*(?:آئی|آئی|ai))?/i,"")
+        .replace(/^.*?ہیلو?\s*رافی(?:\s*(?:آئی|آئی|ai))?/i,"")
         .trim();
       if (command) sendMessage(command);
       else setTimeout(startListening,120);
