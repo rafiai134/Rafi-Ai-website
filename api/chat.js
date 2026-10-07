@@ -178,7 +178,14 @@ async function queueDevice(command, args) {
   q.unshift(item);
   await kvSet("device_queue", q.slice(0, 80));
   await log("Android command queued: " + command, "device");
-  return { ok: true, note: "Android command queued. It runs on the phone within a few seconds; the phone reports back when finished." };
+  const persistent = config().storage;
+  return {
+    ok: true,
+    persistent,
+    note: persistent
+      ? "Android command queued. It runs on the phone within a few seconds; the phone reports back when finished."
+      : "Android command queued in temporary memory only (no Redis database is connected), so the phone may never receive it."
+  };
 }
 
 async function runTool(name, args, ui) {
@@ -272,6 +279,19 @@ Rules:
 - For profit questions call calc_order and mention fees and any warning.
 `;
 
+/* Phone-app names the local fallback understands (English + Urdu spellings) */
+const APP_WORDS = [
+  { re: /whats\s*app|واٹس\s*ایپ|واٹس\s*اپ|व्हाट्स\s*ऐप|व्हाट्सअप/i, name: "WhatsApp" },
+  { re: /you\s*tube|یوٹیوب|यूट्यूब/i, name: "YouTube" },
+  { re: /chrome|کروم/i, name: "Chrome" },
+  { re: /gmail|جی\s*میل/i, name: "Gmail" },
+  { re: /camera|کیمرہ|کیمرا/i, name: "Camera" },
+  { re: /settings|سیٹنگ/i, name: "Settings" },
+  { re: /instagram|انسٹاگرام/i, name: "Instagram" },
+  { re: /facebook|فیس\s*بک/i, name: "Facebook" },
+  { re: /tiktok|ٹک\s*ٹاک/i, name: "TikTok" }
+];
+
 async function localFallback(message, ui) {
   const m = String(message || "").toLowerCase();
   const pushAgent = async (agent, task) => {
@@ -282,18 +302,28 @@ async function localFallback(message, ui) {
     await log("Local fallback assigned " + agent + ": " + item.task, agent);
     return item;
   };
-  if (/home|گھر|ہوم/.test(m)) return { reply: "فون کو Home پر بھیج رہا ہوں۔", tool: await queueDevice("home", {}), ui };
-  if (/back|واپس|بیک/.test(m)) return { reply: "فون پر Back کمانڈ بھیج رہا ہوں۔", tool: await queueDevice("back", {}), ui };
-  if (/recents|recent apps|حالیہ ایپس|ریسنٹ/.test(m)) return { reply: "Recent Apps کمانڈ بھیج رہا ہوں۔", tool: await queueDevice("recents", {}), ui };
-  if (/notification|notifications|نوٹیفکیشن/.test(m)) return { reply: "Notifications کھولنے کی کمانڈ بھیج رہا ہوں۔", tool: await queueDevice("notifications", {}), ui };
-  const appOpen = m.match(/(?:open|کھول|کھولو)\s+(whatsapp|youtube|chrome|gmail|camera|settings|instagram|facebook|tiktok|واٹس\s*ایپ|یوٹیوب|کروم|کیمرہ)/) ||
-    m.match(/(whatsapp|youtube|chrome|gmail|camera|settings|instagram|facebook|tiktok|واٹس\s*ایپ|یوٹیوب|کروم|کیمرہ)\s*(?:open|کھول|کھولو|چلاؤ)/);
-  if (appOpen && process.env.DEVICE_TOKEN) {
-    return { reply: appOpen[1] + " فون پر کھول رہا ہوں۔", tool: await queueDevice("open_app", { appName: appOpen[1] }), ui };
-  }
+  // Queue a phone command and answer honestly based on what really happened.
+  const dev = async (command, args, okText) => {
+    const r = await queueDevice(command, args);
+    if (!r.ok) return { reply: "فون کی کمانڈ نہیں بھیج سکا: " + r.note, tool: r, ui };
+    ui.push({ type: "agent_move", agent: "core", task: "Phone: " + command + (args && args.appName ? " " + args.appName : "") });
+    const extra = r.persistent ? "" : " (خبردار: Redis ڈیٹا بیس جڑا نہیں، اس لیے فون کو شاید کمانڈ نہ پہنچے۔)";
+    return { reply: okText + extra, tool: r, ui };
+  };
+
+  if (/\bhome\b|گھر|ہوم/.test(m)) return dev("home", {}, "فون کو Home پر بھیج رہا ہوں۔");
+  if (/\bback\b|واپس|بیک/.test(m)) return dev("back", {}, "فون پر Back کمانڈ بھیج رہا ہوں۔");
+  if (/recents|recent apps|حالیہ ایپس|ریسنٹ/.test(m)) return dev("recents", {}, "Recent Apps کمانڈ بھیج رہا ہوں۔");
+  if (/notification|notifications|نوٹیفکیشن/.test(m)) return dev("notifications", {}, "Notifications کھولنے کی کمانڈ بھیج رہا ہوں۔");
+
+  // Any phone app mentioned without sending words -> open that app on the phone.
+  const wantsSend = /send|بھیج|میسج|message|لکھ/.test(m);
+  const app = APP_WORDS.find((a) => a.re.test(message));
+  if (app && !wantsSend) return dev("open_app", { appName: app.name }, app.name + " فون پر کھول رہا ہوں۔");
+
   if (/supplier|سپلائر|alibaba|علی بابا/.test(m)) { const t = await pushAgent("supplier", message); return { reply: "Supplier Agent کو task دے دیا ہے۔", taskId: t.id, ui }; }
   if (/shopify|store|اسٹور|شاپفائی/.test(m)) { const t = await pushAgent("shopify", message); return { reply: "Shopify Agent کو task دے دیا ہے۔", taskId: t.id, ui }; }
-  if (/whatsapp|واٹس.?ایپ|message|میسج/.test(m)) { const t = await pushAgent("whatsapp", message); return { reply: "WhatsApp Agent کو task دے دیا ہے۔", taskId: t.id, ui }; }
+  if (/whatsapp|واٹس.?ایپ|message|میسج/.test(m)) { const t = await pushAgent("whatsapp", message); return { reply: "WhatsApp Agent کو task دے دیا ہے۔ (واٹس ایپ پیغام بھیجنے کے لیے AI سروس چاہیے۔)", taskId: t.id, ui }; }
   if (/agent|ایجنٹ|delegate|کام کرو|task/.test(m)) { const t = await pushAgent("core", message); return { reply: "Rafi Core نے task queue میں ڈال دیا ہے۔", taskId: t.id, ui }; }
   const hit = Object.keys(PLATFORMS).find(k => m.includes(k));
   if (hit && /open|کھولو|کھول/.test(m)) { ui.push({ type: "open", label: hit, url: PLATFORMS[hit] }); await log("Local fallback opening " + hit, "core"); return { reply: hit + " کھولنے کا لنک تیار ہے۔", ui }; }
