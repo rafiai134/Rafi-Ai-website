@@ -5,6 +5,7 @@ import {
 
 const PLATFORMS = {
   whatsapp: "https://web.whatsapp.com/",
+  chatgpt: "https://chatgpt.com/",
   alibaba: "https://www.alibaba.com/",
   aliexpress: "https://www.aliexpress.com/",
   shopify: "https://admin.shopify.com/",
@@ -32,7 +33,7 @@ const tools = [
   {
     type: "function",
     name: "open_platform",
-    description: "Open a website for the user in the browser (a link on the dashboard). NOT for opening apps on the owner's phone: use device_command open_app for that.",
+    description: "Open a website for the user in the browser (a link on the dashboard). NOT for opening apps or sites on the owner's phone: use device_command (open_app / open_url) for that.",
     parameters: {
       type: "object",
       properties: { name: { type: "string" } },
@@ -112,7 +113,7 @@ const tools = [
   {
     type: "function",
     name: "delegate_agent",
-    description: "Only for business work (supplier, Shopify, order research): assign a task to one of Rafi AI's visual agents. Agents: core, supplier, shopify, whatsapp. NEVER use this for anything on the owner's Android phone (opening apps, home, back, taps, typing, WhatsApp on the phone): use device_command for those. This creates a visible agent movement/task event; it does not claim external work is completed.",
+    description: "Only for business work (supplier, Shopify, order research): assign a task to one of Rafi AI's visual agents. Agents: core, supplier, shopify, whatsapp. NEVER use this for anything on the owner's Android phone (opening apps or websites, home, back, taps, typing, WhatsApp on the phone): use device_command for those. This creates a visible agent movement/task event; it does not claim external work is completed.",
     parameters: {
       type: "object",
       properties: {
@@ -177,7 +178,7 @@ async function queueDevice(command, args) {
   };
   q.unshift(item);
   await kvSet("device_queue", q.slice(0, 80));
-  await log("Android command queued: " + command, "device");
+  await log("Android command queued: " + command + (args.appName ? " " + args.appName : "") + (args.url ? " " + args.url : ""), "device");
   const persistent = config().storage;
   return {
     ok: true,
@@ -270,8 +271,9 @@ Replies are read aloud, so keep them short (1-3 sentences) unless asked for deta
 Rules:
 - Use tools for actions. Website/dashboard messages, supplier messages and Shopify listings only go into the approval queue. Tell the user they must tap APPROVE. Never say something was sent/created before approval.
 - You cannot read live Alibaba results, prices, stock or shipping. Never invent them. Give the search link and ask the user for supplier details.
-- PHONE CONTROL: the owner's Android phone is controlled through the installed Rafi AI Companion. ANY request about the phone (open/turn on/launch an app, home, back, recents, notifications, tap, type, scroll, dark mode, WhatsApp on the phone) MUST use device_command. Never answer such a request with delegate_agent or open_platform, and never just say a task was given to an agent.
-  * "open WhatsApp / YouTube / any app" (also: "WhatsApp on karo", "WhatsApp kholo") -> open_app with appName.
+- PHONE CONTROL: the owner's Android phone is controlled through the installed Rafi AI Companion. ANY request about the phone (open/turn on/launch an app or website, home, back, recents, notifications, tap, type, scroll, dark mode, WhatsApp on the phone) MUST use device_command. Never answer such a request with delegate_agent or open_platform, and never just say a task was given to an agent.
+  * "open WhatsApp / YouTube / Gmail / Chrome / any installed app" (also: "WhatsApp on karo", "WhatsApp kholo") -> open_app with appName.
+  * "open a website" (ChatGPT https://chatgpt.com, Alibaba https://www.alibaba.com, Shopify https://admin.shopify.com, any other site) -> open_url with the full url.
   * "send WhatsApp message X to person Y" -> device_command whatsapp_send (to = contact name or number, text = the message exactly as the owner said). The owner's own spoken command is the approval for phone actions. If the contact is unknown, ask for the number with country code, then save_contact.
   * actions inside an app -> several device_command calls in order: open_app, then tap_text (visible button text), type_text, scroll, back.
   * Say briefly what you queued. The phone reports back afterwards; never claim success before that. If the tool says the bridge is not configured or that only temporary memory is used, tell the owner honestly.
@@ -290,6 +292,16 @@ const APP_WORDS = [
   { re: /instagram|انسٹاگرام/i, name: "Instagram" },
   { re: /facebook|فیس\s*بک/i, name: "Facebook" },
   { re: /tiktok|ٹک\s*ٹاک/i, name: "TikTok" }
+];
+
+/* Websites the local fallback sends to the phone's browser */
+const SITE_WORDS = [
+  { re: /chat\s*gpt|چیٹ\s*جی\s*پی\s*ٹی|چیٹ\s*جی\s*ٹی|चैट\s*जी\s*पी\s*टी|चैटजीपीटी/i, name: "ChatGPT", url: PLATFORMS.chatgpt },
+  { re: /ali\s*baba|علی\s*بابا|अलीबाबा/i, name: "Alibaba", url: PLATFORMS.alibaba },
+  { re: /ali\s*express|علی\s*ایکسپریس/i, name: "AliExpress", url: PLATFORMS.aliexpress },
+  { re: /shopify|شاپفائی|शॉपिफाई/i, name: "Shopify", url: PLATFORMS.shopify },
+  { re: /amazon|ایمیزون/i, name: "Amazon", url: PLATFORMS.amazon },
+  { re: /google\s*maps|\bmaps\b|میپس|نقشہ/i, name: "Maps", url: PLATFORMS.maps }
 ];
 
 async function localFallback(message, ui) {
@@ -320,6 +332,13 @@ async function localFallback(message, ui) {
   const wantsSend = /send|بھیج|میسج|message|لکھ/.test(m);
   const app = APP_WORDS.find((a) => a.re.test(message));
   if (app && !wantsSend) return dev("open_app", { appName: app.name }, app.name + " فون پر کھول رہا ہوں۔");
+
+  // Websites -> open in the phone's browser through the companion app.
+  const wantsOpen = /open|go to|launch|اوپن|کھول|چلو|جاؤ|جاو|چلاؤ|खोल|चलो|जाओ/i.test(message);
+  if (wantsOpen && !wantsSend) {
+    const site = SITE_WORDS.find((s) => s.re.test(message));
+    if (site) return dev("open_url", { url: site.url }, site.name + " فون کے براؤزر میں کھول رہا ہوں۔");
+  }
 
   if (/supplier|سپلائر|alibaba|علی بابا/.test(m)) { const t = await pushAgent("supplier", message); return { reply: "Supplier Agent کو task دے دیا ہے۔", taskId: t.id, ui }; }
   if (/shopify|store|اسٹور|شاپفائی/.test(m)) { const t = await pushAgent("shopify", message); return { reply: "Shopify Agent کو task دے دیا ہے۔", taskId: t.id, ui }; }
