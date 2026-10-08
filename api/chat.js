@@ -296,7 +296,7 @@ const APP_WORDS = [
 
 /* Websites the local fallback sends to the phone's browser */
 const SITE_WORDS = [
-  { re: /chat\s*gpt|چیٹ\s*جی\s*پی\s*ٹی|چیٹ\s*جی\s*ٹی|चैट\s*जी\s*पी\s*टी|चैटजीपीटी/i, name: "ChatGPT", url: PLATFORMS.chatgpt },
+  { re: /chat\s*g\s*p\s*t|چیٹ\s*(?:جی|جے|گی)\s*پی\s*(?:ٹی|ٹے)|چیٹ\s*جی\s*ٹی|چیٹ\s*جی|चैट\s*(?:जी|जे)\s*पी\s*टी|चैटजीपीटी/i, name: "ChatGPT", url: PLATFORMS.chatgpt },
   { re: /ali\s*baba|علی\s*بابا|अलीबाबा/i, name: "Alibaba", url: PLATFORMS.alibaba },
   { re: /ali\s*express|علی\s*ایکسپریس/i, name: "AliExpress", url: PLATFORMS.aliexpress },
   { re: /shopify|شاپفائی|शॉपिफाई/i, name: "Shopify", url: PLATFORMS.shopify },
@@ -318,7 +318,7 @@ async function localFallback(message, ui) {
   const dev = async (command, args, okText) => {
     const r = await queueDevice(command, args);
     if (!r.ok) return { reply: "فون کی کمانڈ نہیں بھیج سکا: " + r.note, tool: r, ui };
-    ui.push({ type: "agent_move", agent: "core", task: "Phone: " + command + (args && args.appName ? " " + args.appName : "") });
+    ui.push({ type: "agent_move", agent: command === "whatsapp_send" ? "whatsapp" : "core", task: "Phone: " + command + (args && args.appName ? " " + args.appName : "") });
     const extra = r.persistent ? "" : " (خبردار: Redis ڈیٹا بیس جڑا نہیں، اس لیے فون کو شاید کمانڈ نہ پہنچے۔)";
     return { reply: okText + extra, tool: r, ui };
   };
@@ -328,25 +328,46 @@ async function localFallback(message, ui) {
   if (/recents|recent apps|حالیہ ایپس|ریسنٹ/.test(m)) return dev("recents", {}, "Recent Apps کمانڈ بھیج رہا ہوں۔");
   if (/notification|notifications|نوٹیفکیشن/.test(m)) return dev("notifications", {}, "Notifications کھولنے کی کمانڈ بھیج رہا ہوں۔");
 
+  const wantsSend = /send|بھیج|میسج|message|لکھ|کہو|sms|ایس\s*ایم\s*ایس/i.test(message);
+
+  // WhatsApp message from the phone: needs a number (or saved contact) and the text.
+  if (wantsSend && /whats\s*app|واٹس|व्हाट्स|میسج|message|sms|ایس\s*ایم\s*ایس/i.test(message)) {
+    const contacts = (await kvGet("contacts", {})) || {};
+    let to = null;
+    const numM = message.match(/\+?\d[\d\s\-]{7,}\d/);
+    if (numM) to = numM[0].replace(/[^\d]/g, "");
+    if (!to) {
+      const nm = Object.keys(contacts).find((n) => n && m.includes(String(n).toLowerCase()));
+      if (nm) to = nm;
+    }
+    let text = null;
+    const q = message.match(/["“«]([^"”»]+)["”»]/);
+    if (q) text = q[1].trim();
+    else {
+      const t = message.match(/(?:لکھ دو|لکھو|لکھیں|کہہ دو|کہو|بولو|likho|bolo|saying|that|:)\s*(.+)$/i);
+      if (t) text = t[1].trim();
+    }
+    if (to && text) return dev("whatsapp_send", { to, text }, "واٹس ایپ پیغام فون سے بھیجنے کی کمانڈ بھیج رہا ہوں۔");
+    return {
+      reply: "پیغام بھیجنے کے لیے نمبر (ملک کے کوڈ کے ساتھ) اور متن چاہیے۔ مثال: واٹس ایپ پر 923001234567 کو لکھو: سلام، کیسے ہیں",
+      ui
+    };
+  }
+
   // Any phone app mentioned without sending words -> open that app on the phone.
-  const wantsSend = /send|بھیج|میسج|message|لکھ/.test(m);
   const app = APP_WORDS.find((a) => a.re.test(message));
   if (app && !wantsSend) return dev("open_app", { appName: app.name }, app.name + " فون پر کھول رہا ہوں۔");
 
   // Websites -> open in the phone's browser through the companion app.
-  const wantsOpen = /open|go to|launch|اوپن|کھول|چلو|جاؤ|جاو|چلاؤ|खोल|चलो|जाओ/i.test(message);
-  if (wantsOpen && !wantsSend) {
-    const site = SITE_WORDS.find((s) => s.re.test(message));
-    if (site) return dev("open_url", { url: site.url }, site.name + " فون کے براؤزر میں کھول رہا ہوں۔");
-  }
+  const site = SITE_WORDS.find((s) => s.re.test(message));
+  if (site && !wantsSend) return dev("open_url", { url: site.url }, site.name + " فون کے براؤزر میں کھول رہا ہوں۔");
 
   if (/supplier|سپلائر|alibaba|علی بابا/.test(m)) { const t = await pushAgent("supplier", message); return { reply: "Supplier Agent کو task دے دیا ہے۔", taskId: t.id, ui }; }
   if (/shopify|store|اسٹور|شاپفائی/.test(m)) { const t = await pushAgent("shopify", message); return { reply: "Shopify Agent کو task دے دیا ہے۔", taskId: t.id, ui }; }
-  if (/whatsapp|واٹس.?ایپ|message|میسج/.test(m)) { const t = await pushAgent("whatsapp", message); return { reply: "WhatsApp Agent کو task دے دیا ہے۔ (واٹس ایپ پیغام بھیجنے کے لیے AI سروس چاہیے۔)", taskId: t.id, ui }; }
   if (/agent|ایجنٹ|delegate|کام کرو|task/.test(m)) { const t = await pushAgent("core", message); return { reply: "Rafi Core نے task queue میں ڈال دیا ہے۔", taskId: t.id, ui }; }
   const hit = Object.keys(PLATFORMS).find(k => m.includes(k));
   if (hit && /open|کھولو|کھول/.test(m)) { ui.push({ type: "open", label: hit, url: PLATFORMS[hit] }); await log("Local fallback opening " + hit, "core"); return { reply: hit + " کھولنے کا لنک تیار ہے۔", ui }; }
-  return { reply: "Rafi AI core online ہے۔ AI credit کے بغیر بھی agent delegation، Android commands اور dashboard controls دستیاب ہیں۔", ui, generic: true };
+  return { reply: "یہ کمانڈ سمجھنے کے لیے AI سروس چاہیے۔ فی الحال یہ کام کرتے ہیں: Home، Back، ایپ کھولنا، ویب سائٹ کھولنا، اور واٹس ایپ پیغام (نمبر اور متن کے ساتھ)۔", ui, generic: false };
 }
 
 /* Call OpenAI; if the configured model is not available to this key, retry once with gpt-4.1 */
@@ -411,16 +432,14 @@ export default async function handler(req, res) {
     return res.status(200).json({ reply: reply || "ٹھیک ہے۔", ui });
   } catch (e) {
     console.error("chat error", e);
-    // Never return a 500 to the UI: fall back to local controls and say WHY the AI failed.
+    // Never return a 500 to the UI: fall back to local controls. Phone commands work without AI credit.
     const detail = String((e && e.message) || e || "unknown").slice(0, 160);
     const reason = e && (e.status === 429 || e.status === 402)
       ? "AI credit/limit unavailable. Local Rafi controls remain online."
       : "AI service unavailable. Local Rafi controls remain online.";
     let fallback = { reply: "", ui };
     try { fallback = await localFallback(message, ui); } catch (e2) { console.error("fallback error", e2); }
-    const reply = fallback.generic || !fallback.reply
-      ? "AI سروس جواب نہیں دے رہی۔ وجہ: " + detail + " — OpenAI key، credit اور OPENAI_MODEL چیک کریں۔"
-      : fallback.reply;
+    const reply = fallback.reply || ("AI سروس جواب نہیں دے رہی۔ وجہ: " + detail);
     return res.status(200).json({
       reply,
       ui: fallback.ui || ui,
