@@ -8,6 +8,7 @@
   var greeting = false, tok = 0;
   var $ = function (id) { return document.getElementById(id); };
   var DAYS = ['اتوار', 'پیر', 'منگل', 'بدھ', 'جمعرات', 'جمعہ', 'ہفتہ'];
+  var ANDROID = /Android/i.test(navigator.userAgent || '');
 
   function lastGreet() { try { return +localStorage.getItem(KEY) || 0; } catch (e) { return 0; } }
   function stamp() { try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {} }
@@ -134,7 +135,9 @@
     };
   }
 
-  /* ---------- quick-open commands (ChatGPT, WhatsApp ...) ---------- */
+  /* ---------- quick-open commands (ChatGPT, WhatsApp ...) ----------
+     Computers only. On an Android phone these requests go to the server instead,
+     which sends them to the Rafi AI Companion app (it opens the real app / site on the phone). */
   var SITES = [
     { re: /chat\s*gpt|چیٹ\s*جی\s*پی\s*ٹی|چیٹ\s*جی\s*ٹی|चैट\s*जी\s*पी\s*टी|चैटजीपीटी/i, name: 'ChatGPT', url: 'https://chatgpt.com/' },
     { re: /whats\s*app|واٹس\s*ایپ|व्हाट्स\s*ऐप|व्हाट्सअप|वॉट्सऐप/i, name: 'WhatsApp', url: 'https://web.whatsapp.com/' },
@@ -151,7 +154,7 @@
         var inp = $('messageInput');
         var m = String(textOverride !== undefined && textOverride !== null ? textOverride : (inp ? inp.value : '')).trim();
         var isBusy = (typeof busy !== 'undefined') && busy;
-        if (m && !isBusy && OPENRE.test(m)) {
+        if (!ANDROID && m && !isBusy && OPENRE.test(m)) {
           for (var i = 0; i < SITES.length; i++) {
             if (SITES[i].re.test(m)) {
               var s = SITES[i];
