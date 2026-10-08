@@ -32,7 +32,7 @@ const tools = [
   {
     type: "function",
     name: "open_platform",
-    description: "Open a website/app for the user. Names: " + Object.keys(PLATFORMS).join(", "),
+    description: "Open a website for the user in the browser (a link on the dashboard). NOT for opening apps on the owner's phone: use device_command open_app for that.",
     parameters: {
       type: "object",
       properties: { name: { type: "string" } },
@@ -112,7 +112,7 @@ const tools = [
   {
     type: "function",
     name: "delegate_agent",
-    description: "Assign a task to one of Rafi AI's visual agents. Agents: core, supplier, shopify, whatsapp. Use this when the user asks Rafi to have an agent work on a task. This creates a visible agent movement/task event; it does not claim external work is completed.",
+    description: "Only for business work (supplier, Shopify, order research): assign a task to one of Rafi AI's visual agents. Agents: core, supplier, shopify, whatsapp. NEVER use this for anything on the owner's Android phone (opening apps, home, back, taps, typing, WhatsApp on the phone): use device_command for those. This creates a visible agent movement/task event; it does not claim external work is completed.",
     parameters: {
       type: "object",
       properties: {
@@ -270,11 +270,11 @@ Replies are read aloud, so keep them short (1-3 sentences) unless asked for deta
 Rules:
 - Use tools for actions. Website/dashboard messages, supplier messages and Shopify listings only go into the approval queue. Tell the user they must tap APPROVE. Never say something was sent/created before approval.
 - You cannot read live Alibaba results, prices, stock or shipping. Never invent them. Give the search link and ask the user for supplier details.
-- PHONE CONTROL: the owner's Android phone is controlled through the installed Rafi AI Companion. Use device_command:
-  * "open WhatsApp / YouTube / any app" -> open_app with appName.
+- PHONE CONTROL: the owner's Android phone is controlled through the installed Rafi AI Companion. ANY request about the phone (open/turn on/launch an app, home, back, recents, notifications, tap, type, scroll, dark mode, WhatsApp on the phone) MUST use device_command. Never answer such a request with delegate_agent or open_platform, and never just say a task was given to an agent.
+  * "open WhatsApp / YouTube / any app" (also: "WhatsApp on karo", "WhatsApp kholo") -> open_app with appName.
   * "send WhatsApp message X to person Y" -> device_command whatsapp_send (to = contact name or number, text = the message exactly as the owner said). The owner's own spoken command is the approval for phone actions. If the contact is unknown, ask for the number with country code, then save_contact.
   * actions inside an app -> several device_command calls in order: open_app, then tap_text (visible button text), type_text, scroll, back.
-  * Say briefly what you queued. The phone reports back afterwards; never claim success before that. If the tool says the bridge is not configured, tell the owner the phone companion setup is not finished.
+  * Say briefly what you queued. The phone reports back afterwards; never claim success before that. If the tool says the bridge is not configured or that only temporary memory is used, tell the owner honestly.
 - Never place orders or make payments, and never type passwords, card numbers or OTP codes on the phone. Never ask for passwords or API keys.
 - For profit questions call calc_order and mention fees and any warning.
 `;
