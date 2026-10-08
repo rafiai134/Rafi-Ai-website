@@ -2,6 +2,9 @@ import crypto from "node:crypto";
 import { kvGet, kvSet, log } from "./_lib.js";
 
 const MAX_AGE_MS = 10 * 60 * 1000; // commands older than this are never run (phone was offline)
+const NOTE_GAP_MS = 5 * 60 * 1000; // diagnostic notes are rate-limited (per server instance)
+let lastOkNote = 0;
+let lastBadNote = 0;
 
 function valid(req){
   const got=String(req.headers["x-device-token"]||"");
@@ -12,9 +15,20 @@ function valid(req){
 }
 
 export default async function handler(req,res){
-  if(!valid(req)) return res.status(401).json({error:"Invalid device token."});
+  if(!valid(req)){
+    // A phone that is polling with a wrong token would otherwise fail silently.
+    if(req.headers["x-device-token"] && Date.now()-lastBadNote>NOTE_GAP_MS){
+      lastBadNote=Date.now();
+      try{ await log("Phone reached the server but its DEVICE_TOKEN is WRONG. Re-enter the token in the companion app and tap Save connection.","device"); }catch(e){}
+    }
+    return res.status(401).json({error:"Invalid device token."});
+  }
 
   if(req.method==="GET"){
+    if(Date.now()-lastOkNote>NOTE_GAP_MS){
+      lastOkNote=Date.now();
+      try{ await log("Phone connected: companion is polling with a correct token.","device"); }catch(e){}
+    }
     const q=await kvGet("device_queue",[]);
     const now=Date.now();
     let changed=false;
