@@ -17,21 +17,30 @@ export const hasGemini = () => Boolean(process.env.GEMINI_API_KEY);
 
 async function callGemini(body) {
   const key = process.env.GEMINI_API_KEY;
-  const models = [process.env.GEMINI_MODEL, "gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"].filter(Boolean);
+  const models = [process.env.GEMINI_MODEL, "gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash"].filter(Boolean);
   let lastErr;
   for (const model of models) {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify(body)
-    });
+    let r;
+    try {
+      r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": key },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(20000)
+      });
+    } catch (e) {
+      const err = new Error(`Gemini ${model} request failed or timed out: ${e && e.message}`);
+      err.status = 504;
+      lastErr = err;
+      continue;
+    }
     const data = await r.json().catch(() => ({}));
     if (r.ok) return data;
-    const err = new Error((data.error && data.error.message) || ("Gemini HTTP " + r.status));
+    const err = new Error(`[${model}] ` + ((data.error && data.error.message) || ("Gemini HTTP " + r.status)));
     err.status = r.status;
     lastErr = err;
-    // only a missing/invalid model is worth retrying with the next name
-    if (r.status !== 404 && r.status !== 400) throw err;
+    // try the next model on: missing model (404), bad request (400), quota/limit for this model (429), server trouble (5xx)
+    if (![404, 400, 429, 500, 503].includes(r.status)) throw err;
   }
   throw lastErr;
 }
@@ -41,7 +50,7 @@ export async function geminiPing() {
     await callGemini({ contents: [{ role: "user", parts: [{ text: "hi" }] }], generationConfig: { maxOutputTokens: 16 } });
     return { ok: true };
   } catch (e) {
-    return { ok: false, status: e.status || null, message: String(e.message || e).replace(/AIza[0-9A-Za-z_\-]+/g, "AIza...").slice(0, 200) };
+    return { ok: false, status: e.status || null, message: String(e.message || e).replace(/AIza[0-9A-Za-z_\-]+/g, "AIza...").slice(0, 300) };
   }
 }
 
@@ -58,7 +67,7 @@ export async function runGemini({ message, history, ui, runTool, instructions, t
 
   const contents = [...past, { role: "user", parts: [{ text: String(message).slice(0, 4000) }] }];
 
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 5; i++) {
     const data = await callGemini({
       systemInstruction: { parts: [{ text: instructions }] },
       contents,

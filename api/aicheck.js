@@ -12,10 +12,13 @@ const testTools = [
 // Diagnostic only: tells whether the AI keys work. Returns no secrets.
 export default async function handler(req, res) {
   const out = { geminiKey: hasGemini(), openaiKey: Boolean(config().openai) };
+  const t0 = Date.now();
   if (out.geminiKey) {
     out.gemini = await geminiPing();
+    out.geminiMs = Date.now() - t0;
     if (req.query && req.query.tools) {
       const calls = [];
+      const t1 = Date.now();
       try {
         const text = await runGemini({
           message: "Open WhatsApp on my phone",
@@ -25,18 +28,20 @@ export default async function handler(req, res) {
           instructions: "You control the owner's Android phone. For any phone request call device_command. Reply in Urdu.",
           tools: testTools
         });
-        out.toolTest = { ok: true, calls, reply: String(text).slice(0, 120) };
+        out.toolTest = { ok: true, ms: Date.now() - t1, calls, reply: String(text).slice(0, 120) };
       } catch (e) {
-        out.toolTest = { ok: false, status: e.status || null, message: String(e.message || e).replace(/AIza[0-9A-Za-z_\-]+/g, "AIza...").slice(0, 300) };
+        out.toolTest = { ok: false, ms: Date.now() - t1, status: e.status || null, message: String(e.message || e).replace(/AIza[0-9A-Za-z_\-]+/g, "AIza...").slice(0, 300) };
       }
     }
   }
-  if (out.openaiKey) {
-    try {
-      await openai({ instructions: "Reply with one word.", input: "hi", max_output_tokens: 16 });
-      out.openai = { ok: true };
-    } catch (e) {
-      out.openai = { ok: false, status: (e && e.status) || null, message: String((e && e.message) || e || "").replace(/sk-[A-Za-z0-9_\-]+/g, "sk-...").slice(0, 200) };
+  if (!req.query || !req.query.tools) {
+    if (out.openaiKey) {
+      try {
+        await openai({ instructions: "Reply with one word.", input: "hi", max_output_tokens: 16 });
+        out.openai = { ok: true };
+      } catch (e) {
+        out.openai = { ok: false, status: (e && e.status) || null, message: String((e && e.message) || e || "").replace(/sk-[A-Za-z0-9_\-]+/g, "sk-...").slice(0, 200) };
+      }
     }
   }
   return res.status(200).json(out);
