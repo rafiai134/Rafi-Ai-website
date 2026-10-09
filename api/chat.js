@@ -2,6 +2,7 @@ import {
   auth, config, openai, extractText, addAction, log,
   kvGet, kvSet, resolveContact, calcOrder, digits
 } from "./_lib.js";
+import { hasGemini, runGemini } from "./gemini.js";
 
 const PLATFORMS = {
   whatsapp: "https://web.whatsapp.com/",
@@ -374,7 +375,7 @@ async function localFallback(message, ui) {
     }
   }
 
-  const wantsSend = /send|بھیج|میسج|message|لکھ|کہو|بولو|پوچھ|ask|sms|ایس\s*ایم\s*ایس/i.test(message);
+  const wantsSend = /send|سینڈ|بھیج|میسج|میس|message|لکھ|کہو|بولو|پوچھ|\bask\b|sms|ایس\s*ایم\s*ایس/i.test(message);
   const siteHit = SITE_WORDS.find((s) => s.re.test(message));
 
   // Message into ChatGPT on the phone: open it, wait for it to load, type, press Send.
@@ -448,6 +449,12 @@ export default async function handler(req, res) {
   try {
     if (!message || typeof message !== "string") {
       return res.status(400).json({ error: "Message is required" });
+    }
+
+    // Google Gemini is the brain when its key is set (free tier); otherwise OpenAI; otherwise local controls.
+    if (hasGemini()) {
+      const text = await runGemini({ message, history, ui, runTool, instructions: INSTRUCTIONS, tools });
+      return res.status(200).json({ reply: text || "ٹھیک ہے۔", ui });
     }
 
     if (!config().openai) {
