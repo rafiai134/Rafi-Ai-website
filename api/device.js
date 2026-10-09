@@ -36,8 +36,15 @@ export default async function handler(req,res){
       if(x.status==="pending"&&now-(x.createdAt||0)>MAX_AGE_MS){ x.status="failed"; x.result="expired (phone was offline)"; x.finishedAt=now; changed=true; }
     }
     if(changed) await kvSet("device_queue",q);
-    // oldest first, so multi-step jobs (open app -> tap -> type) run in the order they were spoken
-    const pending=q.filter(x=>x.status==="pending").sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).slice(0,5);
+    // oldest first, so multi-step jobs (open app -> tap -> type) run in the order they were spoken.
+    // A step with a future runAfter holds back itself AND everything after it (lets the app/page load first).
+    const sorted=q.filter(x=>x.status==="pending").sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+    const pending=[];
+    for(const x of sorted){
+      if((x.runAfter||0)>now) break;
+      pending.push(x);
+      if(pending.length>=5) break;
+    }
     return res.status(200).json({commands:pending});
   }
 

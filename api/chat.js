@@ -126,7 +126,7 @@ const tools = [
   {
     type: "function",
     name: "device_command",
-    description: "Queue ONE command for the user's Android phone (Rafi AI Companion app). Commands: home, back, recents, notifications, open_app (appName like 'WhatsApp' or packageName), open_url (url), tap (x,y), tap_text (text = visible button/label), type_text (text), scroll, whatsapp_send (to = saved contact name or phone number, text = message). For multi-step jobs inside an app, call this several times in order: open_app, then tap_text / type_text / scroll. Never claim success until the device reports it.",
+    description: "Queue ONE command for the user's Android phone (Rafi AI Companion app). Commands: home, back, recents, notifications, open_app (appName like 'WhatsApp' or packageName), open_url (url), tap (x,y), tap_text (text = visible button/label), type_text (text), scroll, whatsapp_send (to = saved contact name or phone number, text = message). For multi-step jobs, call this several times in order and give each later step a delayMs (milliseconds from now) so the app/page can load first, e.g. open_url (0), type_text (delayMs 7000), tap_text 'Send' (delayMs 9500). Never claim success until the device reports it.",
     parameters: {
       type: "object",
       properties: {
@@ -135,7 +135,8 @@ const tools = [
         packageName: { type: "string" },
         url: { type: "string" },
         to: { type: "string" },
-        x: { type: "number" }, y: { type: "number" }, text: { type: "string" }
+        x: { type: "number" }, y: { type: "number" }, text: { type: "string" },
+        delayMs: { type: "number" }
       },
       required: ["command"]
     }
@@ -161,8 +162,12 @@ async function queueDevice(command, args) {
 
   const num = (v) => (Number.isFinite(Number(v)) && v !== null && v !== undefined ? Number(v) : null);
   const q = await kvGet("device_queue", []);
+  const now = Date.now();
+  const delay = Math.min(Math.max(Number(args.delayMs) || 0, 0), 60000);
+  // strictly increasing createdAt so the phone always runs steps in the order they were queued
+  const newest = q.reduce((mx, x) => Math.max(mx, x.createdAt || 0), 0);
   const item = {
-    id: "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id: "d" + now.toString(36) + Math.random().toString(36).slice(2, 6),
     command,
     args: {
       packageName: args.packageName || null,
@@ -174,11 +179,12 @@ async function queueDevice(command, args) {
       text: args.text ? String(args.text).slice(0, 2000) : null
     },
     status: "pending",
-    createdAt: Date.now()
+    createdAt: Math.max(now, newest + 1),
+    runAfter: delay ? now + delay : 0
   };
   q.unshift(item);
   await kvSet("device_queue", q.slice(0, 80));
-  await log("Android command queued: " + command + (args.appName ? " " + args.appName : "") + (args.url ? " " + args.url : ""), "device");
+  await log("Android command queued: " + command + (args.appName ? " " + args.appName : "") + (args.url ? " " + args.url : "") + (delay ? " (+" + Math.round(delay / 1000) + "s)" : ""), "device");
   const persistent = config().storage;
   return {
     ok: true,
@@ -274,8 +280,9 @@ Rules:
 - PHONE CONTROL: the owner's Android phone is controlled through the installed Rafi AI Companion. ANY request about the phone (open/turn on/launch an app or website, home, back, recents, notifications, tap, type, scroll, dark mode, WhatsApp on the phone) MUST use device_command. Never answer such a request with delegate_agent or open_platform, and never just say a task was given to an agent.
   * "open WhatsApp / YouTube / Gmail / Chrome / any installed app" (also: "WhatsApp on karo", "WhatsApp kholo") -> open_app with appName.
   * "open a website" (ChatGPT https://chatgpt.com, Alibaba https://www.alibaba.com, Shopify https://admin.shopify.com, any other site) -> open_url with the full url.
-  * "send WhatsApp message X to person Y" -> device_command whatsapp_send (to = contact name or number, text = the message exactly as the owner said). The owner's own spoken command is the approval for phone actions. If the contact is unknown, ask for the number with country code, then save_contact.
-  * actions inside an app -> several device_command calls in order: open_app, then tap_text (visible button text), type_text, scroll, back.
+  * "send WhatsApp message X to person Y" -> device_command whatsapp_send (to = contact name or number, text = the message exactly as the owner said). The owner's own spoken command is the approval for phone actions. If the contact is unknown, ask for the number with country code once, then save_contact so next time the name is enough.
+  * "write/ask something in ChatGPT" -> open_url https://chatgpt.com/ (delayMs 0), then type_text with the message (delayMs 7000), then tap_text "Send" (delayMs 9500).
+  * other actions inside an app -> several device_command calls in order with increasing delayMs: open_app, then tap_text (visible button text), type_text, scroll, back.
   * Say briefly what you queued. The phone reports back afterwards; never claim success before that. If the tool says the bridge is not configured or that only temporary memory is used, tell the owner honestly.
 - Never place orders or make payments, and never type passwords, card numbers or OTP codes on the phone. Never ask for passwords or API keys.
 - For profit questions call calc_order and mention fees and any warning.
@@ -304,6 +311,14 @@ const SITE_WORDS = [
   { re: /google\s*maps|\bmaps\b|میپس|نقشہ/i, name: "Maps", url: PLATFORMS.maps }
 ];
 
+/* Pull the message text out of a spoken command: quoted text, or what follows a verb like "write/say/ask" or a colon */
+function extractMessageText(message) {
+  const q = String(message).match(/["“«]([^"”»]+)["”»]/);
+  if (q) return q[1].trim();
+  const t = String(message).match(/(?:لکھ دو|لکھو|لکھیں|کہہ دو|کہو|بولو|پوچھو|پوچھیں|likho|bolo|poocho|ask|saying|that|:)\s*(.+)$/i);
+  return t ? t[1].trim() : null;
+}
+
 async function localFallback(message, ui) {
   const m = String(message || "").toLowerCase();
   const pushAgent = async (agent, task) => {
@@ -322,34 +337,73 @@ async function localFallback(message, ui) {
     const extra = r.persistent ? "" : " (خبردار: Redis ڈیٹا بیس جڑا نہیں، اس لیے فون کو شاید کمانڈ نہ پہنچے۔)";
     return { reply: okText + extra, tool: r, ui };
   };
+  // Several phone steps in order; each step's delay (ms) is added to the previous one.
+  const macro = async (steps, okText) => {
+    let acc = 0, last = null;
+    for (const s of steps) {
+      acc += s.delay || 0;
+      last = await queueDevice(s.command, { ...s.args, delayMs: acc });
+      if (!last.ok) return { reply: "فون کی کمانڈ نہیں بھیج سکا: " + last.note, tool: last, ui };
+    }
+    ui.push({ type: "agent_move", agent: "core", task: "Phone: " + steps.map((s) => s.command).join(" > ") });
+    return { reply: okText, tool: last, ui };
+  };
+  const normNum = (n) => {
+    let d = String(n).replace(/[^\d]/g, "");
+    if (/^0\d{10}$/.test(d)) d = "92" + d.slice(1);
+    return d;
+  };
 
   if (/\bhome\b|گھر|ہوم/.test(m)) return dev("home", {}, "فون کو Home پر بھیج رہا ہوں۔");
   if (/\bback\b|واپس|بیک/.test(m)) return dev("back", {}, "فون پر Back کمانڈ بھیج رہا ہوں۔");
   if (/recents|recent apps|حالیہ ایپس|ریسنٹ/.test(m)) return dev("recents", {}, "Recent Apps کمانڈ بھیج رہا ہوں۔");
   if (/notification|notifications|نوٹیفکیشن/.test(m)) return dev("notifications", {}, "Notifications کھولنے کی کمانڈ بھیج رہا ہوں۔");
 
-  const wantsSend = /send|بھیج|میسج|message|لکھ|کہو|sms|ایس\s*ایم\s*ایس/i.test(message);
+  // Save a contact once: "علی کا نمبر 03001234567 محفوظ کرو" -> later "علی کو لکھو: سلام" works by name.
+  if (/محفوظ|save|یاد رکھ/i.test(message)) {
+    const sm = message.match(/(.+?)\s*(?:کا|کی|ka|ki)?\s*(?:نمبر|number)\s*[:：]?\s*(\+?\d[\d\s\-]{7,}\d)/i);
+    if (sm) {
+      const name = sm[1].replace(/whats\s*app|واٹس\s*ایپ|پر|save|contact|کانٹیکٹ|رافی|rafi/gi, "").trim();
+      if (name) {
+        const contacts = (await kvGet("contacts", {})) || {};
+        contacts[name] = normNum(sm[2]);
+        await kvSet("contacts", contacts);
+        await log("Contact saved: " + name, "whatsapp");
+        return { reply: name + " کا نمبر محفوظ کر لیا۔ اب نام سے پیغام بھیج سکتا ہوں۔", ui };
+      }
+    }
+  }
 
-  // WhatsApp message from the phone: needs a number (or saved contact) and the text.
+  const wantsSend = /send|بھیج|میسج|message|لکھ|کہو|بولو|پوچھ|ask|sms|ایس\s*ایم\s*ایس/i.test(message);
+  const siteHit = SITE_WORDS.find((s) => s.re.test(message));
+
+  // Message into ChatGPT on the phone: open it, wait for it to load, type, press Send.
+  if (wantsSend && siteHit && siteHit.name === "ChatGPT") {
+    const text = extractMessageText(message);
+    if (!text) return { reply: "ChatGPT میں لکھنے کے لیے متن بھی بتائیں۔ مثال: چیٹ جی پی ٹی میں لکھو: پاکستان کا دارالحکومت کیا ہے", ui };
+    return macro([
+      { command: "open_url", args: { url: PLATFORMS.chatgpt }, delay: 0 },
+      { command: "type_text", args: { text }, delay: 7000 },
+      { command: "tap_text", args: { text: "Send" }, delay: 2500 }
+    ], "ChatGPT فون پر کھول کر پیغام لکھ رہا ہوں، تقریباً دس سیکنڈ لگیں گے۔");
+  }
+
+  // WhatsApp message from the phone: needs a number (or a saved contact name) and the text.
   if (wantsSend && /whats\s*app|واٹس|व्हाट्स|میسج|message|sms|ایس\s*ایم\s*ایس/i.test(message)) {
     const contacts = (await kvGet("contacts", {})) || {};
     let to = null;
     const numM = message.match(/\+?\d[\d\s\-]{7,}\d/);
-    if (numM) to = numM[0].replace(/[^\d]/g, "");
+    if (numM) to = normNum(numM[0]);
     if (!to) {
       const nm = Object.keys(contacts).find((n) => n && m.includes(String(n).toLowerCase()));
       if (nm) to = nm;
     }
-    let text = null;
-    const q = message.match(/["“«]([^"”»]+)["”»]/);
-    if (q) text = q[1].trim();
-    else {
-      const t = message.match(/(?:لکھ دو|لکھو|لکھیں|کہہ دو|کہو|بولو|likho|bolo|saying|that|:)\s*(.+)$/i);
-      if (t) text = t[1].trim();
-    }
+    const text = extractMessageText(message);
     if (to && text) return dev("whatsapp_send", { to, text }, "واٹس ایپ پیغام فون سے بھیجنے کی کمانڈ بھیج رہا ہوں۔");
+    if (!to && text) return { reply: "یہ نام میرے پاس محفوظ نہیں۔ ایک بار لکھیں: علی کا نمبر 03001234567 محفوظ کرو۔ پھر ہمیشہ نام سے پیغام بھیج دوں گا۔", ui };
+    if (to && !text) return { reply: "پیغام کا متن بھی بتائیں۔ مثال: واٹس ایپ پر علی کو لکھو: سلام", ui };
     return {
-      reply: "پیغام بھیجنے کے لیے نمبر (ملک کے کوڈ کے ساتھ) اور متن چاہیے۔ مثال: واٹس ایپ پر 923001234567 کو لکھو: سلام، کیسے ہیں",
+      reply: "پہلے نمبر محفوظ کریں: علی کا نمبر 03001234567 محفوظ کرو۔ پھر لکھیں: واٹس ایپ پر علی کو لکھو: سلام",
       ui
     };
   }
@@ -359,15 +413,14 @@ async function localFallback(message, ui) {
   if (app && !wantsSend) return dev("open_app", { appName: app.name }, app.name + " فون پر کھول رہا ہوں۔");
 
   // Websites -> open in the phone's browser through the companion app.
-  const site = SITE_WORDS.find((s) => s.re.test(message));
-  if (site && !wantsSend) return dev("open_url", { url: site.url }, site.name + " فون کے براؤزر میں کھول رہا ہوں۔");
+  if (siteHit && !wantsSend) return dev("open_url", { url: siteHit.url }, siteHit.name + " فون کے براؤزر میں کھول رہا ہوں۔");
 
   if (/supplier|سپلائر|alibaba|علی بابا/.test(m)) { const t = await pushAgent("supplier", message); return { reply: "Supplier Agent کو task دے دیا ہے۔", taskId: t.id, ui }; }
   if (/shopify|store|اسٹور|شاپفائی/.test(m)) { const t = await pushAgent("shopify", message); return { reply: "Shopify Agent کو task دے دیا ہے۔", taskId: t.id, ui }; }
   if (/agent|ایجنٹ|delegate|کام کرو|task/.test(m)) { const t = await pushAgent("core", message); return { reply: "Rafi Core نے task queue میں ڈال دیا ہے۔", taskId: t.id, ui }; }
   const hit = Object.keys(PLATFORMS).find(k => m.includes(k));
   if (hit && /open|کھولو|کھول/.test(m)) { ui.push({ type: "open", label: hit, url: PLATFORMS[hit] }); await log("Local fallback opening " + hit, "core"); return { reply: hit + " کھولنے کا لنک تیار ہے۔", ui }; }
-  return { reply: "یہ کمانڈ سمجھنے کے لیے AI سروس چاہیے۔ فی الحال یہ کام کرتے ہیں: Home، Back، ایپ کھولنا، ویب سائٹ کھولنا، اور واٹس ایپ پیغام (نمبر اور متن کے ساتھ)۔", ui, generic: false };
+  return { reply: "یہ کمانڈ سمجھنے کے لیے AI سروس چاہیے۔ فی الحال یہ کام کرتے ہیں: Home، Back، ایپ کھولنا، ویب سائٹ کھولنا، ChatGPT میں لکھنا، اور واٹس ایپ پیغام (نمبر یا محفوظ نام کے ساتھ)۔", ui, generic: false };
 }
 
 /* Call OpenAI; if the configured model is not available to this key, retry once with gpt-4.1 */
