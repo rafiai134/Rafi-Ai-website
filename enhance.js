@@ -71,7 +71,7 @@
     load('/office.js?v=3',function(){
       load('/greeting.js?v=4',function(){
         load('/voicefix.js?v=1',function(){
-          load('/camera.js?v=1');
+          load('/camera.js?v=2');
         });
       });
     });
