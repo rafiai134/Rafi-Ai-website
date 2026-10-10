@@ -20,17 +20,22 @@ public class MainActivity extends android.app.Activity {
         super.onCreate(state);
         SharedPreferences p = getSharedPreferences(PREFS, MODE_PRIVATE);
 
+        // contacts permission so Rafi can message people by saved name
+        if (checkSelfPermission(android.Manifest.permission.READ_CONTACTS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.READ_CONTACTS}, 1);
+        }
+
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(32, 32, 32, 32);
 
         TextView title = new TextView(this);
-        title.setText("Rafi AI Companion");
+        title.setText("Rafi AI Companion 1.2");
         title.setTextSize(26);
         root.addView(title);
 
         TextView info = new TextView(this);
-        info.setText("Enter the Rafi AI server URL and device token, save them, then enable Rafi AI Companion in Android Accessibility settings.");
+        info.setText("Enter the Rafi AI server URL and device token, save them, allow Contacts, then enable Rafi AI Companion in Android Accessibility settings.");
         root.addView(info);
 
         EditText server = new EditText(this);
