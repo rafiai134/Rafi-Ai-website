@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rafi AI - میری کہانی</title>
+<style>
+  body{margin:0;background:#050b14;color:#d7f3ff;font:16px/1.7 system-ui,sans-serif;padding:16px}
+  h1{font-size:20px;color:#3de0ff;margin:6px 0 4px}
+  p{margin:6px 0;opacity:.85}
+  textarea{width:100%;min-height:55vh;box-sizing:border-box;background:#06121d;color:#d7f3ff;border:1px solid #1d4f66;border-radius:12px;padding:12px;font:16px/1.7 system-ui,sans-serif}
+  button{margin-top:10px;padding:12px 20px;border-radius:12px;border:1px solid #3de0ff;background:#0b2a3b;color:#9be9ff;font:600 16px system-ui}
+  #msg{margin-top:10px;min-height:22px}
+  a{color:#3de0ff}
+</style>
+</head>
+<body>
+<h1>Rafi AI — میری پوری کہانی</h1>
+<p>یہاں اپنے بارے میں سب کچھ لکھ کر Save دبائیں۔ یہ صرف آپ کے پرائیویٹ ڈیٹا بیس میں محفوظ ہوگا، کوڈ میں نہیں۔</p>
+<textarea id="t" placeholder="میرا نام، خاندان، شہر، تعلیم، کام…"></textarea>
+<button id="s">Save</button>
+<div id="msg"></div>
+<p><a href="/">← Rafi AI</a></p>
+<script>
+(function(){
+  var token='';
+  try{ token=localStorage.getItem('rafi_token')||''; }catch(e){}
+  var t=document.getElementById('t'), m=document.getElementById('msg'), s=document.getElementById('s');
+  function call(method,body){
+    return fetch('/api/profile',{method:method,headers:{'Content-Type':'application/json','x-admin-token':token},body:body?JSON.stringify(body):undefined}).then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});});
+  }
+  if(!token){ m.textContent='پہلے Rafi AI صفحہ پر ٹوکن سے لاگ ان کریں، پھر یہاں آئیں۔'; }
+  else call('GET').then(function(r){ if(r.ok && r.j.text){ t.value=r.j.text; m.textContent='پچھلی محفوظ کہانی لوڈ ہو گئی۔'; } });
+  s.addEventListener('click',function(){
+    if(!t.value.trim()){ m.textContent='پہلے کچھ لکھیں۔'; return; }
+    m.textContent='محفوظ ہو رہا ہے…';
+    call('POST',{text:t.value}).then(function(r){
+      m.textContent = r.ok ? '✅ محفوظ ہو گیا ('+r.j.length+' حروف)۔ اب Rafi آپ کو جانتا ہے۔' : ('خرابی: '+(r.j.error||r.status));
+    }).catch(function(){ m.textContent='نیٹ ورک کا مسئلہ۔'; });
+  });
+})();
+</script>
+</body>
+</html>
