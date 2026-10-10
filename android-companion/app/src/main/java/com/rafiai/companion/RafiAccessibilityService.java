@@ -158,7 +158,18 @@ public class RafiAccessibilityService extends AccessibilityService {
                 } else result = "app not found (give appName or packageName)";
             } else if ("whatsapp_send".equals(name)) {
                 String phone = s(args, "phone").replaceAll("[^0-9]", "");
+                String contactName = s(args, "contactName");
                 String text = s(args, "text");
+                if (phone.isEmpty() && !contactName.isEmpty()) {
+                    phone = ContactResolver.find(this, contactName);
+                    if (phone.isEmpty()) {
+                        result = "contact not found on this phone (or Contacts permission not allowed): " + contactName;
+                        text = "";
+                        contactName = "";
+                        if (!id.isEmpty()) postResult(id, "failed", result);
+                        return;
+                    }
+                }
                 if (phone.isEmpty() || text.isEmpty()) {
                     result = "phone and text are required";
                 } else {
