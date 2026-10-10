@@ -54,6 +54,17 @@ export async function geminiPing() {
   }
 }
 
+/* Plain text generation (used for camera vision: contents may include inlineData images). */
+export async function geminiGenerate({ system, contents, maxOutputTokens = 1024 }) {
+  const data = await callGemini({
+    systemInstruction: { parts: [{ text: system }] },
+    contents,
+    generationConfig: { maxOutputTokens }
+  });
+  const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+  return parts.map((p) => p.text || "").join("").trim();
+}
+
 export async function runGemini({ message, history, ui, runTool, instructions, tools }) {
   const declarations = tools.map((t) => ({ name: t.name, description: t.description, parameters: toGeminiSchema(t.parameters) }));
 

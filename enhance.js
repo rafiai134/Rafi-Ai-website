@@ -60,7 +60,7 @@
   }
 })();
 
-/* load order: voice.js -> office.js -> greeting.js -> voicefix.js (each after the previous one) */
+/* load order: voice.js -> office.js -> greeting.js -> voicefix.js -> camera.js (each after the previous one) */
 (function(){
   function load(src,next){
     var s=document.createElement('script'); s.src=src;
@@ -70,7 +70,9 @@
   load('/voice.js?v=1',function(){
     load('/office.js?v=3',function(){
       load('/greeting.js?v=4',function(){
-        load('/voicefix.js?v=1');
+        load('/voicefix.js?v=1',function(){
+          load('/camera.js?v=1');
+        });
       });
     });
   });
