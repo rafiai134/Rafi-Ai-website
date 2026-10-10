@@ -3,6 +3,7 @@ import {
   kvGet, kvSet, resolveContact, calcOrder, digits
 } from "./_lib.js";
 import { hasGemini, runGemini } from "./gemini.js";
+import { buildSystem } from "./_profile.js";
 
 const PLATFORMS = {
   whatsapp: "https://web.whatsapp.com/",
@@ -127,7 +128,7 @@ const tools = [
   {
     type: "function",
     name: "device_command",
-    description: "Queue ONE command for the user's Android phone (Rafi AI Companion app). Commands: home, back, recents, notifications, open_app (appName like 'WhatsApp' or packageName), open_url (url), tap (x,y), tap_text (text = visible button/label), type_text (text), scroll, whatsapp_send (to = saved contact name or phone number, text = message). For multi-step jobs, call this several times in order and give each later step a delayMs (milliseconds from now) so the app/page can load first, e.g. open_url (0), type_text (delayMs 7000), tap_text 'Send' (delayMs 9500). Never claim success until the device reports it.",
+    description: "Queue ONE command for the user's Android phone (Rafi AI Companion app). Commands: home, back, recents, notifications, open_app (appName like 'WhatsApp' or packageName), open_url (url), tap (x,y), tap_text (text = visible button/label), type_text (text), scroll, whatsapp_send (to = contact name as the owner says it, OR a phone number with country code; text = message). The phone itself looks names up in its own contacts. For multi-step jobs, call this several times in order and give each later step a delayMs (milliseconds from now) so the app/page can load first, e.g. open_url (0), type_text (delayMs 7000), tap_text 'Send' (delayMs 9500). Never claim success until the device reports it.",
     parameters: {
       type: "object",
       properties: {
@@ -140,6 +141,25 @@ const tools = [
         delayMs: { type: "number" }
       },
       required: ["command"]
+    }
+  },
+  {
+    type: "function",
+    name: "look_camera",
+    description: "Look at the owner through his device camera (the website opens the camera preview, takes ONE picture and answers). Use when he says things like 'look at me', 'what do you see', 'how do I look', or asks you to check his camera. question = what to look for (optional).",
+    parameters: {
+      type: "object",
+      properties: { question: { type: "string" } }
+    }
+  },
+  {
+    type: "function",
+    name: "remember_fact",
+    description: "Save something about the owner's life, family, work, plans or preferences so you remember it in every future conversation. Use when he tells you something personal or says 'remember this'. fact = one short sentence.",
+    parameters: {
+      type: "object",
+      properties: { fact: { type: "string" } },
+      required: ["fact"]
     }
   }
 ];
@@ -154,11 +174,14 @@ async function queueDevice(command, args) {
   if ((command === "tap_text" || command === "type_text") && !args.text) return { ok: false, note: "text is required." };
 
   let phone = null;
+  let contactName = null;
   if (command === "whatsapp_send") {
     if (!args.text) return { ok: false, note: "text is required." };
-    const c = await resolveContact(args.to || args.phone || "");
-    if (!c || !c.phone) return { ok: false, note: `No saved contact or number for "${args.to || ""}". Ask the user for the phone number with country code.` };
-    phone = digits(c.phone);
+    const who = String(args.to || args.phone || "").trim();
+    if (!who) return { ok: false, note: "Who should the message go to? (contact name or number)" };
+    const c = await resolveContact(who);
+    if (c && c.phone) phone = digits(c.phone);
+    else contactName = who.slice(0, 80); // the phone looks this name up in its own contacts
   }
 
   const num = (v) => (Number.isFinite(Number(v)) && v !== null && v !== undefined ? Number(v) : null);
@@ -175,6 +198,7 @@ async function queueDevice(command, args) {
       appName: args.appName || null,
       url: args.url || null,
       phone,
+      contactName,
       x: num(args.x),
       y: num(args.y),
       text: args.text ? String(args.text).slice(0, 2000) : null
@@ -185,7 +209,7 @@ async function queueDevice(command, args) {
   };
   q.unshift(item);
   await kvSet("device_queue", q.slice(0, 80));
-  await log("Android command queued: " + command + (args.appName ? " " + args.appName : "") + (args.url ? " " + args.url : "") + (delay ? " (+" + Math.round(delay / 1000) + "s)" : ""), "device");
+  await log("Android command queued: " + command + (args.appName ? " " + args.appName : "") + (args.url ? " " + args.url : "") + (contactName ? " to " + contactName : "") + (delay ? " (+" + Math.round(delay / 1000) + "s)" : ""), "device");
   const persistent = config().storage;
   return {
     ok: true,
@@ -261,6 +285,19 @@ async function runTool(name, args, ui) {
       }
       return r;
     }
+    case "look_camera": {
+      ui.push({ type: "camera", question: String(args.question || "").slice(0, 300) });
+      return { ok: true, note: "The website will open the camera preview, take one picture and answer by itself. Just tell the owner briefly that you are looking." };
+    }
+    case "remember_fact": {
+      const fact = String(args.fact || "").trim().slice(0, 300);
+      if (!fact) return { error: "fact is required" };
+      const memory = await kvGet("memory", []);
+      memory.unshift({ fact, t: Date.now() });
+      await kvSet("memory", memory.slice(0, 100));
+      await log("Remembered: " + fact.slice(0, 60), "core");
+      return { ok: true };
+    }
     case "calc_order": {
       const r = calcOrder(args);
       return r || { error: "Invalid numbers" };
@@ -271,20 +308,23 @@ async function runTool(name, args, ui) {
 }
 
 const INSTRUCTIONS = `
-You are Rafi AI, the personal assistant and business agent of the owner (dropshipping: Alibaba suppliers, Shopify store, WhatsApp).
+You are Rafi AI, the personal assistant, companion and business agent of the owner (dropshipping: Alibaba suppliers, Shopify store, WhatsApp).
 Reply in the language the user speaks. Default to Urdu script for Urdu/Roman-Urdu; Hindi speech -> answer in Urdu script unless asked otherwise.
 Replies are read aloud, so keep them short (1-3 sentences) unless asked for detail.
+You know the owner personally (see the profile below). Use that knowledge naturally; do not recite it.
 
 Rules:
 - Use tools for actions. Website/dashboard messages, supplier messages and Shopify listings only go into the approval queue. Tell the user they must tap APPROVE. Never say something was sent/created before approval.
 - You cannot read live Alibaba results, prices, stock or shipping. Never invent them. Give the search link and ask the user for supplier details.
 - PHONE CONTROL: the owner's Android phone is controlled through the installed Rafi AI Companion. ANY request about the phone (open/turn on/launch an app or website, home, back, recents, notifications, tap, type, scroll, dark mode, WhatsApp on the phone) MUST use device_command. Never answer such a request with delegate_agent or open_platform, and never just say a task was given to an agent.
-  * "open WhatsApp / YouTube / Gmail / Chrome / any installed app" (also: "WhatsApp on karo", "WhatsApp kholo") -> open_app with appName.
+  * "open WhatsApp / YouTube / Gmail / Chrome / Camera / Gallery / Settings / any installed app" -> open_app with appName (English app name).
   * "open a website" (ChatGPT https://chatgpt.com, Alibaba https://www.alibaba.com, Shopify https://admin.shopify.com, any other site) -> open_url with the full url.
-  * "send WhatsApp message X to person Y" -> device_command whatsapp_send (to = contact name or number, text = the message exactly as the owner said). The owner's own spoken command is the approval for phone actions. If the contact is unknown, ask for the number with country code once, then save_contact so next time the name is enough.
+  * "send WhatsApp message X to person Y" -> device_command whatsapp_send (to = the contact name exactly as the owner said it, or a number; text = the message as the owner said). The phone looks the name up in its own contacts, so NEVER ask the owner for a number just because the name is not saved here. The owner's own spoken command is the approval for phone actions.
   * "write/ask something in ChatGPT" -> open_url https://chatgpt.com/ (delayMs 0), then type_text with the message (delayMs 7000), then tap_text "Send" (delayMs 9500).
   * other actions inside an app -> several device_command calls in order with increasing delayMs: open_app, then tap_text (visible button text), type_text, scroll, back.
   * Say briefly what you queued. The phone reports back afterwards; never claim success before that. If the tool says the bridge is not configured or that only temporary memory is used, tell the owner honestly.
+- CAMERA: if the owner asks you to look at him / check what you see, call look_camera. You only see through the camera when he has switched it on; never claim to watch him otherwise.
+- MEMORY: when the owner tells you something about his life or asks you to remember something, call remember_fact.
 - Never place orders or make payments, and never type passwords, card numbers or OTP codes on the phone. Never ask for passwords or API keys.
 - For profit questions call calc_order and mention fees and any warning.
 `;
@@ -296,6 +336,7 @@ const APP_WORDS = [
   { re: /chrome|کروم/i, name: "Chrome" },
   { re: /gmail|جی\s*میل/i, name: "Gmail" },
   { re: /camera|کیمرہ|کیمرا/i, name: "Camera" },
+  { re: /gallery|گیلری/i, name: "Gallery" },
   { re: /settings|سیٹنگ/i, name: "Settings" },
   { re: /instagram|انسٹاگرام/i, name: "Instagram" },
   { re: /facebook|فیس\s*بک/i, name: "Facebook" },
@@ -320,8 +361,12 @@ function extractMessageText(message) {
   return t ? t[1].trim() : null;
 }
 
-async function localFallback(message, ui) {
+/* phoneOnly=true: only clear, deterministic phone commands are handled here (fast, no AI needed);
+   anything else returns {unknown:true} so the AI can handle it. */
+async function localFallback(message, ui, phoneOnly = false) {
   const m = String(message || "").toLowerCase();
+  const short = String(message || "").trim().length <= 45;
+  const UNKNOWN = { unknown: true, reply: "", ui };
   const pushAgent = async (agent, task) => {
     const tasks = await kvGet("agent_tasks", []);
     const item = { id: "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), agent, task: String(task).slice(0, 500), status: "queued", createdAt: Date.now() };
@@ -355,10 +400,18 @@ async function localFallback(message, ui) {
     return d;
   };
 
-  if (/\bhome\b|گھر|ہوم/.test(m)) return dev("home", {}, "فون کو Home پر بھیج رہا ہوں۔");
-  if (/\bback\b|واپس|بیک/.test(m)) return dev("back", {}, "فون پر Back کمانڈ بھیج رہا ہوں۔");
-  if (/recents|recent apps|حالیہ ایپس|ریسنٹ/.test(m)) return dev("recents", {}, "Recent Apps کمانڈ بھیج رہا ہوں۔");
-  if (/notification|notifications|نوٹیفکیشن/.test(m)) return dev("notifications", {}, "Notifications کھولنے کی کمانڈ بھیج رہا ہوں۔");
+  // "Look at me" -> the website opens the camera and answers with what it sees.
+  if (/(?:مجھے|مجھ کو|میری طرف|مجھ پر)\s*(?:دیکھو|دیکھ)|کیمرے\s*سے\s*دیکھو|کیمرہ\s*دیکھو|کیمرے\s*میں\s*دیکھو|look at me|what do you see/i.test(message)) {
+    ui.push({ type: "camera", question: "" });
+    return { reply: "ٹھیک ہے سر، کیمرہ کھول کر دیکھ رہا ہوں۔", ui };
+  }
+
+  if (short || !phoneOnly) {
+    if (/\bhome\b|گھر|ہوم/.test(m)) return dev("home", {}, "فون کو Home پر بھیج رہا ہوں۔");
+    if (/\bback\b|واپس|بیک/.test(m)) return dev("back", {}, "فون پر Back کمانڈ بھیج رہا ہوں۔");
+    if (/recents|recent apps|حالیہ ایپس|ریسنٹ/.test(m)) return dev("recents", {}, "Recent Apps کمانڈ بھیج رہا ہوں۔");
+    if (/notification|notifications|نوٹیفکیشن/.test(m)) return dev("notifications", {}, "Notifications کھولنے کی کمانڈ بھیج رہا ہوں۔");
+  }
 
   // Save a contact once: "علی کا نمبر 03001234567 محفوظ کرو" -> later "علی کو لکھو: سلام" works by name.
   if (/محفوظ|save|یاد رکھ/i.test(message)) {
@@ -381,7 +434,10 @@ async function localFallback(message, ui) {
   // Message into ChatGPT on the phone: open it, wait for it to load, type, press Send.
   if (wantsSend && siteHit && siteHit.name === "ChatGPT") {
     const text = extractMessageText(message);
-    if (!text) return { reply: "ChatGPT میں لکھنے کے لیے متن بھی بتائیں۔ مثال: چیٹ جی پی ٹی میں لکھو: پاکستان کا دارالحکومت کیا ہے", ui };
+    if (!text) {
+      if (phoneOnly) return UNKNOWN;
+      return { reply: "ChatGPT میں لکھنے کے لیے متن بھی بتائیں۔ مثال: چیٹ جی پی ٹی میں لکھو: پاکستان کا دارالحکومت کیا ہے", ui };
+    }
     return macro([
       { command: "open_url", args: { url: PLATFORMS.chatgpt }, delay: 0 },
       { command: "type_text", args: { text }, delay: 7000 },
@@ -401,6 +457,7 @@ async function localFallback(message, ui) {
     }
     const text = extractMessageText(message);
     if (to && text) return dev("whatsapp_send", { to, text }, "واٹس ایپ پیغام فون سے بھیجنے کی کمانڈ بھیج رہا ہوں۔");
+    if (phoneOnly) return UNKNOWN; // let the AI work out the contact name and the text
     if (!to && text) return { reply: "یہ نام میرے پاس محفوظ نہیں۔ ایک بار لکھیں: علی کا نمبر 03001234567 محفوظ کرو۔ پھر ہمیشہ نام سے پیغام بھیج دوں گا۔", ui };
     if (to && !text) return { reply: "پیغام کا متن بھی بتائیں۔ مثال: واٹس ایپ پر علی کو لکھو: سلام", ui };
     return {
@@ -411,17 +468,19 @@ async function localFallback(message, ui) {
 
   // Any phone app mentioned without sending words -> open that app on the phone.
   const app = APP_WORDS.find((a) => a.re.test(message));
-  if (app && !wantsSend) return dev("open_app", { appName: app.name }, app.name + " فون پر کھول رہا ہوں۔");
+  if (app && !wantsSend && (short || !phoneOnly)) return dev("open_app", { appName: app.name }, app.name + " فون پر کھول رہا ہوں۔");
 
   // Websites -> open in the phone's browser through the companion app.
-  if (siteHit && !wantsSend) return dev("open_url", { url: siteHit.url }, siteHit.name + " فون کے براؤزر میں کھول رہا ہوں۔");
+  if (siteHit && !wantsSend && (short || !phoneOnly)) return dev("open_url", { url: siteHit.url }, siteHit.name + " فون کے براؤزر میں کھول رہا ہوں۔");
+
+  if (phoneOnly) return UNKNOWN;
 
   if (/supplier|سپلائر|alibaba|علی بابا/.test(m)) { const t = await pushAgent("supplier", message); return { reply: "Supplier Agent کو task دے دیا ہے۔", taskId: t.id, ui }; }
   if (/shopify|store|اسٹور|شاپفائی/.test(m)) { const t = await pushAgent("shopify", message); return { reply: "Shopify Agent کو task دے دیا ہے۔", taskId: t.id, ui }; }
   if (/agent|ایجنٹ|delegate|کام کرو|task/.test(m)) { const t = await pushAgent("core", message); return { reply: "Rafi Core نے task queue میں ڈال دیا ہے۔", taskId: t.id, ui }; }
   const hit = Object.keys(PLATFORMS).find(k => m.includes(k));
   if (hit && /open|کھولو|کھول/.test(m)) { ui.push({ type: "open", label: hit, url: PLATFORMS[hit] }); await log("Local fallback opening " + hit, "core"); return { reply: hit + " کھولنے کا لنک تیار ہے۔", ui }; }
-  return { reply: "یہ کمانڈ سمجھنے کے لیے AI سروس چاہیے۔ فی الحال یہ کام کرتے ہیں: Home، Back، ایپ کھولنا، ویب سائٹ کھولنا، ChatGPT میں لکھنا، اور واٹس ایپ پیغام (نمبر یا محفوظ نام کے ساتھ)۔", ui, generic: false };
+  return { unknown: true, reply: "یہ کمانڈ سمجھنے کے لیے AI سروس چاہیے۔ فی الحال یہ کام کرتے ہیں: Home، Back، ایپ کھولنا، ویب سائٹ کھولنا، ChatGPT میں لکھنا، اور واٹس ایپ پیغام (نمبر یا محفوظ نام کے ساتھ)۔", ui };
 }
 
 /* Call OpenAI; if the configured model is not available to this key, retry once with gpt-4.1 */
@@ -453,13 +512,23 @@ export default async function handler(req, res) {
 
     // Google Gemini is the brain when its key is set (free tier); otherwise OpenAI; otherwise local controls.
     if (hasGemini()) {
-      const text = await runGemini({ message, history, ui, runTool, instructions: INSTRUCTIONS, tools });
+      // Clear, simple phone commands run instantly without waiting for the AI.
+      const quick = await localFallback(message, ui, true);
+      if (quick && !quick.unknown) return res.status(200).json(quick);
+
+      let memory = [];
+      try { memory = await kvGet("memory", []); } catch (e) { /* ignore */ }
+      const text = await runGemini({ message, history, ui, runTool, instructions: buildSystem(INSTRUCTIONS, memory), tools });
       return res.status(200).json({ reply: text || "ٹھیک ہے۔", ui });
     }
 
     if (!config().openai) {
       return res.status(200).json(await localFallback(message, ui));
     }
+
+    let memory = [];
+    try { memory = await kvGet("memory", []); } catch (e) { /* ignore */ }
+    const instructions = buildSystem(INSTRUCTIONS, memory);
 
     const past = Array.isArray(history)
       ? history
@@ -472,7 +541,7 @@ export default async function handler(req, res) {
     let reply = "";
 
     for (let i = 0; i < 8; i++) {
-      const data = await callAI({ instructions: INSTRUCTIONS, input, tools });
+      const data = await callAI({ instructions, input, tools });
       const calls = (data.output || []).filter((o) => o.type === "function_call");
 
       if (!calls.length) {
@@ -493,13 +562,15 @@ export default async function handler(req, res) {
   } catch (e) {
     console.error("chat error", e);
     // Never return a 500 to the UI: fall back to local controls. Phone commands work without AI credit.
-    const detail = String((e && e.message) || e || "unknown").slice(0, 160);
+    const detail = String((e && e.message) || e || "unknown").replace(/AIza[0-9A-Za-z_\-]+/g, "AIza...").slice(0, 160);
     const reason = e && (e.status === 429 || e.status === 402)
       ? "AI credit/limit unavailable. Local Rafi controls remain online."
       : "AI service unavailable. Local Rafi controls remain online.";
     let fallback = { reply: "", ui };
     try { fallback = await localFallback(message, ui); } catch (e2) { console.error("fallback error", e2); }
-    const reply = fallback.reply || ("AI سروس جواب نہیں دے رہی۔ وجہ: " + detail);
+    const reply = fallback.unknown || !fallback.reply
+      ? "AI سروس جواب نہیں دے رہی۔ وجہ: " + detail
+      : fallback.reply;
     return res.status(200).json({
       reply,
       ui: fallback.ui || ui,
