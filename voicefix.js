@@ -2,7 +2,8 @@
    1) Nothing listens (and nothing beeps) until you say "Hello Rafi" or tap START AI.
       Android Chrome plays a system beep every time speech recognition (re)starts, so the
       always-on wake-word listener is OFF by default on phones. A "WAKE" switch turns it on.
-   2) "Hello Rafi" / tap  ->  Rafi answers "Yes sir"  ->  then the mic opens for the command. */
+   2) "Hello Rafi" / tap  ->  Rafi answers "Yes sir"  ->  then the mic opens for the command.
+   3) In conversation mode (talk.js) the mic reopens after Rafi speaks without "Yes sir". */
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
@@ -62,6 +63,7 @@
   window.startListening = function () {
     if (yesBusy) return;
     var args = arguments, self = this;
+    if (window.__quietListen) { window.__quietListen = false; return greetListen.apply(self, args); } // conversation: no "Yes sir"
     if (window.RafiGreeting && RafiGreeting.due()) return greetListen.apply(self, args); // full morning greeting
     yes(function () { greetListen.apply(self, args); });
   };
