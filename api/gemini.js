@@ -15,9 +15,39 @@ function toGeminiSchema(s) {
 
 export const hasGemini = () => Boolean(process.env.GEMINI_API_KEY);
 
+/* Google retires models often. Ask Google which models this key can use right now and try the newest flash ones. */
+let modelCache = { at: 0, list: [] };
+async function discoverModels(key) {
+  if (modelCache.list.length && Date.now() - modelCache.at < 10 * 60 * 1000) return modelCache.list;
+  try {
+    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", {
+      headers: { "x-goog-api-key": key },
+      signal: AbortSignal.timeout(8000)
+    });
+    const d = await r.json().catch(() => ({}));
+    const found = (d.models || [])
+      .filter((m) => (m.supportedGenerationMethods || []).includes("generateContent"))
+      .map((m) => String(m.name || "").replace(/^models\//, ""))
+      .filter((n) => /flash/i.test(n) && !/lite|image|tts|audio|live|embed|robot|computer|native|vision-only/i.test(n))
+      .map((n) => {
+        const v = /gemini-(\d+(?:\.\d+)?)/.exec(n);
+        return { n, v: v ? parseFloat(v[1]) : 0, pre: /preview|exp/i.test(n) ? 1 : 0 };
+      })
+      .sort((a, b) => b.v - a.v || a.pre - b.pre)
+      .map((x) => x.n);
+    if (found.length) {
+      modelCache = { at: Date.now(), list: found.slice(0, 4) };
+      return modelCache.list;
+    }
+  } catch (e) {}
+  return [];
+}
+
 async function callGemini(body) {
   const key = process.env.GEMINI_API_KEY;
-  const models = [process.env.GEMINI_MODEL, "gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash"].filter(Boolean);
+  const found = await discoverModels(key);
+  const models = [...new Set([process.env.GEMINI_MODEL, ...found, "gemini-3.8-flash", "gemini-flash-latest", "gemini-2.5-flash"].filter(Boolean))].slice(0, 6);
+  const errors = [];
   let lastErr;
   for (const model of models) {
     let r;
@@ -29,28 +59,37 @@ async function callGemini(body) {
         signal: AbortSignal.timeout(20000)
       });
     } catch (e) {
-      const err = new Error(`Gemini ${model} request failed or timed out: ${e && e.message}`);
+      const err = new Error(`${model}: request failed or timed out`);
       err.status = 504;
+      errors.push(err.message);
       lastErr = err;
       continue;
     }
     const data = await r.json().catch(() => ({}));
-    if (r.ok) return data;
-    const err = new Error(`[${model}] ` + ((data.error && data.error.message) || ("Gemini HTTP " + r.status)));
+    if (r.ok) {
+      if (modelCache.list[0] !== model && found.includes(model)) modelCache.list = [model, ...modelCache.list.filter((x) => x !== model)];
+      return data;
+    }
+    const msg = `${model}: ` + ((data.error && data.error.message) || ("HTTP " + r.status));
+    errors.push(msg.slice(0, 140));
+    const err = new Error(msg);
     err.status = r.status;
     lastErr = err;
+    modelCache.at = 0; // force re-discovery next time
     // try the next model on: missing model (404), bad request (400), quota/limit for this model (429), server trouble (5xx)
     if (![404, 400, 429, 500, 503].includes(r.status)) throw err;
   }
-  throw lastErr;
+  const all = new Error(errors.join(" | ").slice(0, 450));
+  all.status = lastErr && lastErr.status;
+  throw all;
 }
 
 export async function geminiPing() {
   try {
     await callGemini({ contents: [{ role: "user", parts: [{ text: "hi" }] }], generationConfig: { maxOutputTokens: 16 } });
-    return { ok: true };
+    return { ok: true, models: modelCache.list };
   } catch (e) {
-    return { ok: false, status: e.status || null, message: String(e.message || e).replace(/AIza[0-9A-Za-z_\-]+/g, "AIza...").slice(0, 300) };
+    return { ok: false, status: e.status || null, message: String(e.message || e).replace(/AIza[0-9A-Za-z_\-]+/g, "AIza...").slice(0, 450) };
   }
 }
 
