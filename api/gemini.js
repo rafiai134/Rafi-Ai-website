@@ -15,7 +15,7 @@ function toGeminiSchema(s) {
 
 export const hasGemini = () => Boolean(process.env.GEMINI_API_KEY);
 
-/* Google retires models often. Ask Google which models this key can use right now and try the newest flash ones. */
+/* Google retires models often. Ask Google which models this key can use right now and try them newest first. */
 let modelCache = { at: 0, list: [] };
 async function discoverModels(key) {
   if (modelCache.list.length && Date.now() - modelCache.at < 10 * 60 * 1000) return modelCache.list;
@@ -36,7 +36,7 @@ async function discoverModels(key) {
       .sort((a, b) => b.v - a.v || a.pre - b.pre)
       .map((x) => x.n);
     if (found.length) {
-      modelCache = { at: Date.now(), list: found.slice(0, 4) };
+      modelCache = { at: Date.now(), list: found.slice(0, 6) };
       return modelCache.list;
     }
   } catch (e) {}
@@ -46,7 +46,7 @@ async function discoverModels(key) {
 async function callGemini(body) {
   const key = process.env.GEMINI_API_KEY;
   const found = await discoverModels(key);
-  const models = [...new Set([process.env.GEMINI_MODEL, ...found, "gemini-3.8-flash", "gemini-flash-latest", "gemini-2.5-flash"].filter(Boolean))].slice(0, 6);
+  const models = [...new Set([process.env.GEMINI_MODEL, ...found, "gemini-3.8-flash", "gemini-flash-latest", "gemini-2.5-flash"].filter(Boolean))].slice(0, 8);
   const errors = [];
   let lastErr;
   for (const model of models) {
@@ -56,7 +56,7 @@ async function callGemini(body) {
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": key },
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(20000)
+        signal: AbortSignal.timeout(15000)
       });
     } catch (e) {
       const err = new Error(`${model}: request failed or timed out`);
@@ -67,19 +67,19 @@ async function callGemini(body) {
     }
     const data = await r.json().catch(() => ({}));
     if (r.ok) {
-      if (modelCache.list[0] !== model && found.includes(model)) modelCache.list = [model, ...modelCache.list.filter((x) => x !== model)];
+      if (found.includes(model)) modelCache = { at: Date.now(), list: [model, ...found.filter((x) => x !== model)] };
       return data;
     }
     const msg = `${model}: ` + ((data.error && data.error.message) || ("HTTP " + r.status));
-    errors.push(msg.slice(0, 140));
+    errors.push(msg.slice(0, 120));
     const err = new Error(msg);
     err.status = r.status;
     lastErr = err;
     modelCache.at = 0; // force re-discovery next time
-    // try the next model on: missing model (404), bad request (400), quota/limit for this model (429), server trouble (5xx)
-    if (![404, 400, 429, 500, 503].includes(r.status)) throw err;
+    // try the next model on any model-specific failure: 400/403/404/429/5xx. Stop only on a bad key (401).
+    if (r.status === 401) throw err;
   }
-  const all = new Error(errors.join(" | ").slice(0, 450));
+  const all = new Error(errors.join(" | ").slice(0, 500));
   all.status = lastErr && lastErr.status;
   throw all;
 }
@@ -89,7 +89,7 @@ export async function geminiPing() {
     await callGemini({ contents: [{ role: "user", parts: [{ text: "hi" }] }], generationConfig: { maxOutputTokens: 16 } });
     return { ok: true, models: modelCache.list };
   } catch (e) {
-    return { ok: false, status: e.status || null, message: String(e.message || e).replace(/AIza[0-9A-Za-z_\-]+/g, "AIza...").slice(0, 450) };
+    return { ok: false, status: e.status || null, message: String(e.message || e).replace(/AIza[0-9A-Za-z_\-]+/g, "AIza...").slice(0, 500) };
   }
 }
 
