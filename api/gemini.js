@@ -1,5 +1,6 @@
 // AI brain adapter. Primary: Google Gemini (function calling). Fallback: any OpenAI-compatible chat API
-// (Groq by default, free tier) when LLM_API_KEY is set. Used when Google denies/limits the project.
+// (Groq by default, free tier) when a backup key is set (env LLM_API_KEY, or saved privately in Redis via /api/llmkey).
+import { kvGet } from "./_lib.js";
 
 function toGeminiSchema(s) {
   if (Array.isArray(s)) return s.map(toGeminiSchema);
@@ -14,8 +15,18 @@ function toGeminiSchema(s) {
   return s;
 }
 
-export const hasLLM = () => Boolean(process.env.LLM_API_KEY);
-export const hasGemini = () => Boolean(process.env.GEMINI_API_KEY) || hasLLM();
+export const hasGemini = () => Boolean(process.env.GEMINI_API_KEY) || Boolean(process.env.LLM_API_KEY);
+
+/* ---------- backup key (env or Redis) ---------- */
+let llmKeyVal = "";
+let llmKeyAt = 0;
+async function loadLLMKey() {
+  if (process.env.LLM_API_KEY) { llmKeyVal = process.env.LLM_API_KEY; return llmKeyVal; }
+  if (Date.now() - llmKeyAt < 30 * 1000) return llmKeyVal;
+  try { llmKeyVal = (await kvGet("llm_key", "")) || ""; } catch (e) { llmKeyVal = ""; }
+  llmKeyAt = Date.now();
+  return llmKeyVal;
+}
 
 /* ---------- Gemini ---------- */
 let modelCache = { at: 0, list: [] };
@@ -82,8 +93,7 @@ async function callGemini(body) {
     lastErr = err;
     modelCache.at = 0;
     if (r.status === 401) throw err;
-    // a project-level denial applies to every model: stop early instead of burning time
-    if (denied >= 2) break;
+    if (denied >= 2) break; // project-level denial applies to every model
   }
   const all = new Error(errors.join(" | ").slice(0, 400));
   all.status = lastErr && lastErr.status;
@@ -148,7 +158,11 @@ async function runGeminiOnly({ message, history, ui, runTool, instructions, tool
 }
 
 /* ---------- OpenAI-compatible fallback (Groq / OpenRouter / Mistral ...) ---------- */
-const llmBase = () => (process.env.LLM_BASE_URL || "https://api.groq.com/openai/v1").replace(/\/+$/, "");
+function llmBase() {
+  if (process.env.LLM_BASE_URL) return process.env.LLM_BASE_URL.replace(/\/+$/, "");
+  if (/^sk-or-/.test(llmKeyVal)) return "https://openrouter.ai/api/v1";
+  return "https://api.groq.com/openai/v1";
+}
 let llmCache = { at: 0, ids: [] };
 
 async function llmModels() {
@@ -156,7 +170,7 @@ async function llmModels() {
   if (llmCache.ids.length && Date.now() - llmCache.at < 10 * 60 * 1000) return llmCache.ids;
   let ids = [];
   try {
-    const r = await fetch(llmBase() + "/models", { headers: { authorization: "Bearer " + process.env.LLM_API_KEY }, signal: AbortSignal.timeout(8000) });
+    const r = await fetch(llmBase() + "/models", { headers: { authorization: "Bearer " + llmKeyVal }, signal: AbortSignal.timeout(8000) });
     const d = await r.json().catch(() => ({}));
     ids = (d.data || []).map((m) => m.id).filter((id) => id && !/whisper|tts|guard|embed|playai|orpheus|safeguard|vision-preview|moderation/i.test(id));
   } catch (e) {}
@@ -176,7 +190,7 @@ async function callLLM(body) {
     try {
       r = await fetch(llmBase() + "/chat/completions", {
         method: "POST",
-        headers: { "content-type": "application/json", authorization: "Bearer " + process.env.LLM_API_KEY },
+        headers: { "content-type": "application/json", authorization: "Bearer " + llmKeyVal },
         body: JSON.stringify({ model, ...body }),
         signal: AbortSignal.timeout(25000)
       });
@@ -219,21 +233,22 @@ async function runCompat({ message, history, ui, runTool, instructions, tools })
 /* ---------- entry point used by chat.js ---------- */
 let geminiDownUntil = 0;
 export async function runGemini(args) {
+  const backup = await loadLLMKey();
   let firstErr = null;
-  if (process.env.GEMINI_API_KEY && !(hasLLM() && Date.now() < geminiDownUntil)) {
+  if (process.env.GEMINI_API_KEY && !(backup && Date.now() < geminiDownUntil)) {
     try {
       return await runGeminiOnly(args);
     } catch (e) {
       firstErr = e;
       if (e && e.denied) geminiDownUntil = Date.now() + 5 * 60 * 1000;
-      if (!hasLLM()) throw e;
+      if (!backup) throw e;
     }
   }
-  if (hasLLM()) {
+  if (backup) {
     try {
       return await runCompat(args);
     } catch (e2) {
-      throw new Error((firstErr ? "Gemini: " + String(firstErr.message).slice(0, 120) + " || " : "") + "LLM: " + String(e2.message).slice(0, 200));
+      throw new Error((firstErr ? "Gemini: " + String(firstErr.message).slice(0, 120) + " || " : "") + "Backup AI: " + String(e2.message).slice(0, 200));
     }
   }
   throw firstErr || new Error("No AI key set");
