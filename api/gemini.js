@@ -1,4 +1,5 @@
-// Google Gemini adapter (free-tier friendly). Same tools as the OpenAI path, via Gemini function calling.
+// AI brain adapter. Primary: Google Gemini (function calling). Fallback: any OpenAI-compatible chat API
+// (Groq by default, free tier) when LLM_API_KEY is set. Used when Google denies/limits the project.
 
 function toGeminiSchema(s) {
   if (Array.isArray(s)) return s.map(toGeminiSchema);
@@ -13,9 +14,10 @@ function toGeminiSchema(s) {
   return s;
 }
 
-export const hasGemini = () => Boolean(process.env.GEMINI_API_KEY);
+export const hasLLM = () => Boolean(process.env.LLM_API_KEY);
+export const hasGemini = () => Boolean(process.env.GEMINI_API_KEY) || hasLLM();
 
-/* Google retires models often. Ask Google which models this key can use right now and try them newest first. */
+/* ---------- Gemini ---------- */
 let modelCache = { at: 0, list: [] };
 async function discoverModels(key) {
   if (modelCache.list.length && Date.now() - modelCache.at < 10 * 60 * 1000) return modelCache.list;
@@ -45,10 +47,12 @@ async function discoverModels(key) {
 
 async function callGemini(body) {
   const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new Error("no GEMINI_API_KEY");
   const found = await discoverModels(key);
-  const models = [...new Set([process.env.GEMINI_MODEL, ...found, "gemini-3.8-flash", "gemini-flash-latest", "gemini-2.5-flash"].filter(Boolean))].slice(0, 8);
+  const models = [...new Set([process.env.GEMINI_MODEL, ...found, "gemini-flash-latest", "gemini-2.5-flash"].filter(Boolean))].slice(0, 8);
   const errors = [];
   let lastErr;
+  let denied = 0;
   for (const model of models) {
     let r;
     try {
@@ -59,7 +63,7 @@ async function callGemini(body) {
         signal: AbortSignal.timeout(15000)
       });
     } catch (e) {
-      const err = new Error(`${model}: request failed or timed out`);
+      const err = new Error(`${model}: timeout`);
       err.status = 504;
       errors.push(err.message);
       lastErr = err;
@@ -71,16 +75,19 @@ async function callGemini(body) {
       return data;
     }
     const msg = `${model}: ` + ((data.error && data.error.message) || ("HTTP " + r.status));
-    errors.push(msg.slice(0, 120));
+    errors.push(msg.slice(0, 90));
+    if (r.status === 403) denied++;
     const err = new Error(msg);
     err.status = r.status;
     lastErr = err;
-    modelCache.at = 0; // force re-discovery next time
-    // try the next model on any model-specific failure: 400/403/404/429/5xx. Stop only on a bad key (401).
+    modelCache.at = 0;
     if (r.status === 401) throw err;
+    // a project-level denial applies to every model: stop early instead of burning time
+    if (denied >= 2) break;
   }
-  const all = new Error(errors.join(" | ").slice(0, 500));
+  const all = new Error(errors.join(" | ").slice(0, 400));
   all.status = lastErr && lastErr.status;
+  all.denied = denied >= 2;
   throw all;
 }
 
@@ -89,7 +96,7 @@ export async function geminiPing() {
     await callGemini({ contents: [{ role: "user", parts: [{ text: "hi" }] }], generationConfig: { maxOutputTokens: 16 } });
     return { ok: true, models: modelCache.list };
   } catch (e) {
-    return { ok: false, status: e.status || null, message: String(e.message || e).replace(/AIza[0-9A-Za-z_\-]+/g, "AIza...").slice(0, 500) };
+    return { ok: false, status: e.status || null, message: String(e.message || e).replace(/AIza[0-9A-Za-z_\-]+/g, "AIza...").slice(0, 400) };
   }
 }
 
@@ -104,7 +111,7 @@ export async function geminiGenerate({ system, contents, maxOutputTokens = 1024 
   return parts.map((p) => p.text || "").join("").trim();
 }
 
-export async function runGemini({ message, history, ui, runTool, instructions, tools }) {
+async function runGeminiOnly({ message, history, ui, runTool, instructions, tools }) {
   const declarations = tools.map((t) => ({ name: t.name, description: t.description, parameters: toGeminiSchema(t.parameters) }));
 
   let past = Array.isArray(history)
@@ -138,4 +145,96 @@ export async function runGemini({ message, history, ui, runTool, instructions, t
     contents.push({ role: "user", parts: responses });
   }
   return "";
+}
+
+/* ---------- OpenAI-compatible fallback (Groq / OpenRouter / Mistral ...) ---------- */
+const llmBase = () => (process.env.LLM_BASE_URL || "https://api.groq.com/openai/v1").replace(/\/+$/, "");
+let llmCache = { at: 0, ids: [] };
+
+async function llmModels() {
+  if (process.env.LLM_MODEL) return [process.env.LLM_MODEL];
+  if (llmCache.ids.length && Date.now() - llmCache.at < 10 * 60 * 1000) return llmCache.ids;
+  let ids = [];
+  try {
+    const r = await fetch(llmBase() + "/models", { headers: { authorization: "Bearer " + process.env.LLM_API_KEY }, signal: AbortSignal.timeout(8000) });
+    const d = await r.json().catch(() => ({}));
+    ids = (d.data || []).map((m) => m.id).filter((id) => id && !/whisper|tts|guard|embed|playai|orpheus|safeguard|vision-preview|moderation/i.test(id));
+  } catch (e) {}
+  const prefs = [/gpt-oss-120b/, /llama-3\.3-70b/, /llama-4-maverick/, /llama.*70b/, /qwen/, /gpt-oss-20b/, /llama/];
+  const picked = [];
+  for (const p of prefs) for (const id of ids) if (p.test(id) && !picked.includes(id)) picked.push(id);
+  if (!picked.length) picked.push("llama-3.3-70b-versatile", "openai/gpt-oss-120b");
+  llmCache = { at: Date.now(), ids: picked.slice(0, 4) };
+  return llmCache.ids;
+}
+
+async function callLLM(body) {
+  const models = await llmModels();
+  const errors = [];
+  for (const model of models) {
+    let r;
+    try {
+      r = await fetch(llmBase() + "/chat/completions", {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: "Bearer " + process.env.LLM_API_KEY },
+        body: JSON.stringify({ model, ...body }),
+        signal: AbortSignal.timeout(25000)
+      });
+    } catch (e) { errors.push(model + ": timeout"); continue; }
+    const data = await r.json().catch(() => ({}));
+    if (r.ok) return data;
+    errors.push((model + ": " + ((data.error && data.error.message) || r.status)).slice(0, 100));
+    llmCache.at = 0;
+    if (r.status === 401) break;
+  }
+  throw new Error(errors.join(" | ").slice(0, 400));
+}
+
+async function runCompat({ message, history, ui, runTool, instructions, tools }) {
+  const defs = tools.map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.parameters } }));
+  const past = Array.isArray(history)
+    ? history.slice(-12)
+        .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.trim())
+        .map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }))
+    : [];
+  const messages = [{ role: "system", content: instructions }, ...past, { role: "user", content: String(message).slice(0, 4000) }];
+
+  for (let i = 0; i < 5; i++) {
+    const data = await callLLM({ messages, tools: defs, tool_choice: "auto", temperature: 0.4, max_tokens: 1024 });
+    const msg = data.choices && data.choices[0] && data.choices[0].message;
+    if (!msg) return "";
+    const calls = msg.tool_calls || [];
+    if (!calls.length) return String(msg.content || "").trim();
+    messages.push({ role: "assistant", content: msg.content || "", tool_calls: calls });
+    for (const c of calls) {
+      let args = {};
+      try { args = JSON.parse((c.function && c.function.arguments) || "{}"); } catch (e) {}
+      const result = await runTool(c.function.name, args, ui);
+      messages.push({ role: "tool", tool_call_id: c.id, content: JSON.stringify(result) });
+    }
+  }
+  return "";
+}
+
+/* ---------- entry point used by chat.js ---------- */
+let geminiDownUntil = 0;
+export async function runGemini(args) {
+  let firstErr = null;
+  if (process.env.GEMINI_API_KEY && !(hasLLM() && Date.now() < geminiDownUntil)) {
+    try {
+      return await runGeminiOnly(args);
+    } catch (e) {
+      firstErr = e;
+      if (e && e.denied) geminiDownUntil = Date.now() + 5 * 60 * 1000;
+      if (!hasLLM()) throw e;
+    }
+  }
+  if (hasLLM()) {
+    try {
+      return await runCompat(args);
+    } catch (e2) {
+      throw new Error((firstErr ? "Gemini: " + String(firstErr.message).slice(0, 120) + " || " : "") + "LLM: " + String(e2.message).slice(0, 200));
+    }
+  }
+  throw firstErr || new Error("No AI key set");
 }
