@@ -80,12 +80,24 @@ export async function addAction(type, summary, payload) {
 /* ---------- CONTACTS ---------- */
 export const digits = (s) => String(s || "").replace(/\D/g, "");
 
+const normName = (s) =>
+  String(s || "")
+    .toLowerCase()
+    .replace(/[ً-ٰٟ]/g, "") // Arabic/Urdu diacritics
+    .replace(/[\s._\-]+/g, "")
+    .trim();
+
 export async function resolveContact(nameOrNumber) {
   const raw = String(nameOrNumber || "").trim();
   if (digits(raw).length >= 8) return { name: raw, phone: digits(raw) };
-  const contacts = await kvGet("contacts", {});
-  const key = raw.toLowerCase();
-  const hit = Object.entries(contacts).find(([n]) => n.toLowerCase() === key);
+  const contacts = (await kvGet("contacts", {})) || {};
+  const entries = Object.entries(contacts);
+  const q = normName(raw);
+  if (!q) return null;
+  let hit = entries.find(([n]) => normName(n) === q);
+  if (!hit) hit = entries.find(([n]) => normName(n).startsWith(q));
+  if (!hit && q.length >= 2) hit = entries.find(([n]) => normName(n).includes(q));
+  if (!hit && q.length >= 3) hit = entries.find(([n]) => q.includes(normName(n)) && normName(n).length >= 3);
   return hit ? { name: hit[0], phone: hit[1] } : null;
 }
 
