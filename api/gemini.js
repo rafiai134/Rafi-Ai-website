@@ -233,6 +233,15 @@ async function runCompat({ message, history, ui, runTool, instructions, tools })
 /* ---------- entry point used by chat.js ---------- */
 let geminiDownUntil = 0;
 export async function runGemini(args) {
+  // Let the AI see the saved contact names so a spoken name maps to the exact saved name.
+  try {
+    const contacts = (await kvGet("contacts", {})) || {};
+    const names = Object.keys(contacts).slice(0, 400);
+    if (names.length) {
+      args = { ...args, instructions: args.instructions + "\nSAVED CONTACT NAMES (for whatsapp_send use the closest exact spelling from this list as the contact name; the number is looked up automatically):\n" + names.join(", ") + "\n" };
+    }
+  } catch (e) { /* ignore */ }
+
   const backup = await loadLLMKey();
   let firstErr = null;
   if (process.env.GEMINI_API_KEY && !(backup && Date.now() < geminiDownUntil)) {
