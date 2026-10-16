@@ -4,21 +4,64 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class MainActivity extends android.app.Activity {
     static final String PREFS = "rafi_companion";
     static final String SERVER = "server";
     static final String TOKEN = "token";
+    static final String DEFAULT_SERVER = "https://rafi-ai-website.vercel.app";
+
+    private final Handler ui = new Handler(Looper.getMainLooper());
+    private TextView status;
+    private String testResult = "";
+    private SharedPreferences p;
+
+    private final Runnable refresh = new Runnable() {
+        @Override public void run() {
+            status.setText(buildStatus());
+            ui.postDelayed(this, 1500);
+        }
+    };
+
+    private boolean serviceEnabled() {
+        try {
+            String s = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            return s != null && s.contains(getPackageName());
+        } catch (Exception e) { return false; }
+    }
+
+    private String buildStatus() {
+        SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss", Locale.US);
+        StringBuilder b = new StringBuilder();
+        b.append("Accessibility switch: ").append(serviceEnabled() ? "ON" : "OFF  <-- turn it on").append('\n');
+        long started = p.getLong("svc_started", 0);
+        b.append("Service started: ").append(started == 0 ? "never (switch Accessibility off and on)" : f.format(new Date(started))).append('\n');
+        long at = p.getLong("last_poll_at", 0);
+        long ago = at == 0 ? -1 : (System.currentTimeMillis() - at) / 1000;
+        b.append("Last poll: ").append(at == 0 ? "none yet" : f.format(new Date(at)) + " (" + ago + "s ago)").append('\n');
+        b.append("Poll result: ").append(p.getString("last_poll_res", "-")).append('\n');
+        if (!testResult.isEmpty()) b.append("Test: ").append(testResult).append('\n');
+        return b.toString();
+    }
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        SharedPreferences p = getSharedPreferences(PREFS, MODE_PRIVATE);
+        p = getSharedPreferences(PREFS, MODE_PRIVATE);
 
         // contacts permission so Rafi can message people by saved name
         if (checkSelfPermission(android.Manifest.permission.READ_CONTACTS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -30,17 +73,17 @@ public class MainActivity extends android.app.Activity {
         root.setPadding(32, 32, 32, 32);
 
         TextView title = new TextView(this);
-        title.setText("Rafi AI Companion 1.3");
+        title.setText("Rafi AI Companion 1.4");
         title.setTextSize(26);
         root.addView(title);
 
         TextView info = new TextView(this);
-        info.setText("1) Enter the server URL and device token and press Save. 2) Press 'Keep running in background' and choose Rafi AI Companion -> Don't optimize. 3) Open Accessibility settings and switch Rafi AI Companion on.");
+        info.setText("1) Enter the device token and press Save. 2) Press Test connection (must say OK). 3) Press 'Keep running in background' and choose Don't optimize. 4) Open Accessibility settings and switch Rafi AI Companion on. The Status below must show a recent Last poll.");
         root.addView(info);
 
         EditText server = new EditText(this);
-        server.setHint("https://your-rafi-domain.vercel.app");
-        server.setText(p.getString(SERVER, ""));
+        server.setHint(DEFAULT_SERVER);
+        server.setText(p.getString(SERVER, DEFAULT_SERVER));
         root.addView(server);
 
         EditText token = new EditText(this);
@@ -51,11 +94,41 @@ public class MainActivity extends android.app.Activity {
 
         Button save = new Button(this);
         save.setText("Save connection");
-        save.setOnClickListener(v -> p.edit()
+        save.setOnClickListener(v -> {
+            p.edit()
                 .putString(SERVER, server.getText().toString().trim().replaceAll("/+$", ""))
                 .putString(TOKEN, token.getText().toString().trim())
-                .apply());
+                .apply();
+            testResult = "saved";
+        });
         root.addView(save);
+
+        Button test = new Button(this);
+        test.setText("Test connection");
+        test.setOnClickListener(v -> {
+            final String srv = server.getText().toString().trim().replaceAll("/+$", "");
+            final String tok = token.getText().toString().trim();
+            testResult = "testing...";
+            new Thread(() -> {
+                String res;
+                HttpURLConnection c = null;
+                try {
+                    c = (HttpURLConnection) new URL(srv + "/api/device").openConnection();
+                    c.setConnectTimeout(8000);
+                    c.setReadTimeout(8000);
+                    c.setRequestProperty("x-device-token", tok);
+                    int code = c.getResponseCode();
+                    res = code == 200 ? "OK - server reached and token is correct"
+                        : code == 401 ? "WRONG TOKEN (401) - re-enter DEVICE_TOKEN"
+                        : "server answered HTTP " + code;
+                } catch (Exception e) {
+                    res = "CANNOT REACH SERVER: " + e.getClass().getSimpleName() + " " + e.getMessage();
+                } finally { if (c != null) c.disconnect(); }
+                final String out = res;
+                ui.post(() -> testResult = out);
+            }).start();
+        });
+        root.addView(test);
 
         Button battery = new Button(this);
         battery.setText("Keep running in background");
@@ -70,14 +143,31 @@ public class MainActivity extends android.app.Activity {
         settings.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
         root.addView(settings);
 
-        Button test = new Button(this);
-        test.setText("Open Rafi AI website");
-        test.setOnClickListener(v -> {
+        Button web = new Button(this);
+        web.setText("Open Rafi AI website");
+        web.setOnClickListener(v -> {
             String url = server.getText().toString().trim();
             if (!url.isEmpty()) startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
         });
-        root.addView(test);
+        root.addView(web);
 
-        setContentView(root);
+        status = new TextView(this);
+        status.setTextSize(15);
+        status.setPadding(0, 24, 0, 0);
+        root.addView(status);
+
+        ScrollView sv = new ScrollView(this);
+        sv.addView(root);
+        setContentView(sv);
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        ui.post(refresh);
+    }
+
+    @Override protected void onPause() {
+        ui.removeCallbacks(refresh);
+        super.onPause();
     }
 }

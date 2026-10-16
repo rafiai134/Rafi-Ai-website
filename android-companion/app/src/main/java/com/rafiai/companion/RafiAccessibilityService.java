@@ -44,7 +44,7 @@ public class RafiAccessibilityService extends AccessibilityService {
     private final Runnable poller = new Runnable() {
         @Override public void run() {
             if (!polling) return;
-            worker.execute(() -> pollCommands());
+            try { worker.execute(() -> pollCommands()); } catch (Exception e) { note("worker error: " + e.getClass().getSimpleName()); }
             handler.postDelayed(this, 2500);
         }
     };
@@ -52,6 +52,8 @@ public class RafiAccessibilityService extends AccessibilityService {
     @Override public void onServiceConnected() {
         super.onServiceConnected();
         polling = true;
+        prefs().edit().putLong("svc_started", System.currentTimeMillis()).apply();
+        note("service connected, waiting for first poll");
         handler.post(poller);
     }
 
@@ -69,10 +71,17 @@ public class RafiAccessibilityService extends AccessibilityService {
         return getSharedPreferences(MainActivity.PREFS, MODE_PRIVATE);
     }
 
+    /** Visible in the app's Status line. */
+    private void note(String result) {
+        try {
+            prefs().edit().putLong("last_poll_at", System.currentTimeMillis()).putString("last_poll_res", result).apply();
+        } catch (Exception ignored) {}
+    }
+
     private void pollCommands() {
         String server = prefs().getString(MainActivity.SERVER, "").trim();
         String token = prefs().getString(MainActivity.TOKEN, "").trim();
-        if (server.isEmpty() || token.isEmpty()) return;
+        if (server.isEmpty() || token.isEmpty()) { note("no server or token saved - press Save connection"); return; }
 
         HttpURLConnection c = null;
         try {
@@ -83,10 +92,13 @@ public class RafiAccessibilityService extends AccessibilityService {
             c.setReadTimeout(8000);
             c.setRequestProperty("x-device-token", token);
             c.setRequestProperty("Accept", "application/json");
-            if (c.getResponseCode() != 200) return;
+            int code = c.getResponseCode();
+            if (code != 200) { note(code == 401 ? "HTTP 401 WRONG TOKEN" : "HTTP " + code); return; }
 
             JSONObject root = new JSONObject(read(c.getInputStream()));
             JSONArray commands = root.optJSONArray("commands");
+            int n = commands == null ? 0 : commands.length();
+            note("OK (HTTP 200), commands waiting: " + n);
             if (commands == null) return;
             for (int i = 0; i < commands.length(); i++) {
                 JSONObject cmd = commands.getJSONObject(i);
@@ -97,7 +109,8 @@ public class RafiAccessibilityService extends AccessibilityService {
                 }
                 try { execute(cmd); } finally { inFlight.remove(id); }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            note("error: " + e.getClass().getSimpleName() + " " + String.valueOf(e.getMessage()));
         } finally {
             if (c != null) c.disconnect();
         }
