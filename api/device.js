@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { kvGet, kvSet, log } from "./_lib.js";
+import { agentOnResult } from "./_agent.js";
 
 const MAX_AGE_MS = 10 * 60 * 1000; // commands older than this are never run (phone was offline)
 const NOTE_GAP_MS = 5 * 60 * 1000; // diagnostic notes are rate-limited (per server instance)
@@ -55,8 +56,12 @@ export default async function handler(req,res){
     const item=q.find(x=>x.id===id);
     if(!item) return res.status(404).json({error:"Command not found."});
     item.status=status; item.result=result||null; item.finishedAt=Date.now();
+    // screen dumps are big: keep only the newest one in the queue
+    for(const x of q){ if(x.command==="read_screen"&&x.id!==id&&x.result) x.result="(screen)"; }
     await kvSet("device_queue",q.slice(0,80));
-    await log(`Device command ${status}: ${item.command}${result?" - "+String(result).slice(0,80):""}`,"device");
+    if(item.command!=="read_screen") await log(`Device command ${status}: ${item.command}${result?" - "+String(result).slice(0,80):""}`,"device");
+    // phone-agent loop: decide and queue the next step (never breaks the phone's own report)
+    if(item.agent){ try{ await agentOnResult(item); }catch(e){ try{ await log("Phone task error: "+String(e.message||e).slice(0,120),"core"); }catch(_){} } }
     return res.status(200).json({ok:true});
   }
   return res.status(405).json({error:"Method not allowed."});
