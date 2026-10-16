@@ -24,6 +24,7 @@ Return ONLY one JSON object, no other text:
 When the goal is complete, or cannot be completed: {"done":true,"say":"<short Urdu sentence in Urdu script saying what was done or why it could not>"}.
 Rules:
 - Do exactly what the goal says, nothing more. Never press home/back unless it helps the goal.
+- If the goal says SMS or message to a person, that means a WhatsApp message: use whatsapp_send. Never use the phone's Messages (SMS) app.
 - If the screen is not the app you need, open_app first.
 - Look at the screen carefully: if the thing you need is not visible, scroll, or open the right tab/menu.
 - For "first picture/photo/video" in Gallery: open the Gallery, open the Photos/Albums list if needed, tap the first thumbnail by coordinates.
@@ -150,6 +151,12 @@ export async function agentOnResult(item) {
   const st = await kvGet("agent", null);
   if (!st || !st.active) return;
   if (Date.now() - st.startedAt > MAX_AGE_MS) return stop(st, "time limit reached");
+
+  // The owner gave a newer direct command (not from this agent): stop the old task so they don't fight.
+  try {
+    const q = await kvGet("device_queue", []);
+    if (q.some((x) => !x.agent && (x.createdAt || 0) > st.startedAt)) return stop(st, "stopped: a newer command was given");
+  } catch (e) { /* ignore */ }
 
   if (item.command === "read_screen") {
     if (item.status !== "done") return stop(st, "phone could not read the screen (" + String(item.result || "").slice(0, 60) + "). Install the newest Companion app and make sure Accessibility is on.");
