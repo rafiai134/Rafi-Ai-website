@@ -41,25 +41,50 @@ async function llmKey() {
   try { return (await kvGet("llm_key", "")) || ""; } catch (e) { return ""; }
 }
 
+function baseUrl(key) {
+  if (process.env.LLM_BASE_URL) return process.env.LLM_BASE_URL.replace(/\/+$/, "");
+  if (/^sk-or-/.test(key)) return "https://openrouter.ai/api/v1";
+  return "https://api.groq.com/openai/v1";
+}
+
+let modelCache = { at: 0, ids: [] };
+// Only models this key can really use (same idea as the chat brain), best first.
+async function pickModels(key, base) {
+  if (process.env.LLM_MODEL) return [process.env.LLM_MODEL];
+  if (modelCache.ids.length && Date.now() - modelCache.at < 10 * 60 * 1000) return modelCache.ids;
+  let ids = [];
+  try {
+    const r = await fetch(base + "/models", { headers: { authorization: "Bearer " + key }, signal: AbortSignal.timeout(5000) });
+    const d = await r.json().catch(() => ({}));
+    ids = (d.data || []).map((m) => m.id).filter((id) => id && !/whisper|tts|guard|embed|playai|orpheus|safeguard|vision|moderation|compound/i.test(id));
+  } catch (e) { /* ignore */ }
+  const prefs = [/gpt-oss-120b/, /llama-3\.3-70b/, /llama-4-maverick/, /qwen.*(32b|27b|3)/, /llama.*70b/, /qwen/, /gpt-oss-20b/, /llama/];
+  const picked = [];
+  for (const p of prefs) for (const id of ids) if (p.test(id) && !picked.includes(id)) picked.push(id);
+  if (!picked.length) picked.push("openai/gpt-oss-120b", "llama-3.3-70b-versatile");
+  modelCache = { at: Date.now(), ids: picked.slice(0, 3) };
+  return modelCache.ids;
+}
+
 async function ask(user) {
   const key = await llmKey();
   if (!key) throw new Error("no AI key");
-  const or = /^sk-or-/.test(key);
-  const url = (process.env.LLM_BASE_URL ? process.env.LLM_BASE_URL.replace(/\/+$/, "") : or ? "https://openrouter.ai/api/v1" : "https://api.groq.com/openai/v1") + "/chat/completions";
-  const models = process.env.LLM_MODEL ? [process.env.LLM_MODEL]
-    : or ? ["meta-llama/llama-3.3-70b-instruct"] : ["openai/gpt-oss-120b", "llama-3.3-70b-versatile"];
+  const base = baseUrl(key);
+  const models = await pickModels(key, base);
   let lastErr = "";
   for (const model of models) {
     try {
-      const r = await fetch(url, {
+      const body = { model, temperature: 0.2, max_tokens: 1500, messages: [{ role: "system", content: SYSTEM }, { role: "user", content: user }] };
+      if (/gpt-oss/i.test(model)) body.reasoning_effort = "low";
+      const r = await fetch(base + "/chat/completions", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: "Bearer " + key },
-        body: JSON.stringify({ model, temperature: 0.2, max_tokens: 500, messages: [{ role: "system", content: SYSTEM }, { role: "user", content: user }] }),
-        signal: AbortSignal.timeout(9000)
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(8000)
       });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { lastErr = model + ": " + ((d.error && d.error.message) || r.status); continue; }
-      const txt = String(d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content || "");
+      if (!r.ok) { lastErr = model + ": " + ((d.error && d.error.message) || r.status); modelCache.at = 0; continue; }
+      const txt = String((d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || "");
       const m = txt.match(/\{[\s\S]*\}/);
       if (!m) { lastErr = model + ": no JSON"; continue; }
       return JSON.parse(m[0]);
@@ -147,6 +172,8 @@ export async function agentOnResult(item) {
     st.steps++;
     st.last = sig.slice(0, 200);
     await kvSet("agent", st);
+    const appLine = String(st.screen.split("\n")[0] || "").slice(0, 60);
+    await log("Phone step " + st.steps + " (" + appLine + "): " + command + " " + JSON.stringify(args).slice(0, 90), "core");
     await enqueue(command, args, 0);
     return;
   }
