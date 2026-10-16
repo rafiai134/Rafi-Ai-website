@@ -7,10 +7,12 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.DisplayMetrics;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
@@ -163,10 +165,7 @@ public class RafiAccessibilityService extends AccessibilityService {
                 if (phone.isEmpty() && !contactName.isEmpty()) {
                     phone = ContactResolver.find(this, contactName);
                     if (phone.isEmpty()) {
-                        result = "contact not found on this phone (or Contacts permission not allowed): " + contactName;
-                        text = "";
-                        contactName = "";
-                        if (!id.isEmpty()) postResult(id, "failed", result);
+                        if (!id.isEmpty()) postResult(id, "failed", "contact not found on this phone (or Contacts permission not allowed): " + contactName);
                         return;
                     }
                 }
@@ -249,17 +248,19 @@ public class RafiAccessibilityService extends AccessibilityService {
         if (!launched) return "WhatsApp is not installed on this phone";
         startActivity(intent);
 
-        // wait for the chat screen to appear with the text prefilled, then press the Send button
-        for (int i = 0; i < 12; i++) {
+        // Wait for the chat screen with the text prefilled, then press Send.
+        // Try: (1) Send button by id/label, (2) click its bounds by gesture, (3) the bottom-right button.
+        for (int i = 0; i < 16; i++) {
             Thread.sleep(1000);
             AccessibilityNodeInfo root = getRootInActiveWindow();
             if (root == null) continue;
             AccessibilityNodeInfo send = findSend(root);
-            if (send != null) {
-                Thread.sleep(400);
-                boolean clicked = clickNode(send);
-                if (clicked) return "sent via WhatsApp to " + phone;
-            }
+            String how = "label";
+            if (send == null && i >= 5) { send = findBottomRightButton(root); how = "position"; }
+            if (send == null) continue;
+            Thread.sleep(500);
+            if (clickNode(send)) return "sent via WhatsApp to " + phone + " (" + how + ")";
+            if (clickBounds(send)) return "sent via WhatsApp to " + phone + " (" + how + "+tap)";
         }
         return "WhatsApp opened with the message but the Send button was not found (message is typed, tap Send)";
     }
@@ -270,7 +271,51 @@ public class RafiAccessibilityService extends AccessibilityService {
         if (byId != null && !byId.isEmpty()) return byId.get(0);
         List<AccessibilityNodeInfo> byIdB = node.findAccessibilityNodeInfosByViewId("com.whatsapp.w4b:id/send");
         if (byIdB != null && !byIdB.isEmpty()) return byIdB.get(0);
-        return findByLabel(node, new String[]{"send", "بھیجیں", "भेजें"}, true);
+        AccessibilityNodeInfo exact = findByLabel(node, new String[]{"send", "بھیجیں", "भेजें"}, true);
+        if (exact != null) return exact;
+        return findByDescriptionContains(node, "send");
+    }
+
+    /** Any node whose content description (not text) contains the word, e.g. "Send message". */
+    private AccessibilityNodeInfo findByDescriptionContains(AccessibilityNodeInfo n, String word) {
+        if (n == null) return null;
+        CharSequence d = n.getContentDescription();
+        if (d != null && d.toString().toLowerCase().contains(word)) return n;
+        String id = n.getViewIdResourceName();
+        if (id != null && id.toLowerCase().endsWith("/" + word)) return n;
+        for (int i = 0; i < n.getChildCount(); i++) {
+            AccessibilityNodeInfo hit = findByDescriptionContains(n.getChild(i), word);
+            if (hit != null) return hit;
+        }
+        return null;
+    }
+
+    /** The clickable control furthest to the bottom-right (with text prefilled this is the Send button). */
+    private AccessibilityNodeInfo findBottomRightButton(AccessibilityNodeInfo root) {
+        DisplayMetrics dm = getResources().getDisplayMetrics();
+        AccessibilityNodeInfo[] best = new AccessibilityNodeInfo[1];
+        int[] bestScore = new int[]{-1};
+        scanBottomRight(root, dm.widthPixels, dm.heightPixels, best, bestScore);
+        return best[0];
+    }
+
+    private void scanBottomRight(AccessibilityNodeInfo n, int w, int h, AccessibilityNodeInfo[] best, int[] bestScore) {
+        if (n == null) return;
+        Rect r = new Rect();
+        n.getBoundsInScreen(r);
+        int cx = r.centerX(), cy = r.centerY();
+        if (n.isClickable() && n.isVisibleToUser() && cx > w * 0.80 && cy > h * 0.55 && r.width() > 40 && r.width() < w * 0.30) {
+            int score = cx + cy;
+            if (score > bestScore[0]) { bestScore[0] = score; best[0] = n; }
+        }
+        for (int i = 0; i < n.getChildCount(); i++) scanBottomRight(n.getChild(i), w, h, best, bestScore);
+    }
+
+    private boolean clickBounds(AccessibilityNodeInfo n) {
+        Rect r = new Rect();
+        n.getBoundsInScreen(r);
+        if (r.isEmpty()) return false;
+        return tap(r.centerX(), r.centerY());
     }
 
     /* ---------- generic UI helpers ---------- */
@@ -322,7 +367,7 @@ public class RafiAccessibilityService extends AccessibilityService {
             if (root != null) {
                 AccessibilityNodeInfo hit = findByLabel(root, new String[]{text}, true);
                 if (hit == null) hit = findByLabel(root, new String[]{text}, false);
-                if (hit != null && clickNode(hit)) return true;
+                if (hit != null && (clickNode(hit) || clickBounds(hit))) return true;
             }
             try { Thread.sleep(700); } catch (InterruptedException e) { return false; }
         }

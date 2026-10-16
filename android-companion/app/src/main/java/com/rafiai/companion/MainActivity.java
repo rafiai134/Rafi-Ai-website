@@ -30,12 +30,12 @@ public class MainActivity extends android.app.Activity {
         root.setPadding(32, 32, 32, 32);
 
         TextView title = new TextView(this);
-        title.setText("Rafi AI Companion 1.2");
+        title.setText("Rafi AI Companion 1.3");
         title.setTextSize(26);
         root.addView(title);
 
         TextView info = new TextView(this);
-        info.setText("Enter the Rafi AI server URL and device token, save them, allow Contacts, then enable Rafi AI Companion in Android Accessibility settings.");
+        info.setText("1) Enter the server URL and device token and press Save. 2) Press 'Keep running in background' and choose Rafi AI Companion -> Don't optimize. 3) Open Accessibility settings and switch Rafi AI Companion on.");
         root.addView(info);
 
         EditText server = new EditText(this);
@@ -56,6 +56,14 @@ public class MainActivity extends android.app.Activity {
                 .putString(TOKEN, token.getText().toString().trim())
                 .apply());
         root.addView(save);
+
+        Button battery = new Button(this);
+        battery.setText("Keep running in background");
+        battery.setOnClickListener(v -> {
+            try { startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)); }
+            catch (Exception e) { startActivity(new Intent(Settings.ACTION_SETTINGS)); }
+        });
+        root.addView(battery);
 
         Button settings = new Button(this);
         settings.setText("Open Accessibility settings");
