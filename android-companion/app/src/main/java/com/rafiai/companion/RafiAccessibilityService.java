@@ -9,6 +9,7 @@ import android.content.pm.ResolveInfo;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -128,6 +129,16 @@ public class RafiAccessibilityService extends AccessibilityService {
             } else if ("notifications".equals(name)) {
                 ok = performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS);
                 result = ok ? "notifications opened" : "notifications failed";
+            } else if ("read_screen".equals(name)) {
+                String dump = dumpScreen();
+                ok = !dump.isEmpty();
+                result = ok ? dump : "screen not readable";
+            } else if ("enter".equals(name)) {
+                ok = pressEnter();
+                result = ok ? "enter pressed" : "enter failed (no focused field)";
+            } else if ("scroll_up".equals(name)) {
+                ok = scrollBack();
+                result = ok ? "scrolled back" : "scroll back failed";
             } else if ("open_url".equals(name)) {
                 String url = s(args, "url");
                 if (!url.isEmpty()) {
@@ -182,6 +193,66 @@ public class RafiAccessibilityService extends AccessibilityService {
         }
 
         if (!id.isEmpty()) postResult(id, ok ? "done" : "failed", result);
+    }
+
+    /* ---------- screen reading (for the phone agent) ---------- */
+
+    private String dumpScreen() {
+        AccessibilityNodeInfo root = getRootInActiveWindow();
+        if (root == null) return "";
+        StringBuilder sb = new StringBuilder();
+        sb.append("app: ").append(root.getPackageName()).append('\n');
+        int[] count = new int[]{0};
+        dumpNode(root, sb, count, 0);
+        return sb.toString();
+    }
+
+    private void dumpNode(AccessibilityNodeInfo n, StringBuilder sb, int[] count, int depth) {
+        if (n == null || sb.length() > 3600 || count[0] > 90 || depth > 30) return;
+        if (n.isVisibleToUser()) {
+            String label = "";
+            if (n.getText() != null && n.getText().length() > 0) label = n.getText().toString();
+            else if (n.getContentDescription() != null) label = n.getContentDescription().toString();
+            label = label.replace('\n', ' ').replace('|', '/').trim();
+            if (label.length() > 50) label = label.substring(0, 50);
+            boolean c = n.isClickable(), e = n.isEditable(), sc = n.isScrollable();
+            if (!label.isEmpty() || c || e || sc) {
+                Rect r = new Rect();
+                n.getBoundsInScreen(r);
+                if (!r.isEmpty()) {
+                    sb.append(label).append('|')
+                      .append(c ? "c" : "").append(e ? "e" : "").append(sc ? "s" : "").append('|')
+                      .append(r.centerX()).append(',').append(r.centerY()).append('\n');
+                    count[0]++;
+                }
+            }
+        }
+        for (int i = 0; i < n.getChildCount(); i++) dumpNode(n.getChild(i), sb, count, depth + 1);
+    }
+
+    private boolean pressEnter() {
+        AccessibilityNodeInfo root = getRootInActiveWindow();
+        if (root == null) return false;
+        AccessibilityNodeInfo f = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+        if (f == null) f = findEditable(root);
+        if (f == null) return false;
+        if (Build.VERSION.SDK_INT >= 30) {
+            return f.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.getId());
+        }
+        return false;
+    }
+
+    private boolean scrollBack() {
+        AccessibilityNodeInfo root = getRootInActiveWindow();
+        if (root == null) return false;
+        return scrollNodeBack(root);
+    }
+
+    private boolean scrollNodeBack(AccessibilityNodeInfo node) {
+        if (node == null) return false;
+        if (node.isScrollable() && node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)) return true;
+        for (int i = 0; i < node.getChildCount(); i++) if (scrollNodeBack(node.getChild(i))) return true;
+        return false;
     }
 
     /* ---------- apps ---------- */
@@ -422,7 +493,7 @@ public class RafiAccessibilityService extends AccessibilityService {
             c = (HttpURLConnection) u.openConnection();
             c.setRequestMethod("POST");
             c.setConnectTimeout(8000);
-            c.setReadTimeout(8000);
+            c.setReadTimeout(15000);
             c.setDoOutput(true);
             c.setRequestProperty("x-device-token", token);
             c.setRequestProperty("Content-Type", "application/json");
