@@ -1,6 +1,18 @@
 // AI brain adapter. Primary: Google Gemini (function calling). Fallback: any OpenAI-compatible chat API
 // (Groq by default, free tier) when a backup key is set (env LLM_API_KEY, or saved privately in Redis via /api/llmkey).
 import { kvGet } from "./_lib.js";
+import { startAgent } from "./_agent.js";
+
+const PHONE_TASK_TOOL = {
+  type: "function",
+  name: "phone_task",
+  description: "Do a job on the owner's Android phone by LOOKING at the screen and acting step by step (reads the screen, taps, types, scrolls, opens apps). Use it for ANY phone job that is more than one plain open_app / open_url / whatsapp_send / home / back: e.g. open a picture or video in Gallery (first / by date), search a name or number inside an app, save a new contact, change a setting, read something on screen, use Jazz Cash/Alibaba/any app, anything multi-step. Call it ONCE with the complete goal in plain words (goal). Do not chain device_command calls for such jobs. Never claim it is finished; tell the owner briefly in Urdu that you started.",
+  parameters: {
+    type: "object",
+    properties: { goal: { type: "string" } },
+    required: ["goal"]
+  }
+};
 
 function toGeminiSchema(s) {
   if (Array.isArray(s)) return s.map(toGeminiSchema);
@@ -233,6 +245,15 @@ async function runCompat({ message, history, ui, runTool, instructions, tools })
 /* ---------- entry point used by chat.js ---------- */
 let geminiDownUntil = 0;
 export async function runGemini(args) {
+  // Phone agent tool: complex phone jobs are done by reading the screen step by step.
+  const baseRunTool = args.runTool;
+  args = {
+    ...args,
+    tools: [...(args.tools || []), PHONE_TASK_TOOL],
+    runTool: async (name, a, ui) => (name === "phone_task" ? startAgent(a && a.goal) : baseRunTool(name, a, ui)),
+    instructions: args.instructions + "\nPHONE JOBS: for anything on the phone beyond ONE plain open_app / open_url / whatsapp_send / home / back (gallery pictures or videos, searching inside an app, saving a contact, settings, apps like Jazz Cash or Alibaba, any multi-step or unknown job) call phone_task ONCE with the full goal. Never say you cannot do a phone job; use phone_task.\n"
+  };
+
   // Let the AI see the saved contact names so a spoken name maps to the exact saved name.
   try {
     const contacts = (await kvGet("contacts", {})) || {};
