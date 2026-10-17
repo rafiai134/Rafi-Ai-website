@@ -7,6 +7,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,6 +19,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends android.app.Activity {
@@ -58,6 +60,46 @@ public class MainActivity extends android.app.Activity {
         catch (Throwable t) { return "?"; }
     }
 
+    private static String reasonName(int r) {
+        switch (r) {
+            case 1: return "EXIT_SELF";
+            case 2: return "SIGNALED (killed by the phone)";
+            case 3: return "LOW_MEMORY";
+            case 4: return "CRASH";
+            case 5: return "CRASH_NATIVE";
+            case 6: return "ANR (not responding)";
+            case 7: return "INITIALIZATION_FAILURE";
+            case 8: return "PERMISSION_CHANGE";
+            case 9: return "EXCESSIVE_RESOURCE_USAGE";
+            case 10: return "USER_REQUESTED";
+            case 11: return "USER_STOPPED (force stop)";
+            case 12: return "DEPENDENCY_DIED";
+            case 13: return "OTHER";
+            case 14: return "FREEZER";
+            case 15: return "PACKAGE_STATE_CHANGE";
+            case 16: return "PACKAGE_UPDATED";
+            default: return "reason " + r;
+        }
+    }
+
+    /** Why did the phone end this app's earlier processes? (Android 11+) */
+    private String exitInfo(SimpleDateFormat f) {
+        if (Build.VERSION.SDK_INT < 30) return "";
+        try {
+            android.app.ActivityManager am = (android.app.ActivityManager) getSystemService(ACTIVITY_SERVICE);
+            List<android.app.ApplicationExitInfo> l = am.getHistoricalProcessExitReasons(getPackageName(), 0, 4);
+            StringBuilder sb = new StringBuilder();
+            for (android.app.ApplicationExitInfo e : l) {
+                String d = e.getDescription() == null ? "" : e.getDescription();
+                if (d.length() > 80) d = d.substring(0, 80);
+                sb.append("Process ended ").append(f.format(new Date(e.getTimestamp()))).append(": ")
+                  .append(reasonName(e.getReason())).append(" ").append(d)
+                  .append(" (importance ").append(e.getImportance()).append(")\n");
+            }
+            return sb.toString();
+        } catch (Throwable t) { return ""; }
+    }
+
     private String buildStatus() {
         SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss", Locale.US);
         long now = System.currentTimeMillis();
@@ -69,6 +111,8 @@ public class MainActivity extends android.app.Activity {
         b.append("Accessibility switch: ").append(on ? "ON" : "OFF  <-- turn it on").append('\n');
         if (on && alive) b.append("SERVICE: RUNNING\n");
         else if (on) b.append("SERVICE: NOT RUNNING (switch says ON but the phone stopped it). Open Accessibility settings, switch Rafi AI Companion OFF, then ON.\n");
+        long procStart = now - (SystemClock.uptimeMillis() - android.os.Process.getStartUptimeMillis());
+        b.append("App process started: ").append(f.format(new Date(procStart))).append('\n');
         long fgOk = p.getLong("fg_ok", 0);
         String fgErr = p.getString("fg_err", "");
         if (!fgErr.isEmpty()) b.append("Keep-alive notification: FAILED (").append(fgErr).append(")\n");
@@ -90,6 +134,7 @@ public class MainActivity extends android.app.Activity {
         if (crashAt != 0) b.append("App crash at ").append(f.format(new Date(crashAt))).append(": ").append(p.getString("crash", "?")).append('\n');
         String lerr = p.getString("last_err", "");
         if (!lerr.isEmpty()) b.append("Last internal error: ").append(lerr).append('\n');
+        b.append(exitInfo(f));
         long cat = p.getLong("last_cmd_at", 0);
         b.append("Last command: ");
         if (cat == 0) b.append("none received yet");
