@@ -36,15 +36,46 @@ import java.util.concurrent.Executors;
 
 public class RafiAccessibilityService extends AccessibilityService {
     private final Handler handler = new Handler(Looper.getMainLooper());
-    // One worker thread: commands run strictly one after another, never twice.
-    private final ExecutorService worker = Executors.newSingleThreadExecutor();
+    // Polling has its own thread so a hung network call can never block commands, and a watchdog replaces it if it hangs.
+    private volatile ExecutorService pollExec = Executors.newSingleThreadExecutor();
+    // Commands run strictly one after another on their own thread, never twice.
+    private final ExecutorService cmdExec = Executors.newSingleThreadExecutor();
     private final Set<String> inFlight = new HashSet<>();
+    private final Set<String> finished = new HashSet<>();
+    private volatile long pollStartedAt = 0;
+    private volatile long pollGen = 0;
     private boolean polling = false;
 
     private final Runnable poller = new Runnable() {
         @Override public void run() {
             if (!polling) return;
-            try { worker.execute(() -> pollCommands()); } catch (Exception e) { note("worker error: " + e.getClass().getSimpleName()); }
+            long now = System.currentTimeMillis();
+            try { prefs().edit().putLong("hb", now).apply(); } catch (Exception ignored) {}
+            long started = pollStartedAt;
+            if (started != 0 && now - started > 20000) {
+                // the previous poll hung (network change, DNS, dead socket): abandon its thread and start a fresh one
+                try { pollExec.shutdownNow(); } catch (Exception ignored) {}
+                pollExec = Executors.newSingleThreadExecutor();
+                pollStartedAt = 0;
+                try {
+                    int n = prefs().getInt("restarts", 0) + 1;
+                    prefs().edit().putInt("restarts", n).apply();
+                    note("previous poll hung for 20s - restarted it (#" + n + ")");
+                } catch (Exception ignored) {}
+            }
+            if (pollStartedAt == 0) {
+                final long gen = ++pollGen;
+                pollStartedAt = now;
+                try {
+                    pollExec.execute(() -> {
+                        try { pollCommands(); }
+                        finally { if (pollGen == gen) pollStartedAt = 0; }
+                    });
+                } catch (Exception e) {
+                    pollStartedAt = 0;
+                    note("worker error: " + e.getClass().getSimpleName());
+                }
+            }
             handler.postDelayed(this, 2500);
         }
     };
@@ -60,7 +91,8 @@ public class RafiAccessibilityService extends AccessibilityService {
     @Override public void onDestroy() {
         polling = false;
         handler.removeCallbacksAndMessages(null);
-        worker.shutdownNow();
+        try { pollExec.shutdownNow(); } catch (Exception ignored) {}
+        cmdExec.shutdownNow();
         super.onDestroy();
     }
 
@@ -99,6 +131,8 @@ public class RafiAccessibilityService extends AccessibilityService {
             c.setRequestMethod("GET");
             c.setConnectTimeout(8000);
             c.setReadTimeout(8000);
+            c.setUseCaches(false);
+            c.setRequestProperty("Connection", "close");
             c.setRequestProperty("x-device-token", token);
             c.setRequestProperty("Accept", "application/json");
             int code = c.getResponseCode();
@@ -110,13 +144,30 @@ public class RafiAccessibilityService extends AccessibilityService {
             note("OK (HTTP 200), commands waiting: " + n);
             if (commands == null) return;
             for (int i = 0; i < commands.length(); i++) {
-                JSONObject cmd = commands.getJSONObject(i);
-                String id = cmd.optString("id", "");
+                final JSONObject cmd = commands.getJSONObject(i);
+                final String id = cmd.optString("id", "");
                 if (!id.isEmpty()) {
-                    if (inFlight.contains(id)) continue;
-                    inFlight.add(id);
+                    synchronized (inFlight) {
+                        if (inFlight.contains(id) || finished.contains(id)) continue;
+                        inFlight.add(id);
+                    }
                 }
-                try { execute(cmd); } finally { inFlight.remove(id); }
+                try {
+                    cmdExec.execute(() -> {
+                        try { execute(cmd); }
+                        finally {
+                            synchronized (inFlight) {
+                                inFlight.remove(id);
+                                if (!id.isEmpty()) {
+                                    if (finished.size() > 200) finished.clear();
+                                    finished.add(id);
+                                }
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    synchronized (inFlight) { inFlight.remove(id); }
+                }
             }
         } catch (Exception e) {
             note("error: " + e.getClass().getSimpleName() + " " + String.valueOf(e.getMessage()));
@@ -128,7 +179,7 @@ public class RafiAccessibilityService extends AccessibilityService {
     private static String s(JSONObject o, String k) {
         if (o == null) return "";
         String v = o.optString(k, "");
-        return "null".equals(v) ? "" : v;
+        return v == null ? "" : v.trim();
     }
 
     private void execute(JSONObject cmd) {
@@ -633,6 +684,8 @@ public class RafiAccessibilityService extends AccessibilityService {
             c.setRequestMethod("POST");
             c.setConnectTimeout(8000);
             c.setReadTimeout(15000);
+            c.setUseCaches(false);
+            c.setRequestProperty("Connection", "close");
             c.setDoOutput(true);
             c.setRequestProperty("x-device-token", token);
             c.setRequestProperty("Content-Type", "application/json");

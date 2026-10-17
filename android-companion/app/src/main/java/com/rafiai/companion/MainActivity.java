@@ -50,10 +50,13 @@ public class MainActivity extends android.app.Activity {
         b.append("Accessibility switch: ").append(serviceEnabled() ? "ON" : "OFF  <-- turn it on").append('\n');
         long started = p.getLong("svc_started", 0);
         b.append("Service started: ").append(started == 0 ? "never (switch Accessibility off and on)" : f.format(new Date(started))).append('\n');
+        long hb = p.getLong("hb", 0);
+        b.append("Heartbeat: ").append(hb == 0 ? "none" : ((System.currentTimeMillis() - hb) / 1000) + "s ago").append('\n');
         long at = p.getLong("last_poll_at", 0);
         long ago = at == 0 ? -1 : (System.currentTimeMillis() - at) / 1000;
         b.append("Last poll: ").append(at == 0 ? "none yet" : f.format(new Date(at)) + " (" + ago + "s ago)").append('\n');
         b.append("Poll result: ").append(p.getString("last_poll_res", "-")).append('\n');
+        b.append("Stuck polls restarted: ").append(p.getInt("restarts", 0)).append('\n');
         long cat = p.getLong("last_cmd_at", 0);
         b.append("Last command: ");
         if (cat == 0) b.append("none received yet");
@@ -79,7 +82,7 @@ public class MainActivity extends android.app.Activity {
         root.setPadding(32, 32, 32, 32);
 
         TextView title = new TextView(this);
-        title.setText("Rafi AI Companion 1.5");
+        title.setText("Rafi AI Companion 1.6");
         title.setTextSize(26);
         root.addView(title);
 
