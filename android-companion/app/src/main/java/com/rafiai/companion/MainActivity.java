@@ -53,6 +53,11 @@ public class MainActivity extends android.app.Activity {
         }
     }
 
+    private String versionName() {
+        try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
+        catch (Throwable t) { return "?"; }
+    }
+
     private String buildStatus() {
         SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss", Locale.US);
         long now = System.currentTimeMillis();
@@ -115,7 +120,7 @@ public class MainActivity extends android.app.Activity {
         root.setPadding(32, 32, 32, 32);
 
         TextView title = new TextView(this);
-        title.setText("Rafi AI Companion 1.8");
+        title.setText("Rafi AI Companion " + versionName());
         title.setTextSize(26);
         root.addView(title);
 

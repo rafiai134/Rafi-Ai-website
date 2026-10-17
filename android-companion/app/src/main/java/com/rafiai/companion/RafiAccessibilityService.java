@@ -48,6 +48,10 @@ public class RafiAccessibilityService extends AccessibilityService {
     private volatile long pollGen = 0;
     private boolean polling = false;
 
+    // the last app window the phone told us about (used when the active window cannot be read for a moment)
+    private volatile String lastPkg = "";
+    private volatile long lastPkgAt = 0;
+
     private final Runnable poller = new Runnable() {
         @Override public void run() {
             if (!polling) return;
@@ -129,7 +133,19 @@ public class RafiAccessibilityService extends AccessibilityService {
     }
 
     @Override public void onInterrupt() {}
-    @Override public void onAccessibilityEvent(AccessibilityEvent event) {}
+
+    @Override public void onAccessibilityEvent(AccessibilityEvent event) {
+        try {
+            if (event == null || event.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return;
+            CharSequence cp = event.getPackageName();
+            if (cp == null) return;
+            String p = cp.toString();
+            String l = p.toLowerCase();
+            if (l.equals("com.android.systemui") || l.contains("inputmethod") || p.equals(getPackageName())) return;
+            lastPkg = p;
+            lastPkgAt = System.currentTimeMillis();
+        } catch (Throwable ignored) {}
+    }
 
     private SharedPreferences prefs() {
         return getSharedPreferences(MainActivity.PREFS, MODE_PRIVATE);
@@ -287,11 +303,14 @@ public class RafiAccessibilityService extends AccessibilityService {
                 String phone = s(args, "phone").replaceAll("[^0-9]", "");
                 String contactName = s(args, "contactName");
                 String text = s(args, "text");
+                String who = "";
                 if (phone.isEmpty() && !contactName.isEmpty()) {
-                    phone = ContactResolver.find(this, contactName);
+                    String[] f = ContactResolver.findDetailed(this, contactName);
+                    phone = f[0];
+                    who = f[1];
                     if (phone.isEmpty()) {
-                        String msg = "contact not found on this phone (or Contacts permission not allowed): " + contactName;
-                        rec(name, "failed: " + msg);
+                        String msg = f[2].isEmpty() ? "contact not found on this phone: " + contactName : f[2];
+                        rec(name, "FAILED: " + msg);
                         if (!id.isEmpty()) postResult(id, "failed", msg);
                         return;
                     }
@@ -301,7 +320,7 @@ public class RafiAccessibilityService extends AccessibilityService {
                 } else {
                     String r = whatsappSend(phone, text);
                     ok = r.startsWith("sent") || r.startsWith("tapped");
-                    result = r;
+                    result = who.isEmpty() ? r : r + " [contact: " + who + "]";
                 }
             }
         } catch (Exception e) {
@@ -316,12 +335,14 @@ public class RafiAccessibilityService extends AccessibilityService {
 
     /** Package of the app that is on screen right now ("" if unknown). */
     private String fgPkg() {
+        String root = "";
         try {
             AccessibilityNodeInfo r = getRootInActiveWindow();
-            if (r == null) return "";
-            CharSequence p = r.getPackageName();
-            return p == null ? "" : p.toString();
-        } catch (Exception e) { return ""; }
+            if (r != null && r.getPackageName() != null) root = r.getPackageName().toString();
+        } catch (Exception ignored) {}
+        if (!root.isEmpty()) return root;
+        // the active window could not be read right now: use the last window the phone reported
+        return (System.currentTimeMillis() - lastPkgAt < 20000) ? lastPkg : "";
     }
 
     private boolean isSystemUi(String p) {
@@ -527,11 +548,11 @@ public class RafiAccessibilityService extends AccessibilityService {
 
         // 1) open the chat and CHECK WhatsApp is really in front (retry once from Home)
         try { startActivity(intent); } catch (Exception ignored) {}
-        if (!waitFgPrefix("com.whatsapp", 5000)) {
+        if (!waitFgPrefix("com.whatsapp", 8000)) {
             performGlobalAction(GLOBAL_ACTION_HOME);
             Thread.sleep(800);
             try { startActivity(intent); } catch (Exception ignored) {}
-            if (!waitFgPrefix("com.whatsapp", 5000)) {
+            if (!waitFgPrefix("com.whatsapp", 8000)) {
                 return "WhatsApp did not come to the front (foreground is " + fgPkg() + "). The phone is blocking background start of WhatsApp. Nothing was sent.";
             }
         }

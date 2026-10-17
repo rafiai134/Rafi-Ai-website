@@ -83,10 +83,14 @@ export const digits = (s) => String(s || "").replace(/\D/g, "");
 const normName = (s) =>
   String(s || "")
     .toLowerCase()
-    .replace(/[ً-ٰٟ]/g, "") // Arabic/Urdu diacritics
+    .replace(/[ً-ٰ]/g, "") // Arabic/Urdu diacritics
     .replace(/[\s._\-]+/g, "")
     .trim();
 
+// A name must match a saved contact EXACTLY (spaces, case and dots ignored).
+// "Bilal Bro" must never become "Bilal Brother". A single word ("Ahmed") may match by prefix,
+// but only when exactly one saved contact fits. Anything unclear returns null: the phone then
+// looks the name up in its own contacts and says so if it is ambiguous.
 export async function resolveContact(nameOrNumber) {
   const raw = String(nameOrNumber || "").trim();
   if (digits(raw).length >= 8) return { name: raw, phone: digits(raw) };
@@ -94,11 +98,14 @@ export async function resolveContact(nameOrNumber) {
   const entries = Object.entries(contacts);
   const q = normName(raw);
   if (!q) return null;
-  let hit = entries.find(([n]) => normName(n) === q);
-  if (!hit) hit = entries.find(([n]) => normName(n).startsWith(q));
-  if (!hit && q.length >= 2) hit = entries.find(([n]) => normName(n).includes(q));
-  if (!hit && q.length >= 3) hit = entries.find(([n]) => q.includes(normName(n)) && normName(n).length >= 3);
-  return hit ? { name: hit[0], phone: hit[1] } : null;
+  const exact = entries.find(([n]) => normName(n) === q);
+  if (exact) return { name: exact[0], phone: exact[1] };
+  const oneWord = !/\s/.test(raw);
+  if (oneWord && q.length >= 3) {
+    const loose = entries.filter(([n]) => normName(n).startsWith(q));
+    if (loose.length === 1) return { name: loose[0][0], phone: loose[0][1] };
+  }
+  return null;
 }
 
 /* ---------- OPENAI ---------- */
