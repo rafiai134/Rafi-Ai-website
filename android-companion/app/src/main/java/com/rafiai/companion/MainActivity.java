@@ -3,6 +3,7 @@ package com.rafiai.companion;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -44,6 +45,14 @@ public class MainActivity extends android.app.Activity {
         } catch (Exception e) { return false; }
     }
 
+    private void startKeepAlive() {
+        try {
+            startForegroundService(new Intent(this, KeepAliveService.class));
+        } catch (Throwable t) {
+            p.edit().putString("fg_err", "start: " + t.getClass().getSimpleName() + ": " + t.getMessage()).apply();
+        }
+    }
+
     private String buildStatus() {
         SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss", Locale.US);
         long now = System.currentTimeMillis();
@@ -55,6 +64,11 @@ public class MainActivity extends android.app.Activity {
         b.append("Accessibility switch: ").append(on ? "ON" : "OFF  <-- turn it on").append('\n');
         if (on && alive) b.append("SERVICE: RUNNING\n");
         else if (on) b.append("SERVICE: NOT RUNNING (switch says ON but the phone stopped it). Open Accessibility settings, switch Rafi AI Companion OFF, then ON.\n");
+        long fgOk = p.getLong("fg_ok", 0);
+        String fgErr = p.getString("fg_err", "");
+        if (!fgErr.isEmpty()) b.append("Keep-alive notification: FAILED (").append(fgErr).append(")\n");
+        else if (fgOk != 0) b.append("Keep-alive notification: ON (since ").append(f.format(new Date(fgOk))).append(")\n");
+        else b.append("Keep-alive notification: starting...\n");
         long started = p.getLong("svc_started", 0);
         b.append("Service started: ").append(started == 0 ? "never (switch Accessibility off and on)" : f.format(new Date(started))).append('\n');
         b.append("Heartbeat: ").append(hb == 0 ? "none" : hbAge + "s ago").append('\n');
@@ -86,17 +100,22 @@ public class MainActivity extends android.app.Activity {
         super.onCreate(state);
         p = getSharedPreferences(PREFS, MODE_PRIVATE);
 
-        // contacts permission so Rafi can message people by saved name
+        // contacts permission so Rafi can message people by saved name, notification permission for the keep-alive notice
+        java.util.ArrayList<String> need = new java.util.ArrayList<>();
         if (checkSelfPermission(android.Manifest.permission.READ_CONTACTS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{android.Manifest.permission.READ_CONTACTS}, 1);
+            need.add(android.Manifest.permission.READ_CONTACTS);
         }
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            need.add(android.Manifest.permission.POST_NOTIFICATIONS);
+        }
+        if (!need.isEmpty()) requestPermissions(need.toArray(new String[0]), 1);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(32, 32, 32, 32);
 
         TextView title = new TextView(this);
-        title.setText("Rafi AI Companion 1.7");
+        title.setText("Rafi AI Companion 1.8");
         title.setTextSize(26);
         root.addView(title);
 
@@ -186,6 +205,7 @@ public class MainActivity extends android.app.Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        startKeepAlive();
         ui.post(refresh);
     }
 
