@@ -54,6 +54,12 @@ public class MainActivity extends android.app.Activity {
         long ago = at == 0 ? -1 : (System.currentTimeMillis() - at) / 1000;
         b.append("Last poll: ").append(at == 0 ? "none yet" : f.format(new Date(at)) + " (" + ago + "s ago)").append('\n');
         b.append("Poll result: ").append(p.getString("last_poll_res", "-")).append('\n');
+        long cat = p.getLong("last_cmd_at", 0);
+        b.append("Last command: ");
+        if (cat == 0) b.append("none received yet");
+        else b.append(p.getString("last_cmd", "-")).append(" at ").append(f.format(new Date(cat)));
+        b.append('\n');
+        b.append("Command result: ").append(p.getString("last_cmd_res", "-")).append('\n');
         if (!testResult.isEmpty()) b.append("Test: ").append(testResult).append('\n');
         return b.toString();
     }
@@ -73,7 +79,7 @@ public class MainActivity extends android.app.Activity {
         root.setPadding(32, 32, 32, 32);
 
         TextView title = new TextView(this);
-        title.setText("Rafi AI Companion 1.4");
+        title.setText("Rafi AI Companion 1.5");
         title.setTextSize(26);
         root.addView(title);
 

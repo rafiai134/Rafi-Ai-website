@@ -78,6 +78,15 @@ public class RafiAccessibilityService extends AccessibilityService {
         } catch (Exception ignored) {}
     }
 
+    /** Last executed command and its result, visible in the app's Status. */
+    private void rec(String name, String res) {
+        try {
+            if (res != null && res.length() > 220) res = res.substring(0, 220);
+            prefs().edit().putLong("last_cmd_at", System.currentTimeMillis())
+                .putString("last_cmd", name).putString("last_cmd_res", res).apply();
+        } catch (Exception ignored) {}
+    }
+
     private void pollCommands() {
         String server = prefs().getString(MainActivity.SERVER, "").trim();
         String token = prefs().getString(MainActivity.TOKEN, "").trim();
@@ -128,6 +137,8 @@ public class RafiAccessibilityService extends AccessibilityService {
         JSONObject args = cmd.optJSONObject("args");
         boolean ok = false;
         String result = "unsupported";
+        boolean quiet = "read_screen".equals(name);
+        if (!quiet) rec(name, "running...");
 
         try {
             if ("home".equals(name)) {
@@ -155,11 +166,16 @@ public class RafiAccessibilityService extends AccessibilityService {
             } else if ("open_url".equals(name)) {
                 String url = s(args, "url");
                 if (!url.isEmpty()) {
+                    String before = fgPkg();
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
-                    ok = true;
-                    result = "url launch requested";
+                    if (waitMoved(before, 3500, true)) {
+                        ok = true;
+                        result = "url opened (foreground: " + fgPkg() + ")";
+                    } else {
+                        result = "url did not open (foreground is " + fgPkg() + "). Background start may be blocked by the phone.";
+                    }
                 } else result = "missing url";
             } else if ("tap".equals(name)) {
                 float x = args == null ? -1 : (float) args.optDouble("x", -1);
@@ -179,8 +195,9 @@ public class RafiAccessibilityService extends AccessibilityService {
                 String pkg = s(args, "packageName");
                 if (pkg.isEmpty()) pkg = resolveApp(s(args, "appName"));
                 if (!pkg.isEmpty()) {
-                    ok = launchPackage(pkg);
-                    result = ok ? "app launch requested: " + pkg : "app package not found";
+                    String r = openAppVerified(pkg);
+                    ok = r.startsWith("OK");
+                    result = r;
                 } else result = "app not found (give appName or packageName)";
             } else if ("whatsapp_send".equals(name)) {
                 String phone = s(args, "phone").replaceAll("[^0-9]", "");
@@ -189,7 +206,9 @@ public class RafiAccessibilityService extends AccessibilityService {
                 if (phone.isEmpty() && !contactName.isEmpty()) {
                     phone = ContactResolver.find(this, contactName);
                     if (phone.isEmpty()) {
-                        if (!id.isEmpty()) postResult(id, "failed", "contact not found on this phone (or Contacts permission not allowed): " + contactName);
+                        String msg = "contact not found on this phone (or Contacts permission not allowed): " + contactName;
+                        rec(name, "failed: " + msg);
+                        if (!id.isEmpty()) postResult(id, "failed", msg);
                         return;
                     }
                 }
@@ -197,7 +216,7 @@ public class RafiAccessibilityService extends AccessibilityService {
                     result = "phone and text are required";
                 } else {
                     String r = whatsappSend(phone, text);
-                    ok = r.startsWith("sent");
+                    ok = r.startsWith("sent") || r.startsWith("tapped");
                     result = r;
                 }
             }
@@ -205,7 +224,51 @@ public class RafiAccessibilityService extends AccessibilityService {
             result = e.getClass().getSimpleName() + ": " + String.valueOf(e.getMessage());
         }
 
+        if (!quiet) rec(name, (ok ? "done: " : "FAILED: ") + result);
         if (!id.isEmpty()) postResult(id, ok ? "done" : "failed", result);
+    }
+
+    /* ---------- foreground checks ---------- */
+
+    /** Package of the app that is on screen right now ("" if unknown). */
+    private String fgPkg() {
+        try {
+            AccessibilityNodeInfo r = getRootInActiveWindow();
+            if (r == null) return "";
+            CharSequence p = r.getPackageName();
+            return p == null ? "" : p.toString();
+        } catch (Exception e) { return ""; }
+    }
+
+    private boolean isSystemUi(String p) {
+        String l = p.toLowerCase();
+        return l.isEmpty() || l.contains("launcher") || l.equals("com.android.systemui") || l.equals("com.miui.home")
+            || l.equals("com.rafiai.companion2");
+    }
+
+    private boolean isBrowser(String p) {
+        String l = p.toLowerCase();
+        return l.contains("chrome") || l.contains("browser") || l.contains("firefox") || l.contains("opera") || l.contains("brave");
+    }
+
+    /** True when some real app (not the launcher/system UI) is now in front and it changed from `before` (or is a browser). */
+    private boolean waitMoved(String before, int ms, boolean browserOk) throws InterruptedException {
+        long end = System.currentTimeMillis() + ms;
+        while (System.currentTimeMillis() < end) {
+            String cur = fgPkg();
+            if (!isSystemUi(cur) && (!cur.equals(before) || (browserOk && isBrowser(cur)))) return true;
+            Thread.sleep(300);
+        }
+        return false;
+    }
+
+    private boolean waitFgPrefix(String prefix, int ms) throws InterruptedException {
+        long end = System.currentTimeMillis() + ms;
+        while (System.currentTimeMillis() < end) {
+            if (fgPkg().startsWith(prefix)) return true;
+            Thread.sleep(300);
+        }
+        return false;
     }
 
     /* ---------- screen reading (for the phone agent) ---------- */
@@ -270,12 +333,58 @@ public class RafiAccessibilityService extends AccessibilityService {
 
     /* ---------- apps ---------- */
 
-    private boolean launchPackage(String pkg) {
+    private String appLabel(String pkg) {
+        try {
+            PackageManager pm = getPackageManager();
+            return String.valueOf(pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)));
+        } catch (Exception e) { return ""; }
+    }
+
+    /**
+     * Open an app and CHECK that it really came to the front.
+     * 1) normal launch intent; 2) if the phone blocks background launches, go Home and tap the app icon like a person would.
+     */
+    private String openAppVerified(String pkg) throws InterruptedException {
         Intent intent = getPackageManager().getLaunchIntentForPackage(pkg);
-        if (intent == null) return false;
+        if (intent == null) return "app package not found: " + pkg;
+        String before = fgPkg();
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-        return true;
+        try { startActivity(intent); } catch (Exception e) { /* fall through to icon method */ }
+        if (fgPkg().equals(pkg) || waitMoved(before, 3500, false)) {
+            return "OK opened " + pkg + " (foreground: " + fgPkg() + ")";
+        }
+        String label = appLabel(pkg);
+        if (!label.isEmpty() && tapLauncherIcon(label)) {
+            if (waitMoved("", 4000, false)) return "OK opened " + pkg + " by tapping its icon (foreground: " + fgPkg() + ")";
+        }
+        return pkg + " did not come to the front (foreground is " + fgPkg() + "). The phone is blocking background start, or the icon was not found.";
+    }
+
+    /** Go Home, find the icon by its label (open the app drawer if needed) and tap it. */
+    private boolean tapLauncherIcon(String label) throws InterruptedException {
+        performGlobalAction(GLOBAL_ACTION_HOME);
+        Thread.sleep(1000);
+        DisplayMetrics dm = getResources().getDisplayMetrics();
+        for (int attempt = 0; attempt < 6; attempt++) {
+            AccessibilityNodeInfo root = getRootInActiveWindow();
+            if (root != null) {
+                AccessibilityNodeInfo hit = findByLabel(root, new String[]{label}, true);
+                if (hit == null && label.length() > 3) hit = findByLabel(root, new String[]{label}, false);
+                if (hit != null && (clickNode(hit) || clickBounds(hit))) return true;
+            }
+            // swipe up: opens the app drawer first time, then scrolls through it
+            swipe(dm.widthPixels / 2f, dm.heightPixels * 0.82f, dm.widthPixels / 2f, dm.heightPixels * 0.25f);
+            Thread.sleep(1000);
+        }
+        return false;
+    }
+
+    private boolean swipe(float x1, float y1, float x2, float y2) {
+        Path path = new Path();
+        path.moveTo(x1, y1);
+        path.lineTo(x2, y2);
+        GestureDescription.StrokeDescription stroke = new GestureDescription.StrokeDescription(path, 0, 350);
+        return dispatchGesture(new GestureDescription.Builder().addStroke(stroke).build(), null, null);
     }
 
     /** Find an installed launcher app by its visible name ("WhatsApp", "Chrome" ...). */
@@ -290,7 +399,8 @@ public class RafiAccessibilityService extends AccessibilityService {
             {"کیمرہ", "camera"}, {"कैमरा", "camera"},
             {"سیٹنگ", "settings"}, {"सेटिंग", "settings"},
             {"فیس بک", "facebook"}, {"انسٹاگرام", "instagram"}, {"ٹک ٹاک", "tiktok"},
-            {"میپس", "maps"}, {"نقشہ", "maps"}, {"شاپفائی", "shopify"}
+            {"میپس", "maps"}, {"نقشہ", "maps"}, {"شاپفائی", "shopify"},
+            {"گیلری", "gallery"}, {"गैलरी", "gallery"}
         };
         for (String[] a : alias) if (q.contains(a[0])) { q = a[1]; break; }
 
@@ -330,12 +440,22 @@ public class RafiAccessibilityService extends AccessibilityService {
             }
         }
         if (!launched) return "WhatsApp is not installed on this phone";
-        startActivity(intent);
 
-        // Wait for the chat screen with the text prefilled, then press Send.
-        // Try: (1) Send button by id/label, (2) click its bounds by gesture, (3) the bottom-right button.
-        for (int i = 0; i < 16; i++) {
+        // 1) open the chat and CHECK WhatsApp is really in front (retry once from Home)
+        try { startActivity(intent); } catch (Exception ignored) {}
+        if (!waitFgPrefix("com.whatsapp", 5000)) {
+            performGlobalAction(GLOBAL_ACTION_HOME);
+            Thread.sleep(800);
+            try { startActivity(intent); } catch (Exception ignored) {}
+            if (!waitFgPrefix("com.whatsapp", 5000)) {
+                return "WhatsApp did not come to the front (foreground is " + fgPkg() + "). The phone is blocking background start of WhatsApp. Nothing was sent.";
+            }
+        }
+
+        // 2) wait for the Send button of the prefilled chat, only while WhatsApp is in front, then press it
+        for (int i = 0; i < 14; i++) {
             Thread.sleep(1000);
+            if (!fgPkg().startsWith("com.whatsapp")) continue;
             AccessibilityNodeInfo root = getRootInActiveWindow();
             if (root == null) continue;
             AccessibilityNodeInfo send = findSend(root);
@@ -343,10 +463,16 @@ public class RafiAccessibilityService extends AccessibilityService {
             if (send == null && i >= 5) { send = findBottomRightButton(root); how = "position"; }
             if (send == null) continue;
             Thread.sleep(500);
-            if (clickNode(send)) return "sent via WhatsApp to " + phone + " (" + how + ")";
-            if (clickBounds(send)) return "sent via WhatsApp to " + phone + " (" + how + "+tap)";
+            boolean clicked = clickNode(send) || clickBounds(send);
+            if (!clicked) continue;
+            // 3) confirm: after a real send the Send button turns back into the microphone
+            Thread.sleep(1500);
+            AccessibilityNodeInfo after = getRootInActiveWindow();
+            boolean stillThere = after != null && findSend(after) != null;
+            if (!stillThere) return "sent via WhatsApp to " + phone + " (" + how + ", confirmed)";
+            return "tapped Send in WhatsApp for " + phone + " (" + how + ") but could not confirm it was delivered - check the chat";
         }
-        return "WhatsApp opened with the message but the Send button was not found (message is typed, tap Send)";
+        return "WhatsApp opened but the Send button was not found (" + fgPkg() + "). The message may be typed but not sent";
     }
 
     private AccessibilityNodeInfo findSend(AccessibilityNodeInfo node) {
