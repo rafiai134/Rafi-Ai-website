@@ -32,7 +32,7 @@ public class MainActivity extends android.app.Activity {
 
     private final Runnable refresh = new Runnable() {
         @Override public void run() {
-            status.setText(buildStatus());
+            try { status.setText(buildStatus()); } catch (Throwable ignored) {}
             ui.postDelayed(this, 1500);
         }
     };
@@ -46,17 +46,31 @@ public class MainActivity extends android.app.Activity {
 
     private String buildStatus() {
         SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss", Locale.US);
+        long now = System.currentTimeMillis();
         StringBuilder b = new StringBuilder();
-        b.append("Accessibility switch: ").append(serviceEnabled() ? "ON" : "OFF  <-- turn it on").append('\n');
+        boolean on = serviceEnabled();
+        long hb = p.getLong("hb", 0);
+        long hbAge = hb == 0 ? -1 : (now - hb) / 1000;
+        boolean alive = hb != 0 && hbAge <= 12;
+        b.append("Accessibility switch: ").append(on ? "ON" : "OFF  <-- turn it on").append('\n');
+        if (on && alive) b.append("SERVICE: RUNNING\n");
+        else if (on) b.append("SERVICE: NOT RUNNING (switch says ON but the phone stopped it). Open Accessibility settings, switch Rafi AI Companion OFF, then ON.\n");
         long started = p.getLong("svc_started", 0);
         b.append("Service started: ").append(started == 0 ? "never (switch Accessibility off and on)" : f.format(new Date(started))).append('\n');
-        long hb = p.getLong("hb", 0);
-        b.append("Heartbeat: ").append(hb == 0 ? "none" : ((System.currentTimeMillis() - hb) / 1000) + "s ago").append('\n');
+        b.append("Heartbeat: ").append(hb == 0 ? "none" : hbAge + "s ago").append('\n');
         long at = p.getLong("last_poll_at", 0);
-        long ago = at == 0 ? -1 : (System.currentTimeMillis() - at) / 1000;
+        long ago = at == 0 ? -1 : (now - at) / 1000;
         b.append("Last poll: ").append(at == 0 ? "none yet" : f.format(new Date(at)) + " (" + ago + "s ago)").append('\n');
         b.append("Poll result: ").append(p.getString("last_poll_res", "-")).append('\n');
         b.append("Stuck polls restarted: ").append(p.getInt("restarts", 0)).append('\n');
+        long unb = p.getLong("svc_unbound", 0);
+        if (unb != 0) b.append("Phone unbound the service at: ").append(f.format(new Date(unb))).append('\n');
+        long des = p.getLong("svc_destroyed", 0);
+        if (des != 0) b.append("Phone destroyed the service at: ").append(f.format(new Date(des))).append('\n');
+        long crashAt = p.getLong("crash_at", 0);
+        if (crashAt != 0) b.append("App crash at ").append(f.format(new Date(crashAt))).append(": ").append(p.getString("crash", "?")).append('\n');
+        String lerr = p.getString("last_err", "");
+        if (!lerr.isEmpty()) b.append("Last internal error: ").append(lerr).append('\n');
         long cat = p.getLong("last_cmd_at", 0);
         b.append("Last command: ");
         if (cat == 0) b.append("none received yet");
@@ -82,12 +96,12 @@ public class MainActivity extends android.app.Activity {
         root.setPadding(32, 32, 32, 32);
 
         TextView title = new TextView(this);
-        title.setText("Rafi AI Companion 1.6");
+        title.setText("Rafi AI Companion 1.7");
         title.setTextSize(26);
         root.addView(title);
 
         TextView info = new TextView(this);
-        info.setText("1) Enter the device token and press Save. 2) Press Test connection (must say OK). 3) Press 'Keep running in background' and choose Don't optimize. 4) Open Accessibility settings and switch Rafi AI Companion on. The Status below must show a recent Last poll.");
+        info.setText("1) Enter the device token and press Save. 2) Press Test connection (must say OK). 3) Press 'Keep running in background' and choose Don't optimize. 4) Open Accessibility settings and switch Rafi AI Companion on. The Status below must say SERVICE: RUNNING.");
         root.addView(info);
 
         EditText server = new EditText(this);

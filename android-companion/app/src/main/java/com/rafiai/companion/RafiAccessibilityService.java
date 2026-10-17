@@ -35,6 +35,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class RafiAccessibilityService extends AccessibilityService {
+    private static boolean crashHookSet = false;
+
     private final Handler handler = new Handler(Looper.getMainLooper());
     // Polling has its own thread so a hung network call can never block commands, and a watchdog replaces it if it hangs.
     private volatile ExecutorService pollExec = Executors.newSingleThreadExecutor();
@@ -49,51 +51,81 @@ public class RafiAccessibilityService extends AccessibilityService {
     private final Runnable poller = new Runnable() {
         @Override public void run() {
             if (!polling) return;
-            long now = System.currentTimeMillis();
-            try { prefs().edit().putLong("hb", now).apply(); } catch (Exception ignored) {}
-            long started = pollStartedAt;
-            if (started != 0 && now - started > 20000) {
-                // the previous poll hung (network change, DNS, dead socket): abandon its thread and start a fresh one
-                try { pollExec.shutdownNow(); } catch (Exception ignored) {}
-                pollExec = Executors.newSingleThreadExecutor();
-                pollStartedAt = 0;
-                try {
+            try {
+                long now = System.currentTimeMillis();
+                try { prefs().edit().putLong("hb", now).apply(); } catch (Throwable ignored) {}
+                long started = pollStartedAt;
+                if (started != 0 && now - started > 20000) {
+                    // the previous poll hung (network change, DNS, dead socket): abandon its thread and start a fresh one
+                    try { pollExec.shutdownNow(); } catch (Throwable ignored) {}
+                    pollExec = Executors.newSingleThreadExecutor();
+                    pollStartedAt = 0;
                     int n = prefs().getInt("restarts", 0) + 1;
                     prefs().edit().putInt("restarts", n).apply();
                     note("previous poll hung for 20s - restarted it (#" + n + ")");
-                } catch (Exception ignored) {}
-            }
-            if (pollStartedAt == 0) {
-                final long gen = ++pollGen;
-                pollStartedAt = now;
-                try {
-                    pollExec.execute(() -> {
-                        try { pollCommands(); }
-                        finally { if (pollGen == gen) pollStartedAt = 0; }
-                    });
-                } catch (Exception e) {
-                    pollStartedAt = 0;
-                    note("worker error: " + e.getClass().getSimpleName());
                 }
+                if (pollStartedAt == 0) {
+                    final long gen = ++pollGen;
+                    pollStartedAt = now;
+                    try {
+                        pollExec.execute(() -> {
+                            try { pollCommands(); }
+                            catch (Throwable t) { note("poll crashed: " + t.getClass().getSimpleName() + " " + t.getMessage()); }
+                            finally { if (pollGen == gen) pollStartedAt = 0; }
+                        });
+                    } catch (Throwable e) {
+                        pollStartedAt = 0;
+                        note("worker error: " + e.getClass().getSimpleName());
+                    }
+                }
+            } catch (Throwable t) {
+                try { prefs().edit().putString("last_err", "poller: " + t.getClass().getSimpleName() + " " + t.getMessage()).apply(); } catch (Throwable ignored) {}
+            } finally {
+                // the loop must never stop because of an error
+                if (polling) handler.postDelayed(this, 2500);
             }
-            handler.postDelayed(this, 2500);
         }
     };
 
     @Override public void onServiceConnected() {
         super.onServiceConnected();
+        installCrashHook();
         polling = true;
         prefs().edit().putLong("svc_started", System.currentTimeMillis()).apply();
         note("service connected, waiting for first poll");
+        handler.removeCallbacks(poller);
         handler.post(poller);
     }
 
+    @Override public boolean onUnbind(Intent intent) {
+        try { prefs().edit().putLong("svc_unbound", System.currentTimeMillis()).apply(); } catch (Throwable ignored) {}
+        return super.onUnbind(intent);
+    }
+
     @Override public void onDestroy() {
+        try { prefs().edit().putLong("svc_destroyed", System.currentTimeMillis()).apply(); } catch (Throwable ignored) {}
         polling = false;
         handler.removeCallbacksAndMessages(null);
-        try { pollExec.shutdownNow(); } catch (Exception ignored) {}
+        try { pollExec.shutdownNow(); } catch (Throwable ignored) {}
         cmdExec.shutdownNow();
         super.onDestroy();
+    }
+
+    /** If the app ever crashes, remember why so the Status can show it. */
+    private void installCrashHook() {
+        if (crashHookSet) return;
+        crashHookSet = true;
+        final Thread.UncaughtExceptionHandler prev = Thread.getDefaultUncaughtExceptionHandler();
+        final SharedPreferences sp = prefs();
+        Thread.setDefaultUncaughtExceptionHandler((th, ex) -> {
+            try {
+                String where = ex.getStackTrace().length > 0 ? ex.getStackTrace()[0].toString() : "";
+                String msg = ex.getClass().getSimpleName() + ": " + ex.getMessage() + " @ " + where;
+                if (msg.length() > 300) msg = msg.substring(0, 300);
+                sp.edit().putLong("crash_at", System.currentTimeMillis()).putString("crash", msg).commit();
+            } catch (Throwable ignored) {}
+            if (prev != null) prev.uncaughtException(th, ex);
+        });
     }
 
     @Override public void onInterrupt() {}
@@ -155,6 +187,7 @@ public class RafiAccessibilityService extends AccessibilityService {
                 try {
                     cmdExec.execute(() -> {
                         try { execute(cmd); }
+                        catch (Throwable t) { rec(cmd.optString("command", "?"), "FAILED: " + t.getClass().getSimpleName() + " " + t.getMessage()); }
                         finally {
                             synchronized (inFlight) {
                                 inFlight.remove(id);

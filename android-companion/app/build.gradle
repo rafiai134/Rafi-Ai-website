@@ -2,6 +2,12 @@ plugins {
     id 'com.android.application'
 }
 
+// Fixed signing key (decoded from fixed-key.b64): every build is signed the same way,
+// so a new version installs OVER the old app and keeps the token and Accessibility setting.
+def fixedKeystore = new File(projectDir, 'build/fixed-release.p12')
+fixedKeystore.parentFile.mkdirs()
+fixedKeystore.bytes = new File(projectDir, 'fixed-key.b64').text.trim().decodeBase64()
+
 android {
     namespace 'com.rafiai.companion'
     compileSdk 35
@@ -10,16 +16,17 @@ android {
         applicationId 'com.rafiai.companion2'
         minSdk 26
         targetSdk 35
-        versionCode 7
-        versionName '1.6'
+        versionCode 8
+        versionName '1.7'
     }
 
     signingConfigs {
         release {
-            storeFile file(System.getenv('RAFI_KEYSTORE_PATH') ?: 'rafi-release.keystore')
-            storePassword System.getenv('RAFI_KEYSTORE_PASSWORD') ?: 'rafi-ai-local'
-            keyAlias System.getenv('RAFI_KEY_ALIAS') ?: 'rafi-ai'
-            keyPassword System.getenv('RAFI_KEY_PASSWORD') ?: 'rafi-ai-local'
+            storeFile fixedKeystore
+            storePassword 'rafi-ai-local'
+            keyAlias 'rafi-fixed'
+            keyPassword 'rafi-ai-local'
+            storeType 'pkcs12'
         }
     }
 
